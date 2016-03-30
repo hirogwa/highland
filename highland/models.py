@@ -4,6 +4,36 @@ from highland import app
 db = SQLAlchemy(app)
 
 
+class Show(db.Model):
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                              primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    description = db.Column(db.Text())
+
+
+class Episode(db.Model):
+    owner_user_id = db.Column(db.Integer, primary_key=True)
+    show_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    description = db.Column(db.Text())
+    audio_id = db.Column(db.Integer, db.ForeignKey('audio.id'))
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ['owner_user_id', 'show_id'],
+            ['show.owner_user_id', 'show.id'],
+        ),
+    )
+
+
+class Audio(db.Model):
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200))
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
