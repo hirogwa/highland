@@ -18,7 +18,7 @@ class Episode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
-    audio_id = db.Column(db.Integer, db.ForeignKey('audio.id'))
+    audio_id = db.Column(db.Integer)
 
     __table_args__ = (
         db.ForeignKeyConstraint(
@@ -26,6 +26,13 @@ class Episode(db.Model):
             ['show.owner_user_id', 'show.id'],
         ),
     )
+
+    def __init__(self, show, title, description, audio):
+        self.owner_user_id = show.owner_user_id
+        self.show_id = show.id
+        self.title = title
+        self.description = description
+        self.audio_id = audio.id if audio else -1
 
 
 class Audio(db.Model):
