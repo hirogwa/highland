@@ -26,3 +26,29 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_add.assert_called_with(episode)
         mocked_commit.assert_called_with()
         self.assertEqual(episode, result)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    def test_update(self, mocked_commit):
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 1
+        mocked_show.id = 2
+
+        mocked_audio_original = MagicMock()
+        mocked_audio_original.id = 3
+
+        episode = models.Episode(mocked_show, 'original title',
+                                 'original desc', mocked_audio_original)
+
+        title = 'new title'
+        description = 'new desc'
+        mocked_audio_new = MagicMock()
+        mocked_audio_new.id = 11
+
+        episode_operation.update(episode, title, description, mocked_audio_new)
+
+        mocked_commit.assert_called_with()
+        self.assertEqual(mocked_show.owner_user_id, episode.owner_user_id)
+        self.assertEqual(mocked_show.id, episode.show_id)
+        self.assertEqual(title, episode.title)
+        self.assertEqual(description, episode.description)
+        self.assertEqual(mocked_audio_new.id, episode.audio_id)
