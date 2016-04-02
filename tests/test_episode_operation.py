@@ -72,3 +72,25 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_delete.assert_called_with(episode)
         mocked_commit.assert_called_with()
         self.assertTrue(result)
+
+    @unittest.mock.patch('highland.models.Episode.query')
+    def test_load(self, mocked_query):
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 1
+        mocked_show.id = 2
+
+        mocked_audio = MagicMock()
+        mocked_audio.id = 3
+
+        ep_one = models.Episode(
+            mocked_show, 'title one', 'desc one', mocked_audio)
+        ep_two = models.Episode(
+            mocked_show, 'title two', 'desc two', mocked_audio)
+        ep_list = [ep_one, ep_two]
+
+        mocked_query.all.return_value = ep_list
+
+        result = episode_operation.load()
+
+        mocked_query.all.assert_called_with()
+        self.assertEqual(ep_list, result)

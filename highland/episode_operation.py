@@ -20,3 +20,7 @@ def delete(episode):
     models.db.session.delete(episode)
     models.db.session.commit()
     return True
+
+
+def load():
+    return models.Episode.query.all()
