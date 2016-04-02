@@ -14,3 +14,9 @@ def update(episode, title, description, audio):
     episode.audio_id = audio.id
     models.db.session.commit()
     return episode
+
+
+def delete(episode):
+    models.db.session.delete(episode)
+    models.db.session.commit()
+    return True

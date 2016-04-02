@@ -44,7 +44,8 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_audio_new = MagicMock()
         mocked_audio_new.id = 11
 
-        episode_operation.update(episode, title, description, mocked_audio_new)
+        result = episode_operation.update(
+            episode, title, description, mocked_audio_new)
 
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show.owner_user_id, episode.owner_user_id)
@@ -52,3 +53,22 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(title, episode.title)
         self.assertEqual(description, episode.description)
         self.assertEqual(mocked_audio_new.id, episode.audio_id)
+        self.assertEqual(result, episode)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(models.db.session, 'delete')
+    def test_delete(self, mocked_delete, mocked_commit):
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 1
+        mocked_show.id = 2
+
+        mocked_audio = MagicMock()
+        mocked_audio.id = 3
+
+        episode = models.Episode(mocked_show, 'title', 'desc', mocked_audio)
+
+        result = episode_operation.delete(episode)
+
+        mocked_delete.assert_called_with(episode)
+        mocked_commit.assert_called_with()
+        self.assertTrue(result)
