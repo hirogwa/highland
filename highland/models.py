@@ -11,6 +11,11 @@ class Show(db.Model):
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
 
+    def __init__(self, user, title, description):
+        self.owner_user_id = user.id
+        self.title = title
+        self.description = description
+
 
 class Episode(db.Model):
     owner_user_id = db.Column(db.Integer, primary_key=True)

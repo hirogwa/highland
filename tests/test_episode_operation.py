@@ -17,15 +17,18 @@ class TestEpisodeOperation(unittest.TestCase):
 
         title = 'my episode'
         description = 'my episode description'
-        episode = models.Episode(mocked_show, title, description, mocked_audio)
-        mocked_episode_class.return_value = episode
+
+        mocked_episode = MagicMock()
+        mocked_episode_class.return_value = mocked_episode
 
         result = episode_operation.create(
             mocked_show, title, description, mocked_audio)
 
-        mocked_add.assert_called_with(episode)
+        mocked_episode_class.assert_called_with(
+            mocked_show, title, description, mocked_audio)
+        mocked_add.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
-        self.assertEqual(episode, result)
+        self.assertEqual(mocked_episode, result)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
     def test_update(self, mocked_commit):
