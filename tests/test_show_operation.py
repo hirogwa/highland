@@ -52,3 +52,22 @@ class TestShowOperation(unittest.TestCase):
         mocked_delete.assert_called_with(mocked_show)
         mocked_commit.assert_called_with()
         self.assertTrue(result)
+
+    @unittest.mock.patch('highland.models.Show.query')
+    def test_load(self, mocked_query):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+
+        mocked_show_01 = MagicMock()
+        mocked_show_02 = MagicMock()
+        show_list = [mocked_show_01, mocked_show_02]
+
+        mocked_filter = MagicMock()
+        mocked_filter.all.return_value = show_list
+        mocked_query.filter_by.return_value = mocked_filter
+
+        result = show_operation.load(mocked_user)
+
+        mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id)
+        mocked_filter.all.assert_called_with()
+        self.assertEqual(show_list, result)

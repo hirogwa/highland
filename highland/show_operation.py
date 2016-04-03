@@ -19,3 +19,7 @@ def delete(show):
     models.db.session.delete(show)
     models.db.session.commit()
     return True
+
+
+def load(user):
+    return models.Show.query.filter_by(owner_user_id=user.id).all()
