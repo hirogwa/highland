@@ -22,5 +22,7 @@ def delete(episode):
     return True
 
 
-def load():
-    return models.Episode.query.all()
+def load(show):
+    return models.Episode.query.\
+        filter_by(owner_user_id=show.owner_user_id, show_id=show.id).\
+        all()

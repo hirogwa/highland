@@ -96,9 +96,14 @@ class TestEpisodeOperation(unittest.TestCase):
             mocked_show, 'title two', 'desc two', mocked_audio)
         ep_list = [ep_one, ep_two]
 
-        mocked_query.all.return_value = ep_list
+        mocked_filter = MagicMock()
+        mocked_filter.all.return_value = ep_list
+        mocked_query.filter_by.return_value = mocked_filter
 
-        result = episode_operation.load()
+        result = episode_operation.load(mocked_show)
 
-        mocked_query.all.assert_called_with()
+        mocked_query.filter_by.assert_called_with(
+            owner_user_id=mocked_show.owner_user_id,
+            show_id=mocked_show.id)
+        mocked_filter.all.assert_called_with()
         self.assertEqual(ep_list, result)
