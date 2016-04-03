@@ -39,8 +39,12 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_audio_original = MagicMock()
         mocked_audio_original.id = 3
 
-        episode = models.Episode(mocked_show, 'original title',
-                                 'original desc', mocked_audio_original)
+        mocked_episode = MagicMock()
+        mocked_episode.owner_user_id = mocked_show.owner_user_id
+        mocked_episode.show_id = mocked_show.id
+        mocked_episode.title = 'title original'
+        mocked_episode.description = 'desc original'
+        mocked_episode.audio_id = mocked_audio_original.id
 
         title = 'new title'
         description = 'new desc'
@@ -48,15 +52,16 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_audio_new.id = 11
 
         result = episode_operation.update(
-            episode, title, description, mocked_audio_new)
+            mocked_episode, title, description, mocked_audio_new)
 
         mocked_commit.assert_called_with()
-        self.assertEqual(mocked_show.owner_user_id, episode.owner_user_id)
-        self.assertEqual(mocked_show.id, episode.show_id)
-        self.assertEqual(title, episode.title)
-        self.assertEqual(description, episode.description)
-        self.assertEqual(mocked_audio_new.id, episode.audio_id)
-        self.assertEqual(result, episode)
+        self.assertEqual(mocked_show.owner_user_id,
+                         mocked_episode.owner_user_id)
+        self.assertEqual(mocked_show.id, mocked_episode.show_id)
+        self.assertEqual(title, mocked_episode.title)
+        self.assertEqual(description, mocked_episode.description)
+        self.assertEqual(mocked_audio_new.id, mocked_episode.audio_id)
+        self.assertEqual(result, mocked_episode)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'delete')

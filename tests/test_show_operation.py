@@ -21,3 +21,23 @@ class TestShowOperation(unittest.TestCase):
         mocked_add.assert_called_with(mocked_show)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    def test_update(self, mocked_commit):
+        owner_user_id = 1
+
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = owner_user_id
+        mocked_show.title = 'title original'
+        mocked_show.description = 'desc original'
+
+        title = 'title new'
+        description = 'desc new'
+
+        result = show_operation.update(mocked_show, title, description)
+
+        mocked_commit.assert_called_with()
+        self.assertEqual(owner_user_id, mocked_show.owner_user_id)
+        self.assertEqual(title, mocked_show.title)
+        self.assertEqual(description, mocked_show.description)
+        self.assertEqual(result, mocked_show)
