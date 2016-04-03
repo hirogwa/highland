@@ -41,3 +41,14 @@ class TestShowOperation(unittest.TestCase):
         self.assertEqual(title, mocked_show.title)
         self.assertEqual(description, mocked_show.description)
         self.assertEqual(result, mocked_show)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(models.db.session, 'delete')
+    def test_delete(self, mocked_delete, mocked_commit):
+        mocked_show = MagicMock()
+
+        result = show_operation.delete(mocked_show)
+
+        mocked_delete.assert_called_with(mocked_show)
+        mocked_commit.assert_called_with()
+        self.assertTrue(result)

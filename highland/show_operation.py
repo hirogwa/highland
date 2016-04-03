@@ -13,3 +13,9 @@ def update(show, title, description):
     show.description = description
     models.db.session.commit()
     return show
+
+
+def delete(show):
+    models.db.session.delete(show)
+    models.db.session.commit()
+    return True
