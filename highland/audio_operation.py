@@ -12,3 +12,9 @@ def delete(audio):
     models.db.session.delete(audio)
     models.db.session.commit()
     return True
+
+
+def load(user):
+    return models.Audio.query.\
+        filter_by(owner_user_id=user.id).\
+        all()
