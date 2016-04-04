@@ -19,3 +19,14 @@ class TestAudioOperation(unittest.TestCase):
         mocked_add.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_audio, result)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(models.db.session, 'delete')
+    def test_delete(self, mocked_delete, mocked_commit):
+        mocked_audio = MagicMock()
+
+        result = audio_operation.delete(mocked_audio)
+
+        mocked_delete.assert_called_with(mocked_audio)
+        mocked_commit.assert_called_with()
+        self.assertTrue(result)
