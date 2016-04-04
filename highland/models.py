@@ -45,6 +45,10 @@ class Audio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
 
+    def __init__(self, user, audio_file):
+        self.owner_user_id = user.id
+        self.filename = audio_file.filename
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
