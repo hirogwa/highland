@@ -17,7 +17,7 @@ class Show(db.Model):
         self.description = description
 
     def __iter__(self):
-        for key in ['owner_user_id', 'title', 'description']:
+        for key in ['owner_user_id', 'id', 'title', 'description']:
             yield(key, getattr(self, key))
 
 
