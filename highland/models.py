@@ -16,6 +16,10 @@ class Show(db.Model):
         self.title = title
         self.description = description
 
+    def __iter__(self):
+        for key in ['owner_user_id', 'title', 'description']:
+            yield(key, getattr(self, key))
+
 
 class Episode(db.Model):
     owner_user_id = db.Column(db.Integer, primary_key=True)
