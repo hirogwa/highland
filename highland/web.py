@@ -19,6 +19,7 @@ def show():
             args = request.get_json()
             id, title, description = (
                 args.get('id'), args.get('title'), args.get('description'))
+            assert id, 'id required'
             assert title, 'title required'
             assert description, 'description required'
 
