@@ -86,3 +86,20 @@ class TestShow(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.put_with_json(id=2,
                                title='new title')
+
+    @unittest.mock.patch.object(show_operation, 'load')
+    def test_show_get(self, mocked_load):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        shows = [
+            models.Show(mocked_user, 'title 01', 'description 01'),
+            models.Show(mocked_user, 'title 02', 'description 02')
+        ]
+        mocked_load.return_value = shows
+
+        response = self.app.get('/show')
+
+        resp_data = json.loads(response.data)
+        resp_shows = resp_data.get('shows')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(list(map(dict, shows)), resp_shows)

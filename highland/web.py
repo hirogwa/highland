@@ -3,7 +3,7 @@ from flask import request, jsonify
 from highland import app, models, show_operation
 
 
-@app.route('/show', methods=['POST', 'PUT'])
+@app.route('/show', methods=['POST', 'PUT', 'GET'])
 def show():
     try:
         if 'POST' == request.method:
@@ -25,6 +25,10 @@ def show():
 
             show = show_operation.update(test_user(), id, title, description)
             return jsonify(show=dict(show), result='success')
+
+        if 'GET' == request.method:
+            shows = show_operation.load(test_user())
+            return jsonify(shows=list(map(dict, shows)), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
