@@ -1,6 +1,5 @@
-import json
 import traceback
-from flask import request, Response
+from flask import request, jsonify
 from highland import app, models, show_operation
 
 
@@ -15,18 +14,10 @@ def show():
 
             show = show_operation.create(test_user(), title, description)
 
-            return json_response({
-                'result': 'success',
-                'show': dict(show)
-            })
+            return jsonify(show=dict(show), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
-
-
-def json_response(data):
-    return Response(
-        json.dumps(data), mimetype='application/json')
 
 
 def test_user():
