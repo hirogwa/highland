@@ -8,7 +8,12 @@ def create(user, title, description):
     return show
 
 
-def update(show, title, description):
+def update(user, show_id, title, description):
+    show = models.Show.query \
+                      .filter_by(owner_user_id=user.id, id=show_id) \
+                      .first()
+    assert show, 'specified show does not exist'
+
     show.title = title
     show.description = description
     models.db.session.commit()
