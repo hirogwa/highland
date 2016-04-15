@@ -251,3 +251,27 @@ class TestEpisode(unittest.TestCase):
                                id=2,
                                title='new title',
                                description='new description')
+
+    @unittest.mock.patch.object(episode_operation, 'load')
+    def test_episodes_get(self, mocked_load):
+        show_id = 2
+
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 1
+        mocked_show.id = show_id
+        mocked_audio_01 = MagicMock()
+        mocked_audio_01.id = 10
+        mocked_audio_02 = MagicMock()
+        mocked_audio_02.id = 11
+        episodes = [
+            models.Episode(mocked_show, 'title01', 'desc01', mocked_audio_01),
+            models.Episode(mocked_show, 'title02', 'desc02', mocked_audio_02)
+        ]
+        mocked_load.return_value = episodes
+
+        response = self.app.get('/episodes/{}'.format(show_id))
+
+        resp_data = json.loads(response.data)
+        resp_episodes = resp_data.get('episodes')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(list(map(dict, episodes)), resp_episodes)

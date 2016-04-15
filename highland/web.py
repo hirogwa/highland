@@ -79,6 +79,16 @@ def episode():
         raise e
 
 
+@app.route('/episodes/<show_id>', methods=['GET'])
+def episodes(show_id):
+    try:
+        episodes = episode_operation.load(test_user(), show_id)
+        return jsonify(episodes=list(map(dict, episodes)), result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
 def test_user():
     return models.User.query.filter_by(id=1).first()
 

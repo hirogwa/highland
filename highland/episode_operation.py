@@ -47,7 +47,11 @@ def delete(episode):
     return True
 
 
-def load(show):
+def load(user, show_id):
+    show = models.Show.query.\
+        filter_by(owner_user_id=user.id, id=show_id).first()
+    assert show, 'No such show. (user,show)=({0},{1})'.format(user.id, show_id)
+
     return models.Episode.query.\
         filter_by(owner_user_id=show.owner_user_id, show_id=show.id).\
         all()
