@@ -13,7 +13,7 @@ def show():
             assert description, 'description required'
 
             show = show_operation.create(test_user(), title, description)
-            return jsonify(show=dict(show), result='success')
+            return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
