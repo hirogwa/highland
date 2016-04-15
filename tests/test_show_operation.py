@@ -22,25 +22,58 @@ class TestShowOperation(unittest.TestCase):
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
 
+    @unittest.mock.patch('highland.models.Show.query')
     @unittest.mock.patch.object(models.db.session, 'commit')
-    def test_update(self, mocked_commit):
+    def test_update(self, mocked_commit, mocked_query):
         owner_user_id = 1
+        show_id = 2
+
+        mocked_user = MagicMock()
+        mocked_user.id = owner_user_id
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = owner_user_id
+        mocked_show.id = show_id
         mocked_show.title = 'title original'
         mocked_show.description = 'desc original'
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = mocked_show
+        mocked_query.filter_by.return_value = mocked_filter
 
         title = 'title new'
         description = 'desc new'
 
-        result = show_operation.update(mocked_show, title, description)
+        result = show_operation.update(
+            mocked_user, show_id, title, description)
 
+        mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
+                                                  id=show_id)
+        mocked_filter.first.assert_called_with()
         mocked_commit.assert_called_with()
-        self.assertEqual(owner_user_id, mocked_show.owner_user_id)
         self.assertEqual(title, mocked_show.title)
         self.assertEqual(description, mocked_show.description)
         self.assertEqual(result, mocked_show)
+
+    @unittest.mock.patch('highland.models.Show.query')
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    def test_update_assert_non_existing(self, mocked_commit, mocked_query):
+        owner_user_id = 1
+        show_id = 2
+        mocked_user = MagicMock()
+        mocked_user.id = owner_user_id
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = None
+        mocked_query.filter_by.return_value = mocked_filter
+
+        with self.assertRaises(AssertionError):
+            show_operation.update(mocked_user, show_id, 'title', 'desc')
+
+        mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
+                                                  id=show_id)
+        mocked_filter.first.assert_called_with()
+        mocked_commit.assert_not_called()
 
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'delete')
