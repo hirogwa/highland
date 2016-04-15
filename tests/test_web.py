@@ -2,7 +2,7 @@ import unittest
 import highland
 from flask import json
 from unittest.mock import MagicMock
-from highland import show_operation, models
+from highland import show_operation, episode_operation, models
 
 
 class TestShow(unittest.TestCase):
@@ -103,3 +103,73 @@ class TestShow(unittest.TestCase):
         resp_shows = resp_data.get('shows')
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(list(map(dict, shows)), resp_shows)
+
+
+class TestEpisode(unittest.TestCase):
+    def setUp(self):
+        highland.app.config['TESTING'] = True
+        self.app = highland.app.test_client()
+
+    def post_with_json(self, **kwargs):
+        return self.app.post('/episode',
+                             data=json.dumps(kwargs),
+                             content_type='application/json')
+
+    @unittest.mock.patch.object(episode_operation, 'create')
+    def test_post(self, mocked_create):
+        show_id = 2
+        title = 'my title'
+        description = 'my description'
+        audio_id = 3
+
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 1
+        mocked_show.id = show_id
+        mocked_audio = MagicMock()
+        mocked_audio.id = audio_id
+        episode = models.Episode(mocked_show, title, description, mocked_audio)
+        mocked_create.return_value = episode
+
+        response = self.post_with_json(show_id=show_id,
+                                       title=title,
+                                       description=description,
+                                       audio_id=audio_id)
+
+        resp_data = json.loads(response.data)
+        resp_episode = resp_data.get('episode')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(episode.owner_user_id,
+                         resp_episode.get('owner_user_id'))
+        self.assertEqual(episode.show_id, resp_episode.get('show_id'))
+        self.assertEqual(episode.id, resp_episode.get('id'))
+        self.assertEqual(episode.title, resp_episode.get('title'))
+        self.assertEqual(episode.description, resp_episode.get('description'))
+        self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
+
+    @unittest.mock.patch.object(episode_operation, 'create')
+    def test_post_input_check_show_id(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(title='new title',
+                                description='new description',
+                                audio_id=3)
+
+    @unittest.mock.patch.object(episode_operation, 'create')
+    def test_post_input_check_title(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(show_id=2,
+                                description='new description',
+                                audio_id=3)
+
+    @unittest.mock.patch.object(episode_operation, 'create')
+    def test_post_input_check_description(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(show_id=2,
+                                title='new title',
+                                audio_id=3)
+
+    @unittest.mock.patch.object(episode_operation, 'create')
+    def test_post_input_check_audio_id(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(show_id=2,
+                                title='new title',
+                                description='new description')

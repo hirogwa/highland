@@ -43,6 +43,11 @@ class Episode(db.Model):
         self.description = description
         self.audio_id = audio.id if audio else -1
 
+    def __iter__(self):
+        for key in ['owner_user_id', 'show_id', 'id', 'title', 'description',
+                    'audio_id']:
+            yield(key, getattr(self, key))
+
 
 class Audio(db.Model):
     owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

@@ -1,7 +1,16 @@
 from highland import models
 
 
-def create(show, title, description, audio):
+def create(user, show_id, title, description, audio_id):
+    show = models.Show.query.\
+        filter_by(owner_user_id=user.id, id=show_id).first()
+    audio = models.Audio.query.\
+        filter_by(owner_user_id=user.id, id=audio_id).first()
+
+    assert show, 'No such show. (user,show)=({0},{1})'.format(user.id, show_id)
+    assert audio,\
+        'No such audio. (user,audio)=({0},{1})'.format(user.id, audio_id)
+
     episode = models.Episode(show, title, description, audio)
     models.db.session.add(episode)
     models.db.session.commit()
