@@ -38,3 +38,18 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.title, episode_d.get('title'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
+
+
+class TestAudio(unittest.TestCase):
+    def test_iter(self):
+        user = MagicMock()
+        user.id = 1
+        audio = models.Audio(user, 'my file name')
+        audio.id = 2
+
+        audio_d = dict(audio)
+
+        self.assertEqual(3, len(audio_d))
+        self.assertEqual(audio.owner_user_id, audio_d.get('owner_user_id'))
+        self.assertEqual(audio.id, audio_d.get('id'))
+        self.assertEqual(audio.filename, audio_d.get('filename'))

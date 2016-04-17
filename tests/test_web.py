@@ -1,8 +1,9 @@
+import io
 import unittest
 import highland
 from flask import json
 from unittest.mock import MagicMock
-from highland import show_operation, episode_operation, models
+from highland import models, show_operation, episode_operation, audio_operation
 
 
 class TestShow(unittest.TestCase):
@@ -275,3 +276,28 @@ class TestEpisode(unittest.TestCase):
         resp_episodes = resp_data.get('episodes')
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(list(map(dict, episodes)), resp_episodes)
+
+
+class TestAudio(unittest.TestCase):
+    def setUp(self):
+        highland.app.config['TESTING'] = True
+        self.app = highland.app.test_client()
+
+    @unittest.mock.patch.object(audio_operation, 'create')
+    def test_post(self, mocked_create):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        filename = 'somefile.mp4'
+        audio = models.Audio(mocked_user, filename)
+        mocked_create.return_value = audio
+
+        response = self.app.post(
+            '/audio',
+            data={
+                'file': (io.BytesIO(b'test data'), filename)
+            })
+
+        resp_data = json.loads(response.data)
+        resp_audio = resp_data.get('audio')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(dict(audio), resp_audio)
