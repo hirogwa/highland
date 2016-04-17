@@ -301,3 +301,20 @@ class TestAudio(unittest.TestCase):
         resp_audio = resp_data.get('audio')
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(dict(audio), resp_audio)
+
+    @unittest.mock.patch.object(audio_operation, 'load')
+    def test_get(self, mocked_load):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        audios = [
+            models.Audio(mocked_user, 'testfile01.mp4'),
+            models.Audio(mocked_user, 'testfile02.mp4')
+        ]
+        mocked_load.return_value = audios
+
+        response = self.app.get('/audio')
+
+        resp_data = json.loads(response.data)
+        resp_audios = resp_data.get('audios')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(list(map(dict, audios)), resp_audios)

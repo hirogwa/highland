@@ -90,12 +90,15 @@ def episodes(show_id):
         raise e
 
 
-@app.route('/audio', methods=['POST'])
+@app.route('/audio', methods=['POST', 'GET'])
 def audio():
     try:
         if 'POST' == request.method:
             audio = audio_operation.create(test_user(), request.files['file'])
             return jsonify(audio=dict(audio), result='success'), 201
+        if 'GET' == request.method:
+            audios = audio_operation.load(test_user())
+            return jsonify(audios=list(map(dict, audios)), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
