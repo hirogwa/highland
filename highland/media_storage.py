@@ -14,3 +14,8 @@ def upload(file_data, folder=''):
     key_name = os.path.join(folder, file_data.filename)
     s3.Bucket(settings.S3_BUCKET).\
         put_object(Key=key_name, Body=file_data, ACL='public-read')
+
+
+def delete(filename, folder=''):
+    key_name = os.path.join(folder, filename)
+    s3.Object(settings.S3_BUCKET, key_name).delete()
