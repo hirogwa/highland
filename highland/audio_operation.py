@@ -12,6 +12,7 @@ def create(user, audio_file):
 
 
 def delete(audio):
+    media_storage.delete(audio.filename, AUDIO_FOLDER)
     models.db.session.delete(audio)
     models.db.session.commit()
     return True
