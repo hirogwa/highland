@@ -53,3 +53,14 @@ class TestAudio(unittest.TestCase):
         self.assertEqual(audio.owner_user_id, audio_d.get('owner_user_id'))
         self.assertEqual(audio.id, audio_d.get('id'))
         self.assertEqual(audio.filename, audio_d.get('filename'))
+
+
+class TestUser(unittest.TestCase):
+    def test_iter(self):
+        user = models.User('name', 'mail@example.com', 'strong password')
+        user_d = dict(user)
+
+        self.assertEqual(3, len(user_d))
+        self.assertEqual(user.id, user_d.get('id'))
+        self.assertEqual(user.username, user_d.get('username'))
+        self.assertEqual(user.email, user_d.get('email'))

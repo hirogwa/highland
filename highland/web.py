@@ -114,5 +114,5 @@ def ping():
     print(request.form)
     print(request.args)
     print(request.get_json())
-    user = models.User('name', 'email')
+    user = models.User('name', 'email', 'somepass')
     return user.username
