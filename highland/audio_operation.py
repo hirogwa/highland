@@ -1,7 +1,10 @@
-from highland import models
+from highland import models, media_storage
+
+AUDIO_FOLDER = 'audio'
 
 
 def create(user, audio_file):
+    media_storage.upload(audio_file, AUDIO_FOLDER)
     audio = models.Audio(user, audio_file.filename)
     models.db.session.add(audio)
     models.db.session.commit()
