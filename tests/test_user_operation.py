@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from highland import user_operation
+from highland import user_operation, models
 
 
 class TestUserOperation(unittest.TestCase):
@@ -67,3 +67,42 @@ class TestUserOperation(unittest.TestCase):
     def test_user_credentials_lacking_password(self):
         with self.assertRaises(ValueError):
             user_operation.get(password='somepass')
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(models.db.session, 'add')
+    @unittest.mock.patch('highland.models.User')
+    def test_signup(self, mocked_user_class, mocked_add, mocked_commit):
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = None
+        mocked_user_class.query.filter_by.return_value = mocked_filter
+
+        mocked_user = MagicMock()
+        mocked_user_class.return_value = mocked_user
+
+        username = 'some username'
+        email = 'some@example.com'
+        password = 'some strong password'
+
+        result = user_operation.signup(username, email, password)
+
+        mocked_add.assert_called_with(mocked_user)
+        mocked_commit.assert_called_with()
+        self.assertEqual(mocked_user, result)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(models.db.session, 'add')
+    @unittest.mock.patch('highland.models.User.query')
+    def test_signup_dupl_username(self, mocked_query,
+                                  mocked_add, mocked_commit):
+        username = 'some user'
+        mocked_user = MagicMock()
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = mocked_user
+        mocked_query.filter_by.return_value = mocked_filter
+
+        with self.assertRaises(AssertionError):
+            user_operation.signup(username, 'some@example.com', 'some pass')
+        mocked_query.filter_by.assert_called_with(username=username)
+        mocked_filter.first.assert_called_with()
+        mocked_add.assert_not_called()
+        mocked_commit.assert_not_called()
