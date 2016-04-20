@@ -3,7 +3,8 @@ import unittest
 import highland
 from flask import json
 from unittest.mock import MagicMock
-from highland import models, show_operation, episode_operation, audio_operation
+from highland import models, show_operation, episode_operation, audio_operation,\
+    user_operation
 
 
 class TestShow(unittest.TestCase):
@@ -318,3 +319,65 @@ class TestAudio(unittest.TestCase):
         resp_audios = resp_data.get('audios')
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(list(map(dict, audios)), resp_audios)
+
+
+class TestUser(unittest.TestCase):
+    def setUp(self):
+        highland.app.config['TESTING'] = True
+        self.app = highland.app.test_client()
+
+    def post_with_json(self, **kwargs):
+        return self.app.post('/user',
+                             data=json.dumps(kwargs),
+                             content_type='application/json')
+
+    @unittest.mock.patch.object(user_operation, 'get')
+    def test_get(self, mocked_get):
+        id = 1
+        user = models.User('username', 'email@example.com', 'some pass')
+        user.id = id
+        mocked_get.return_value = user
+
+        response = self.app.get('/user/{}'.format(id))
+
+        resp_data = json.loads(response.data)
+        resp_user = resp_data.get('user')
+        mocked_get.assert_called_with(id=id)
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(dict(user), resp_user)
+
+    @unittest.mock.patch.object(user_operation, 'create')
+    def test_post(self, mocked_create):
+        username = 'some user'
+        email = 'some@example.com'
+        password = 'some pass'
+        user = models.User(username, email, password)
+        user.id = 1
+        mocked_create.return_value = user
+
+        response = self.post_with_json(
+            username=username, email=email, password=password)
+
+        resp_data = json.loads(response.data)
+        resp_user = resp_data.get('user')
+        mocked_create.assert_called_with(username, email, password)
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(dict(user), resp_user)
+
+    @unittest.mock.patch.object(user_operation, 'create')
+    def test_post_assert_input_username(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(email='a@b.com', password='pass')
+        mocked_create.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'create')
+    def test_post_assert_input_email(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(username='name', password='pass')
+        mocked_create.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'create')
+    def test_post_assert_input_password(self, mocked_create):
+        with self.assertRaises(AssertionError):
+            self.post_with_json(username='name', email='a@b.com')
+        mocked_create.assert_not_called()

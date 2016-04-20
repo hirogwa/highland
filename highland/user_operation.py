@@ -1,7 +1,7 @@
 from highland import models
 
 
-def signup(username, email, password):
+def create(username, email, password):
     if models.User.query.filter_by(username=username).first():
         raise AssertionError('User exists: {}'.format(username))
 

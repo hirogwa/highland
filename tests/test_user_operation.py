@@ -83,7 +83,7 @@ class TestUserOperation(unittest.TestCase):
         email = 'some@example.com'
         password = 'some strong password'
 
-        result = user_operation.signup(username, email, password)
+        result = user_operation.create(username, email, password)
 
         mocked_add.assert_called_with(mocked_user)
         mocked_commit.assert_called_with()
@@ -101,7 +101,7 @@ class TestUserOperation(unittest.TestCase):
         mocked_query.filter_by.return_value = mocked_filter
 
         with self.assertRaises(AssertionError):
-            user_operation.signup(username, 'some@example.com', 'some pass')
+            user_operation.create(username, 'some@example.com', 'some pass')
         mocked_query.filter_by.assert_called_with(username=username)
         mocked_filter.first.assert_called_with()
         mocked_add.assert_not_called()

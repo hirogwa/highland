@@ -1,7 +1,7 @@
 import traceback
 from flask import request, jsonify
 from highland import app, models,\
-    show_operation, episode_operation, audio_operation
+    show_operation, episode_operation, audio_operation, user_operation
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
@@ -99,6 +99,33 @@ def audio():
         if 'GET' == request.method:
             audios = audio_operation.load(test_user())
             return jsonify(audios=list(map(dict, audios)), result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
+@app.route('/user', methods=['POST'])
+def user_post():
+    try:
+        args = request.get_json()
+        (username, email, password) = (args.get('username'),
+                                       args.get('email'),
+                                       args.get('password'))
+        assert username, 'username required'
+        assert email, 'email required'
+        assert password, 'password required'
+        user = user_operation.create(username, email, password)
+        return jsonify(user=dict(user), result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
+@app.route('/user/<user_id>', methods=['GET'])
+def user_get(user_id):
+    try:
+        user = user_operation.get(id=int(user_id))
+        return jsonify(user=dict(user), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
