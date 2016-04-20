@@ -11,6 +11,17 @@ def signup(username, email, password):
     return user
 
 
+def update(id, username, email, password):
+    user = models.User.query.filter_by(id=id).first()
+    assert user, 'no such user ({})'.format(id)
+
+    user.username = username
+    user.email = email
+    user.password = password
+    models.db.session.commit()
+    return user
+
+
 def get(id=None, username=None, password=None):
     if id:
         user = models.User.query.filter_by(id=id).first()
