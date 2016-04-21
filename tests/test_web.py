@@ -331,6 +331,11 @@ class TestUser(unittest.TestCase):
                              data=json.dumps(kwargs),
                              content_type='application/json')
 
+    def put_with_json(self, **kwargs):
+        return self.app.put('/user',
+                            data=json.dumps(kwargs),
+                            content_type='application/json')
+
     @unittest.mock.patch.object(user_operation, 'get')
     def test_get(self, mocked_get):
         id = 1
@@ -381,3 +386,54 @@ class TestUser(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.post_with_json(username='name', email='a@b.com')
         mocked_create.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'update')
+    def test_put(self, mocked_update):
+        id = '1'
+        username = 'some user'
+        email = 'some@example.com'
+        password = 'some pass'
+        user = models.User(username, email, password)
+        user.id = id
+        mocked_update.return_value = user
+
+        response = self.put_with_json(
+            id=id, username=username, email=email, password=password)
+
+        resp_data = json.loads(response.data)
+        resp_user = resp_data.get('user')
+        mocked_update.assert_called_with(int(id), username, email, password)
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(dict(user), resp_user)
+
+    @unittest.mock.patch.object(user_operation, 'update')
+    def test_put_assert_input_id(self, mocked_update):
+        with self.assertRaises(AssertionError):
+            self.put_with_json(username='some name',
+                               email='some@example.com',
+                               password='some pass')
+        mocked_update.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'update')
+    def test_put_assert_input_username(self, mocked_update):
+        with self.assertRaises(AssertionError):
+            self.put_with_json(id='1',
+                               email='some@example.com',
+                               password='some pass')
+        mocked_update.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'update')
+    def test_put_assert_input_email(self, mocked_update):
+        with self.assertRaises(AssertionError):
+            self.put_with_json(id='1',
+                               username='some name',
+                               password='some pass')
+        mocked_update.assert_not_called()
+
+    @unittest.mock.patch.object(user_operation, 'update')
+    def test_put_assert_input_password(self, mocked_update):
+        with self.assertRaises(AssertionError):
+            self.put_with_json(id='1',
+                               username='some name',
+                               email='some@example.com')
+        mocked_update.assert_not_called()
