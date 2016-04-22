@@ -18,7 +18,7 @@ def update(id, username, email, password):
 
     user.username = username
     user.email = email
-    user.password = password
+    user.password = _hash(password)
     models.db.session.commit()
     return user
 

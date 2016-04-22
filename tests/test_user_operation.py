@@ -138,7 +138,7 @@ class TestUserOperation(unittest.TestCase):
         self.assertEqual(id_original, result.id)
         self.assertEqual(username, result.username)
         self.assertEqual(email, result.email)
-        self.assertEqual(password, result.password)
+        self.assertEqual(user_operation._hash(password), result.password)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch('highland.models.User.query')
