@@ -31,7 +31,7 @@ def get(id=None, username=None, password=None):
 
     if username and password:
         user = models.User.query.\
-            filter_by(username=username, password=password).first()
+            filter_by(username=username, password=_hash(password)).first()
         assert user, 'no user exists with the passed credentials'
         return user
 

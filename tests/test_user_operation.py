@@ -42,7 +42,7 @@ class TestUserOperation(unittest.TestCase):
         result = user_operation.get(username=username, password=password)
 
         mocked_query.filter_by.assert_called_with(
-            username=username, password=password)
+            username=username, password=user_operation._hash(password))
         mocked_filter.first.assert_called_with()
         self.assertEqual(mocked_user, result)
 
@@ -57,7 +57,7 @@ class TestUserOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             user_operation.get(username=username, password=password)
         mocked_query.filter_by.assert_called_with(
-            username=username, password=password)
+            username=username, password=user_operation._hash(password))
         mocked_filter.first.assert_called_with()
 
     def test_get_credentials_lacking_username(self):
