@@ -1,11 +1,12 @@
-from highland import models
+import hashlib
+from highland import models, settings
 
 
 def create(username, email, password):
     if models.User.query.filter_by(username=username).first():
         raise AssertionError('User exists: {}'.format(username))
 
-    user = models.User(username, email, password)
+    user = models.User(username, email, _hash(password))
     models.db.session.add(user)
     models.db.session.commit()
     return user
@@ -35,3 +36,18 @@ def get(id=None, username=None, password=None):
         return user
 
     raise ValueError('Not enough information supplied to find a user')
+
+
+def _salt(s):
+    return '{}{}'.format(settings.FIXED_SALT_STRING, s)
+
+
+def _stretch(s):
+    result = s
+    for i in range(settings.STRETCH_COUNT):
+        result = hashlib.sha256(result.encode(settings.ENCODING)).hexdigest()
+    return result
+
+
+def _hash(s):
+    return _stretch(_salt(s))
