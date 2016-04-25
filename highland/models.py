@@ -1,3 +1,4 @@
+import datetime
 from flask_sqlalchemy import SQLAlchemy
 from highland import app
 
@@ -10,15 +11,22 @@ class Show(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
+    update_datetime = db.Column(db.DateTime())
+    create_datetime = db.Column(db.DateTime())
 
-    def __init__(self, user, title, description):
+    def __init__(self, user, title, description, create=True):
         self.owner_user_id = user.id
         self.title = title
         self.description = description
+        self.update_datetime = datetime.datetime.utcnow()
+        if create:
+            self.create_datetime = self.update_datetime
 
     def __iter__(self):
         for key in ['owner_user_id', 'id', 'title', 'description']:
             yield(key, getattr(self, key))
+        yield('update_datetime', str(self.update_datetime))
+        yield('create_datetime', str(self.create_datetime))
 
 
 class Episode(db.Model):

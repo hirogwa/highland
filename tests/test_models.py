@@ -12,11 +12,13 @@ class TestShow(unittest.TestCase):
 
         show_d = dict(show)
 
-        self.assertEqual(4, len(show_d))
+        self.assertEqual(6, len(show_d))
         self.assertEqual(show.owner_user_id, show_d.get('owner_user_id'))
         self.assertEqual(show.id, show_d.get('id'))
         self.assertEqual(show.title, show_d.get('title'))
         self.assertEqual(show.description, show_d.get('description'))
+        self.assertIsNotNone(show_d.get('update_datetime'))
+        self.assertIsNotNone(show_d.get('create_datetime'))
 
 
 class TestEpisode(unittest.TestCase):
