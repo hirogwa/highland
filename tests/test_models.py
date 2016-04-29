@@ -33,13 +33,15 @@ class TestEpisode(unittest.TestCase):
 
         episode_d = dict(episode)
 
-        self.assertEqual(6, len(episode_d))
+        self.assertEqual(8, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
         self.assertEqual(episode.title, episode_d.get('title'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
+        self.assertIsNotNone(episode_d.get('update_datetime'))
+        self.assertIsNotNone(episode_d.get('create_datetime'))
 
 
 class TestAudio(unittest.TestCase):
@@ -51,10 +53,11 @@ class TestAudio(unittest.TestCase):
 
         audio_d = dict(audio)
 
-        self.assertEqual(3, len(audio_d))
+        self.assertEqual(4, len(audio_d))
         self.assertEqual(audio.owner_user_id, audio_d.get('owner_user_id'))
         self.assertEqual(audio.id, audio_d.get('id'))
         self.assertEqual(audio.filename, audio_d.get('filename'))
+        self.assertIsNotNone(audio_d.get('create_datetime'))
 
 
 class TestUser(unittest.TestCase):
@@ -62,7 +65,9 @@ class TestUser(unittest.TestCase):
         user = models.User('name', 'mail@example.com', 'strong password')
         user_d = dict(user)
 
-        self.assertEqual(3, len(user_d))
+        self.assertEqual(5, len(user_d))
         self.assertEqual(user.id, user_d.get('id'))
         self.assertEqual(user.username, user_d.get('username'))
         self.assertEqual(user.email, user_d.get('email'))
+        self.assertIsNotNone(user_d.get('update_datetime'))
+        self.assertIsNotNone(user_d.get('create_datetime'))
