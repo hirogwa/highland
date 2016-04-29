@@ -11,16 +11,15 @@ class Show(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
-    update_datetime = db.Column(db.DateTime())
-    create_datetime = db.Column(db.DateTime())
+    update_datetime = db.Column(db.DateTime(),
+                                onupdate=datetime.datetime.utcnow)
+    create_datetime = db.Column(db.DateTime(),
+                                default=datetime.datetime.utcnow)
 
-    def __init__(self, user, title, description, create=True):
+    def __init__(self, user, title, description):
         self.owner_user_id = user.id
         self.title = title
         self.description = description
-        self.update_datetime = datetime.datetime.utcnow()
-        if create:
-            self.create_datetime = self.update_datetime
 
     def __iter__(self):
         for key in ['owner_user_id', 'id', 'title', 'description']:
