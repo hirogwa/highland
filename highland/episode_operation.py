@@ -1,14 +1,26 @@
 from highland import models
 
 
-def create(user, show_id, title, description, audio_id):
+def create(user, show_id, title=None, description=None, audio_id=None):
     show = get_show_or_assert(user, show_id)
-    audio = get_audio_or_assert(user, audio_id)
-
-    episode = models.Episode(show, title, description, audio)
+    if title and description and audio_id:
+        episode = _create_published(user, show, title, description, audio_id)
+    else:
+        episode = _create_draft(user, show, title, description, audio_id)
     models.db.session.add(episode)
     models.db.session.commit()
     return episode
+
+
+def _create_published(user, show, title, description, audio_id):
+    audio = get_audio_or_assert(user, audio_id)
+    return models.Episode(show, title, description, audio.id,
+                          models.Episode.DraftStatus.ready)
+
+
+def _create_draft(user, show, title='', description='', audio_id=-1):
+    return models.Episode(show, title, description, audio_id,
+                          models.Episode.DraftStatus.draft)
 
 
 def update(user, show_id, episode_id, title, description, audio_id):

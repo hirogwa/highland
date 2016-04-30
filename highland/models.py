@@ -1,4 +1,5 @@
 import datetime
+import enum
 from flask_sqlalchemy import SQLAlchemy
 from highland import app
 
@@ -29,12 +30,19 @@ class Show(db.Model):
 
 
 class Episode(db.Model):
+    class DraftStatus(enum.Enum):
+        draft = 'draft'
+        ready = 'ready'
+
     owner_user_id = db.Column(db.Integer, primary_key=True)
     show_id = db.Column(db.Integer, primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
     audio_id = db.Column(db.Integer)
+    draft_status = db.Column(db.Enum(DraftStatus.draft.name,
+                                     DraftStatus.ready.name,
+                                     name='draft_status'))
     update_datetime = db.Column(db.DateTime(),
                                 onupdate=datetime.datetime.utcnow)
     create_datetime = db.Column(db.DateTime(),
@@ -47,16 +55,17 @@ class Episode(db.Model):
         ),
     )
 
-    def __init__(self, show, title, description, audio):
+    def __init__(self, show, title, description, audio_id, draft_status):
         self.owner_user_id = show.owner_user_id
         self.show_id = show.id
         self.title = title
         self.description = description
-        self.audio_id = audio.id if audio else -1
+        self.audio_id = audio_id
+        self.draft_status = draft_status.name
 
     def __iter__(self):
         for key in ['owner_user_id', 'show_id', 'id', 'title', 'description',
-                    'audio_id']:
+                    'audio_id', 'draft_status']:
             yield(key, getattr(self, key))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))
