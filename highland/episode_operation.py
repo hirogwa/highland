@@ -1,9 +1,9 @@
 from highland import models
 
 
-def create(user, show_id, title=None, description=None, audio_id=None):
+def create(user, show_id, title='', description='', audio_id=-1):
     show = get_show_or_assert(user, show_id)
-    if title and description and audio_id:
+    if title and description and audio_id > 0:
         episode = _create_published(user, show, title, description, audio_id)
     else:
         episode = _create_draft(user, show, title, description, audio_id)

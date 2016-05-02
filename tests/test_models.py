@@ -28,18 +28,20 @@ class TestEpisode(unittest.TestCase):
         show.id = 2
         audio = MagicMock()
         audio.id = 3
-        episode = models.Episode(show, 'my title', 'my description', audio)
+        episode = models.Episode(show, 'my title', 'my description', audio.id,
+                                 models.Episode.DraftStatus.draft)
         episode.id = 4
 
         episode_d = dict(episode)
 
-        self.assertEqual(8, len(episode_d))
+        self.assertEqual(9, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
         self.assertEqual(episode.title, episode_d.get('title'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
+        self.assertEqual(episode.draft_status, episode_d.get('draft_status'))
         self.assertIsNotNone(episode_d.get('update_datetime'))
         self.assertIsNotNone(episode_d.get('create_datetime'))
 

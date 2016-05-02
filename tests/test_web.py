@@ -134,7 +134,9 @@ class TestEpisode(unittest.TestCase):
         mocked_show.id = show_id
         mocked_audio = MagicMock()
         mocked_audio.id = audio_id
-        episode = models.Episode(mocked_show, title, description, mocked_audio)
+        episode = models.Episode(mocked_show, title, description,
+                                 mocked_audio.id,
+                                 models.Episode.DraftStatus.ready)
         mocked_create.return_value = episode
 
         response = self.post_with_json(show_id=show_id,
@@ -194,7 +196,9 @@ class TestEpisode(unittest.TestCase):
         mocked_show.id = show_id
         mocked_audio = MagicMock()
         mocked_audio.id = audio_id
-        episode = models.Episode(mocked_show, title, description, mocked_audio)
+        episode = models.Episode(mocked_show, title, description,
+                                 mocked_audio.id,
+                                 models.Episode.DraftStatus.ready)
         mocked_update.return_value = episode
 
         response = self.put_with_json(show_id=show_id,
@@ -266,8 +270,12 @@ class TestEpisode(unittest.TestCase):
         mocked_audio_02 = MagicMock()
         mocked_audio_02.id = 11
         episodes = [
-            models.Episode(mocked_show, 'title01', 'desc01', mocked_audio_01),
-            models.Episode(mocked_show, 'title02', 'desc02', mocked_audio_02)
+            models.Episode(mocked_show, 'title01', 'desc01',
+                           mocked_audio_01.id,
+                           models.Episode.DraftStatus.ready),
+            models.Episode(mocked_show, 'title02', 'desc02',
+                           mocked_audio_02.id,
+                           models.Episode.DraftStatus.draft)
         ]
         mocked_load.return_value = episodes
 
