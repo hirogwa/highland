@@ -40,8 +40,9 @@ def episode():
     try:
         if 'POST' == request.method:
             args = request.get_json()
-            (show_id, title, description, audio_id) = (
+            (show_id, draft_status, title, description, audio_id) = (
                 args.get('show_id'),
+                args.get('draft_status'),
                 args.get('title'),
                 args.get('description'),
                 args.get('audio_id'))
@@ -52,7 +53,8 @@ def episode():
             assert audio_id, 'audio id required'
 
             episode = episode_operation.create(
-                test_user(), show_id, title, description, audio_id)
+                test_user(), show_id, draft_status, title, description,
+                audio_id)
 
             return jsonify(episode=dict(episode), result='success'), 201
 

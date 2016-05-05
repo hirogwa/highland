@@ -4,96 +4,86 @@ from highland import episode_operation, models
 
 
 class TestEpisodeOperation(unittest.TestCase):
-    @unittest.mock.patch.object(episode_operation, '_create_published')
+    @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
+    @unittest.mock.patch('highland.models.Episode')
+    @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'add')
-    def test_create_complete(self, mocked_add, mocked_commit, mocked_get_show,
-                             mocked_create_published):
+    def test_create(self, mocked_add, mocked_commit, mocked_get_show,
+                    mocked_get_audio, mocked_episode_class, mocked_valid):
         mocked_user = MagicMock()
-        mocked_user.id = 1
         mocked_show = MagicMock()
-        mocked_show.owner_user_id = mocked_user.id
         mocked_show.id = 2
         mocked_audio = MagicMock()
         mocked_audio.id = 3
+        status_published = models.Episode.DraftStatus.published
 
         title = 'my episode'
         description = 'my episode description'
 
         mocked_get_show.return_value = mocked_show
-        mocked_episode = MagicMock()
-        mocked_create_published.return_value = mocked_episode
-
-        result = episode_operation.create(
-            mocked_user, mocked_show.id, title, description, mocked_audio.id)
-
-        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
-        mocked_create_published.assert_called_with(
-            mocked_user, mocked_show, title, description, mocked_audio.id)
-        mocked_add.assert_called_with(mocked_episode)
-        mocked_commit.assert_called_with()
-        self.assertEqual(mocked_episode, result)
-
-    @unittest.mock.patch.object(episode_operation, '_create_draft')
-    @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
-    @unittest.mock.patch.object(models.db.session, 'commit')
-    @unittest.mock.patch.object(models.db.session, 'add')
-    def test_create_incomplete(self, mocked_add, mocked_commit,
-                               mocked_get_show, mocked_create_draft):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        mocked_show = MagicMock()
-        mocked_show.owner_user_id = mocked_user.id
-        mocked_show.id = 2
-
-        mocked_get_show.return_value = mocked_show
-        mocked_episode = MagicMock()
-        mocked_create_draft.return_value = mocked_episode
-
-        result = episode_operation.create(mocked_user, mocked_show.id)
-
-        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
-        mocked_create_draft.assert_called_with(
-            mocked_user, mocked_show, '', '', -1)
-        mocked_add.assert_called_with(mocked_episode)
-        mocked_commit.assert_called_with()
-        self.assertEqual(mocked_episode, result)
-
-    @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
-    @unittest.mock.patch('highland.models.Episode')
-    def test_create_published(self, mocked_episode_class, mocked_get_audio):
-        mocked_user = MagicMock()
-        mocked_show = MagicMock()
-        mocked_audio = MagicMock()
-        mocked_audio.id = 1
         mocked_get_audio.return_value = mocked_audio
         mocked_episode = MagicMock()
         mocked_episode_class.return_value = mocked_episode
-        title = 'some title'
-        description = 'some description'
+        mocked_episode_class.DraftStatus.return_value = status_published
+        mocked_valid.return_value = mocked_episode
 
-        result = episode_operation._create_published(
-            mocked_user, mocked_show, title, description, mocked_audio.id)
+        result = episode_operation.create(
+            mocked_user, mocked_show.id, status_published.name, None,
+            title, description, mocked_audio.id)
 
         self.assertEqual(mocked_episode, result)
-        mocked_get_audio.assert_called_with(mocked_user, mocked_audio.id)
+        mocked_episode_class.DraftStatus.assert_called_with(
+            status_published.name)
+        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_episode_class.assert_called_with(
-            mocked_show, title, description, mocked_audio.id,
-            models.Episode.DraftStatus.ready)
+            mocked_show, title, description, mocked_audio.id, status_published,
+            None)
+        mocked_valid.assert_called_with(mocked_user, mocked_episode)
+        mocked_add.assert_called_with(mocked_episode)
+        mocked_commit.assert_called_with()
 
-    @unittest.mock.patch('highland.models.Episode')
-    def test_create_draft(self, mocked_episode_class):
+    @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
+    def test_valid_or_assert_valid_published(self, mocked_get_audio):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
-        mocked_episode = MagicMock()
-        mocked_episode_class.return_value = mocked_episode
+        mocked_audio = MagicMock()
+        mocked_audio.id = 3
 
-        result = episode_operation._create_draft(mocked_user, mocked_show)
+        mocked_get_audio.return_value = mocked_audio
 
-        self.assertEqual(mocked_episode, result)
-        mocked_episode_class.assert_called_with(
-            mocked_show, '', '', -1, models.Episode.DraftStatus.draft)
+        episode = models.Episode(
+            mocked_show, 'my episode', 'my episode desc', mocked_audio.id,
+            models.Episode.DraftStatus.published, None)
+
+        result = episode_operation.valid_or_assert(mocked_user, episode)
+
+        self.assertEqual(episode, result)
+        mocked_get_audio.assert_called_with(mocked_user, episode.audio_id)
+
+    @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
+    def test_valid_or_assert_incomplete_draft(self, mocked_get_audio):
+        mocked_user = MagicMock()
+        mocked_show = MagicMock()
+
+        episode = models.Episode(
+            mocked_show, '', None, -1, models.Episode.DraftStatus.draft, None)
+
+        result = episode_operation.valid_or_assert(mocked_user, episode)
+
+        self.assertEqual(episode, result)
+        mocked_get_audio.assert_not_called()
+
+    def test_valid_or_assert_scheduled_with_no_time(self):
+        mocked_user = MagicMock()
+        mocked_show = MagicMock()
+        episode = models.Episode(
+            mocked_show, '', None, -1, models.Episode.DraftStatus.scheduled,
+            None)
+
+        with self.assertRaises(AssertionError):
+            episode_operation.valid_or_assert(mocked_user, episode)
 
     @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_episode_or_assert')
@@ -154,7 +144,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_audio.id = 3
 
         episode = models.Episode(mocked_show, 'title', 'desc', mocked_audio,
-                                 models.Episode.DraftStatus.ready)
+                                 models.Episode.DraftStatus.published, None)
 
         result = episode_operation.delete(episode)
 
@@ -176,10 +166,10 @@ class TestEpisodeOperation(unittest.TestCase):
 
         ep_one = models.Episode(
             mocked_show, 'title one', 'desc one', mocked_audio,
-            models.Episode.DraftStatus.ready)
+            models.Episode.DraftStatus.published, None)
         ep_two = models.Episode(
             mocked_show, 'title two', 'desc two', mocked_audio,
-            models.Episode.DraftStatus.draft)
+            models.Episode.DraftStatus.draft, None)
         ep_list = [ep_one, ep_two]
 
         mocked_filter = MagicMock()
