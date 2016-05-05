@@ -12,14 +12,17 @@ def create(user, show_id, draft_status, scheduled_datetime=None,
     return episode
 
 
-def update(user, show_id, episode_id, title, description, audio_id):
+def update(user, show_id, episode_id, draft_status, scheduled_datetime=None,
+           title='', description='', audio_id=-1):
     get_show_or_assert(user, show_id)
     episode = get_episode_or_assert(user, show_id, episode_id)
-    audio = get_audio_or_assert(user, audio_id)
 
     episode.title = title
     episode.description = description
-    episode.audio_id = audio.id
+    episode.audio_id = audio_id
+    episode.draft_status = models.Episode.DraftStatus(draft_status)
+    episode.scheduled_datetime = scheduled_datetime
+    valid_or_assert(user, episode)
     models.db.session.commit()
     return episode
 

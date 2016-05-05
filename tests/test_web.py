@@ -125,6 +125,7 @@ class TestEpisode(unittest.TestCase):
     @unittest.mock.patch.object(episode_operation, 'create')
     def test_post(self, mocked_create):
         show_id = 2
+        draft_status = 'draft'
         title = 'my title'
         description = 'my description'
         audio_id = 3
@@ -136,10 +137,11 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(mocked_show, title, description,
                                  mocked_audio.id,
-                                 models.Episode.DraftStatus.published, None)
+                                 models.Episode.DraftStatus.draft, None)
         mocked_create.return_value = episode
 
         response = self.post_with_json(show_id=show_id,
+                                       draft_status=draft_status,
                                        title=title,
                                        description=description,
                                        audio_id=audio_id)
@@ -187,6 +189,7 @@ class TestEpisode(unittest.TestCase):
     def test_put(self, mocked_update):
         show_id = 2
         episode_id = 3
+        draft_status = 'published'
         title = 'my new title'
         description = 'my new description'
         audio_id = 4
@@ -203,6 +206,7 @@ class TestEpisode(unittest.TestCase):
 
         response = self.put_with_json(show_id=show_id,
                                       id=episode_id,
+                                      draft_status=draft_status,
                                       title=title,
                                       description=description,
                                       audio_id=audio_id)

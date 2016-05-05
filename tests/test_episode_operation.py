@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock
 from highland import episode_operation, models
@@ -85,12 +86,12 @@ class TestEpisodeOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             episode_operation.valid_or_assert(mocked_user, episode)
 
-    @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
+    @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_episode_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     def test_update(self, mocked_commit,
-                    mocked_get_show, mocked_get_episode, mocked_get_audio):
+                    mocked_get_show, mocked_get_episode, mocked_valid):
         mocked_user = MagicMock()
         mocked_user.id = 1
 
@@ -104,26 +105,29 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_episode = MagicMock()
         mocked_episode.owner_user_id = mocked_show.owner_user_id
         mocked_episode.show_id = mocked_show.id
+        mocked_episode.draft_status = models.Episode.DraftStatus.draft
         mocked_episode.title = 'title original'
         mocked_episode.description = 'desc original'
         mocked_episode.audio_id = mocked_audio_original.id
 
         title = 'new title'
         description = 'new desc'
+        draft_status_new = models.Episode.DraftStatus.scheduled
+        scheduled_datetime_new = datetime.datetime.utcnow()
         mocked_audio_new = MagicMock()
         mocked_audio_new.id = 11
 
         mocked_get_episode.return_value = mocked_episode
-        mocked_get_audio.return_value = mocked_audio_new
 
         result = episode_operation.update(
-            mocked_user, mocked_show.id, mocked_episode.id, title,
-            description, mocked_audio_new.id)
+            mocked_user, mocked_show.id, mocked_episode.id,
+            draft_status_new.name, scheduled_datetime_new, title, description,
+            mocked_audio_new.id)
 
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_get_episode.assert_called_with(
             mocked_user, mocked_show.id, mocked_episode.id)
-        mocked_get_audio.assert_called_with(mocked_user, mocked_audio_new.id)
+        mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show.owner_user_id,
                          mocked_episode.owner_user_id)
@@ -131,6 +135,9 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(title, mocked_episode.title)
         self.assertEqual(description, mocked_episode.description)
         self.assertEqual(mocked_audio_new.id, mocked_episode.audio_id)
+        self.assertEqual(draft_status_new, mocked_episode.draft_status)
+        self.assertEqual(scheduled_datetime_new,
+                         mocked_episode.scheduled_datetime)
         self.assertEqual(result, mocked_episode)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
