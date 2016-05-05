@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock
 from highland import models
@@ -29,19 +30,22 @@ class TestEpisode(unittest.TestCase):
         audio = MagicMock()
         audio.id = 3
         episode = models.Episode(show, 'my title', 'my description', audio.id,
-                                 models.Episode.DraftStatus.draft)
+                                 models.Episode.DraftStatus.scheduled,
+                                 datetime.datetime.utcnow())
         episode.id = 4
 
         episode_d = dict(episode)
 
-        self.assertEqual(9, len(episode_d))
+        self.assertEqual(10, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
         self.assertEqual(episode.title, episode_d.get('title'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
-        self.assertEqual(episode.draft_status, episode_d.get('draft_status'))
+        self.assertEqual(episode.draft_status.name,
+                         episode_d.get('draft_status'))
+        self.assertIsNotNone(episode_d.get('scheduled_datetime'))
         self.assertIsNotNone(episode_d.get('update_datetime'))
         self.assertIsNotNone(episode_d.get('create_datetime'))
 

@@ -32,7 +32,8 @@ class Show(db.Model):
 class Episode(db.Model):
     class DraftStatus(enum.Enum):
         draft = 'draft'
-        ready = 'ready'
+        scheduled = 'scheduled'
+        published = 'published'
 
     owner_user_id = db.Column(db.Integer, primary_key=True)
     show_id = db.Column(db.Integer, primary_key=True)
@@ -41,8 +42,10 @@ class Episode(db.Model):
     description = db.Column(db.Text())
     audio_id = db.Column(db.Integer)
     draft_status = db.Column(db.Enum(DraftStatus.draft.name,
-                                     DraftStatus.ready.name,
+                                     DraftStatus.scheduled.name,
+                                     DraftStatus.published.name,
                                      name='draft_status'))
+    scheduled_datetime = db.Column(db.DateTime())
     update_datetime = db.Column(db.DateTime(),
                                 onupdate=datetime.datetime.utcnow)
     create_datetime = db.Column(db.DateTime(),
@@ -55,18 +58,22 @@ class Episode(db.Model):
         ),
     )
 
-    def __init__(self, show, title, description, audio_id, draft_status):
+    def __init__(self, show, title, description, audio_id, draft_status,
+                 scheduled_datetime):
         self.owner_user_id = show.owner_user_id
         self.show_id = show.id
         self.title = title
         self.description = description
         self.audio_id = audio_id
-        self.draft_status = draft_status.name
+        self.draft_status = draft_status
+        self.scheduled_datetime = scheduled_datetime
 
     def __iter__(self):
         for key in ['owner_user_id', 'show_id', 'id', 'title', 'description',
-                    'audio_id', 'draft_status']:
+                    'audio_id']:
             yield(key, getattr(self, key))
+        yield('draft_status', self.draft_status.name)
+        yield('scheduled_datetime', str(self.scheduled_datetime))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))
 
