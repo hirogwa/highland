@@ -1,10 +1,11 @@
-from highland import models
+import urllib.parse
+from highland import models, show_operation, settings
 
 
 def create(user, show_id, draft_status, scheduled_datetime=None,
            title='', description='', audio_id=-1):
     draft_status = models.Episode.DraftStatus(draft_status)
-    show = get_show_or_assert(user, show_id)
+    show = show_operation.get_show_or_assert(user, show_id)
     episode = valid_or_assert(user, models.Episode(
         show, title, description, audio_id, draft_status, scheduled_datetime))
     models.db.session.add(episode)
@@ -14,7 +15,7 @@ def create(user, show_id, draft_status, scheduled_datetime=None,
 
 def update(user, show_id, episode_id, draft_status, scheduled_datetime=None,
            title='', description='', audio_id=-1):
-    get_show_or_assert(user, show_id)
+    show_operation.get_show_or_assert(user, show_id)
     episode = get_episode_or_assert(user, show_id, episode_id)
 
     episode.title = title
@@ -33,21 +34,11 @@ def delete(episode):
     return True
 
 
-def load(user, show_id):
-    show = get_show_or_assert(user, show_id)
+def load(user, show_id, **kwargs):
+    show = show_operation.get_show_or_assert(user, show_id)
     return models.Episode.query.\
-        filter_by(owner_user_id=show.owner_user_id, show_id=show.id).\
+        filter_by(owner_user_id=show.owner_user_id, show_id=show.id, **kwargs).\
         all()
-
-
-def get_show_or_assert(user, show_id):
-    show = models.Show.query.\
-        filter_by(owner_user_id=user.id, id=show_id).first()
-    if show:
-        return show
-    else:
-        raise AssertionError(
-            'No such show. (user,show):({0},{1})'.format(user.id, show_id))
 
 
 def get_audio_or_assert(user, audio_id):
@@ -85,3 +76,10 @@ def valid_or_assert(user, episode):
         episode.scheduled_datetime = None
 
     return episode
+
+
+def get_episode_url(episode):
+    # TODO
+    return urllib.parse.urljoin(
+        settings.HOST,
+        'user/{}/show/{}'.format(episode.owner_user_id, episode.show_id))

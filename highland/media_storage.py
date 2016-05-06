@@ -10,10 +10,11 @@ s3 = boto3.resource(
 )
 
 
-def upload(file_data, folder=''):
-    key_name = os.path.join(folder, file_data.filename)
+def upload(file_data, file_name=None, folder='', **kwargs):
+    file_name = file_name or file_data.filename
+    key_name = os.path.join(folder, file_name)
     s3.Bucket(settings.S3_BUCKET).\
-        put_object(Key=key_name, Body=file_data, ACL='public-read')
+        put_object(Key=key_name, Body=file_data, ACL='public-read', **kwargs)
 
 
 def delete(filename, folder=''):

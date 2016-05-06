@@ -1,14 +1,14 @@
 import datetime
 import unittest
 from unittest.mock import MagicMock
-from highland import episode_operation, models
+from highland import show_operation, episode_operation, models
 
 
 class TestEpisodeOperation(unittest.TestCase):
     @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
     @unittest.mock.patch('highland.models.Episode')
     @unittest.mock.patch.object(episode_operation, 'get_audio_or_assert')
-    @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
+    @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'add')
     def test_create(self, mocked_add, mocked_commit, mocked_get_show,
@@ -88,7 +88,7 @@ class TestEpisodeOperation(unittest.TestCase):
 
     @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_episode_or_assert')
-    @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
+    @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     def test_update(self, mocked_commit,
                     mocked_get_show, mocked_get_episode, mocked_valid):
@@ -159,7 +159,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_commit.assert_called_with()
         self.assertTrue(result)
 
-    @unittest.mock.patch.object(episode_operation, 'get_show_or_assert')
+    @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     @unittest.mock.patch('highland.models.Episode.query')
     def test_load(self, mocked_query, mocked_get_show):
         mocked_user = MagicMock()
@@ -190,40 +190,6 @@ class TestEpisodeOperation(unittest.TestCase):
             show_id=mocked_show.id)
         mocked_filter.all.assert_called_with()
         self.assertEqual(ep_list, result)
-
-    @unittest.mock.patch('highland.models.Show.query')
-    def test_get_show_or_assert(self, mocked_query):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        mocked_show = MagicMock()
-        mocked_show.owner_user_id = mocked_user.id
-        mocked_show.id = 2
-
-        mocked_filter = MagicMock()
-        mocked_filter.first.return_value = mocked_show
-        mocked_query.filter_by.return_value = mocked_filter
-
-        result = episode_operation.get_show_or_assert(
-            mocked_user, mocked_show.id)
-
-        mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id,
-                                                  id=mocked_show.id)
-        mocked_filter.first.assert_called_with()
-        self.assertEqual(result, mocked_show)
-
-    @unittest.mock.patch('highland.models.Show.query')
-    def test_get_show_or_assert_assert(self, mocked_query):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        show_id = 2
-
-        mocked_filter = MagicMock()
-        mocked_filter.first.return_value = None
-        mocked_query.filter_by.return_value = mocked_filter
-
-        with self.assertRaises(AssertionError):
-            episode_operation.get_show_or_assert(
-                mocked_user, show_id)
 
     @unittest.mock.patch('highland.models.Audio.query')
     def test_get_audio_or_assert(self, mocked_query):
