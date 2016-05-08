@@ -1,5 +1,6 @@
 import datetime
 import enum
+import uuid
 from flask_sqlalchemy import SQLAlchemy
 from highland import app
 
@@ -61,6 +62,7 @@ class Episode(db.Model):
     show_id = db.Column(db.Integer, primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
+    subtitle = db.Column(db.String(200))
     description = db.Column(db.Text())
     audio_id = db.Column(db.Integer)
     draft_status = db.Column(db.Enum(DraftStatus.draft.name,
@@ -68,6 +70,9 @@ class Episode(db.Model):
                                      DraftStatus.published.name,
                                      name='draft_status'))
     scheduled_datetime = db.Column(db.DateTime())
+    explicit = db.Column(db.Boolean())
+    guid = db.Column(db.String(32),
+                     default=lambda x: uuid.uuid4().hex)
     update_datetime = db.Column(db.DateTime(),
                                 onupdate=datetime.datetime.utcnow)
     create_datetime = db.Column(db.DateTime(),
@@ -80,19 +85,21 @@ class Episode(db.Model):
         ),
     )
 
-    def __init__(self, show, title, description, audio_id, draft_status,
-                 scheduled_datetime):
+    def __init__(self, show, title, subtitle, description, audio_id,
+                 draft_status, scheduled_datetime, explicit):
         self.owner_user_id = show.owner_user_id
         self.show_id = show.id
         self.title = title
+        self.subtitle = subtitle
         self.description = description
         self.audio_id = audio_id
         self.draft_status = draft_status
         self.scheduled_datetime = scheduled_datetime
+        self.explicit = explicit
 
     def __iter__(self):
-        for key in ['owner_user_id', 'show_id', 'id', 'title', 'description',
-                    'audio_id']:
+        for key in ['owner_user_id', 'show_id', 'id', 'title', 'subtitle',
+                    'description', 'audio_id', 'explicit', 'guid']:
             yield(key, getattr(self, key))
         yield('draft_status', self.draft_status.name)
         yield('scheduled_datetime', str(self.scheduled_datetime))
@@ -101,18 +108,29 @@ class Episode(db.Model):
 
 
 class Audio(db.Model):
+    '''
+    duration: in seconds
+    length: in bytes
+    '''
     owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
+    duration = db.Column(db.Integer())
+    length = db.Column(db.Integer())
+    type = db.Column(db.String(30))
     create_datetime = db.Column(db.DateTime(),
                                 default=datetime.datetime.utcnow)
 
-    def __init__(self, user, filename):
+    def __init__(self, user, filename, duration, length, type):
         self.owner_user_id = user.id
         self.filename = filename
+        self.duration = duration
+        self.length = length
+        self.type = type
 
     def __iter__(self):
-        for key in ['owner_user_id', 'id', 'filename']:
+        for key in ['owner_user_id', 'id', 'filename', 'duration', 'length',
+                    'type']:
             yield(key, getattr(self, key))
         yield('create_datetime', str(self.create_datetime))
 

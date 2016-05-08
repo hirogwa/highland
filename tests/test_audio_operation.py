@@ -57,3 +57,37 @@ class TestAudioOperation(unittest.TestCase):
         mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id)
         mocked_filter.all.assert_called_with()
         self.assertEqual(audio_list, result)
+
+    @unittest.mock.patch('highland.models.Audio.query')
+    def test_get_audio_or_assert(self, mocked_query):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        mocked_audio = MagicMock()
+        mocked_audio.owner_user_id = mocked_user.id
+        mocked_audio.id = 2
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = mocked_audio
+        mocked_query.filter_by.return_value = mocked_filter
+
+        result = audio_operation.get_audio_or_assert(
+            mocked_user, mocked_audio.id)
+
+        mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id,
+                                                  id=mocked_audio.id)
+        mocked_filter.first.assert_called_with()
+        self.assertEqual(result, mocked_audio)
+
+    @unittest.mock.patch('highland.models.Audio.query')
+    def test_get_audio_or_assert_assert(self, mocked_query):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        audio_id = 2
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = None
+        mocked_query.filter_by.return_value = mocked_filter
+
+        with self.assertRaises(AssertionError):
+            audio_operation.get_audio_or_assert(
+                mocked_user, audio_id)

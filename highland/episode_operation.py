@@ -1,5 +1,5 @@
 import urllib.parse
-from highland import models, show_operation, settings
+from highland import models, show_operation, settings, audio_operation
 
 
 def create(user, show_id, draft_status, scheduled_datetime=None,
@@ -41,16 +41,6 @@ def load(user, show_id, **kwargs):
         all()
 
 
-def get_audio_or_assert(user, audio_id):
-    audio = models.Audio.query.\
-        filter_by(owner_user_id=user.id, id=audio_id).first()
-    if audio:
-        return audio
-    else:
-        raise AssertionError(
-            'No such audio. (user,audio)=({0},{1})'.format(user.id, audio_id))
-
-
 def get_episode_or_assert(user, show_id, episode_id):
     episode = models.Episode.query.\
         filter_by(owner_user_id=user.id,
@@ -68,7 +58,7 @@ def valid_or_assert(user, episode):
     if episode.draft_status != models.Episode.DraftStatus.draft:
         assert episode.title, 'title required'
         assert episode.description, 'description required'
-        get_audio_or_assert(user, episode.audio_id)
+        audio_operation.get_audio_or_assert(user, episode.audio_id)
 
     if episode.draft_status == models.Episode.DraftStatus.scheduled:
         assert episode.scheduled_datetime, 'scheduled_datetime required'
