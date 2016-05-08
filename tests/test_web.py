@@ -26,10 +26,16 @@ class TestShow(unittest.TestCase):
     def test_show_post(self, mocked_create):
         title = 'my title'
         description = 'my description'
+        subtitle = 'my subtitle'
+        language = 'en-US'
+        author = 'my author'
+        category = 'my category'
+        explicit = False
 
         mocked_user = MagicMock()
         mocked_user.id = 1
-        show = models.Show(mocked_user, title, description)
+        show = models.Show(mocked_user, title, description, subtitle,
+                           language, author, category, explicit)
         show.id = 2
         mocked_create.return_value = show
 
@@ -42,6 +48,11 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.id, resp_show.get('id'))
         self.assertEqual(show.title, resp_show.get('title'))
         self.assertEqual(show.description, resp_show.get('description'))
+        self.assertEqual(show.subtitle, resp_show.get('subtitle'))
+        self.assertEqual(show.language, resp_show.get('language'))
+        self.assertEqual(show.author, resp_show.get('author'))
+        self.assertEqual(show.category, resp_show.get('category'))
+        self.assertEqual(show.explicit, resp_show.get('explicit'))
 
     def test_show_post_input_check_title(self):
         with self.assertRaises(AssertionError):
@@ -56,10 +67,16 @@ class TestShow(unittest.TestCase):
         show_id = 2
         title = 'new title'
         description = 'new description'
+        subtitle = 'new subtitle'
+        language = 'en-US'
+        author = 'new author'
+        category = 'new category'
+        explicit = False
 
         mocked_user = MagicMock()
         mocked_user.id = 1
-        show = models.Show(mocked_user, title, description)
+        show = models.Show(mocked_user, title, description, subtitle,
+                           language, author, category, explicit)
         show.id = show_id
         mocked_update.return_value = show
 
@@ -73,6 +90,11 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.id, resp_show.get('id'))
         self.assertEqual(show.title, resp_show.get('title'))
         self.assertEqual(show.description, resp_show.get('description'))
+        self.assertEqual(show.subtitle, resp_show.get('subtitle'))
+        self.assertEqual(show.language, resp_show.get('language'))
+        self.assertEqual(show.author, resp_show.get('author'))
+        self.assertEqual(show.category, resp_show.get('category'))
+        self.assertEqual(show.explicit, resp_show.get('explicit'))
 
     def test_show_put_input_check_id(self):
         with self.assertRaises(AssertionError):
@@ -94,8 +116,12 @@ class TestShow(unittest.TestCase):
         mocked_user = MagicMock()
         mocked_user.id = 1
         shows = [
-            models.Show(mocked_user, 'title 01', 'description 01'),
-            models.Show(mocked_user, 'title 02', 'description 02')
+            models.Show(
+                mocked_user, 'title 01', 'description 01', 'subtitle 01',
+                'en-US', 'author 01', 'category 01', False),
+            models.Show(
+                mocked_user, 'title 02', 'description 02', 'subtitle 02',
+                'ja', 'author 02', 'category 02', True)
         ]
         mocked_load.return_value = shows
 
@@ -351,7 +377,8 @@ class TestUser(unittest.TestCase):
     @unittest.mock.patch.object(user_operation, 'get')
     def test_get(self, mocked_get):
         id = 1
-        user = models.User('username', 'email@example.com', 'some pass')
+        user = models.User('username', 'email@example.com', 'some pass',
+                           'some name')
         user.id = id
         mocked_get.return_value = user
 
@@ -368,7 +395,8 @@ class TestUser(unittest.TestCase):
         username = 'some user'
         email = 'some@example.com'
         password = 'some pass'
-        user = models.User(username, email, password)
+        name = 'Ultraman Taro'
+        user = models.User(username, email, password, name)
         user.id = 1
         mocked_create.return_value = user
 
@@ -405,7 +433,8 @@ class TestUser(unittest.TestCase):
         username = 'some user'
         email = 'some@example.com'
         password = 'some pass'
-        user = models.User(username, email, password)
+        name = 'Ultraman Taro'
+        user = models.User(username, email, password, name)
         user.id = id
         mocked_update.return_value = user
 

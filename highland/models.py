@@ -7,24 +7,46 @@ db = SQLAlchemy(app)
 
 
 class Show(db.Model):
+    '''
+    last_build_datetime: when the last public change under the show was made
+    update_datetime: when the last change to the show entity was made
+    '''
     owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                               primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
-    update_datetime = db.Column(db.DateTime(),
-                                onupdate=datetime.datetime.utcnow)
-    create_datetime = db.Column(db.DateTime(),
-                                default=datetime.datetime.utcnow)
+    subtitle = db.Column(db.String(200))
+    language = db.Column(db.String(10))
+    author = db.Column(db.String(100))
+    category = db.Column(db.String(50))
+    explicit = db.Column(db.Boolean())
+    last_build_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
+    update_datetime = db.Column(
+        db.DateTime(timezone=True),
+        onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
+    create_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, title, description):
+    def __init__(self, user, title, description, subtitle, language, author,
+                 category, explicit):
         self.owner_user_id = user.id
         self.title = title
         self.description = description
+        self.subtitle = subtitle
+        self.language = language
+        self.author = author
+        self.category = category
+        self.explicit = explicit
 
     def __iter__(self):
-        for key in ['owner_user_id', 'id', 'title', 'description']:
+        for key in ['owner_user_id', 'id', 'title', 'description', 'subtitle',
+                    'language', 'author', 'category', 'explicit']:
             yield(key, getattr(self, key))
+        yield('last_build_datetime', str(self.last_build_datetime))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))
 
@@ -100,18 +122,20 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
+    name = db.Column(db.String(100))
     update_datetime = db.Column(db.DateTime(),
                                 onupdate=datetime.datetime.utcnow)
     create_datetime = db.Column(db.DateTime(),
                                 default=datetime.datetime.utcnow)
 
-    def __init__(self, username, email, password):
+    def __init__(self, username, email, password, name):
         self.username = username
         self.email = email
         self.password = password
+        self.name = name
 
     def __iter__(self):
-        for key in ['id', 'username', 'email']:
+        for key in ['id', 'username', 'email', 'name']:
             yield(key, getattr(self, key))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))
