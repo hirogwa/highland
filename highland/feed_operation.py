@@ -32,15 +32,14 @@ def update(user, show_id):
         fe.link(href=episode_operation.get_episode_url(episode))
         fe.description(episode.description)
         fe.enclosure(url=audio_operation.get_audio_url(audio),
-                     length=audio.length, type=audio.type)
+                     length=str(audio.length), type=audio.type)
         fe.guid(episode.guid)
-        fe.pubDate(episode.update_datetime or episode.create_datetime)
+        fe.pubdate(episode.update_datetime or episode.create_datetime)
 
-        fe.load_extension('podcast_entry')
-        fe.podcast_entry.itunes_author(show.author)
-        fe.podcast_entry.itunes_duration(_format_seconds(audio.duration))
-        fe.podcast_entry.itunes_explicit('yes' if episode.explicit else 'no')
-        fe.podcast_entry.itunes_subtitle(episode.subtitle)
+        fe.podcast.itunes_author(show.author)
+        fe.podcast.itunes_duration(_format_seconds(audio.duration))
+        fe.podcast.itunes_explicit('yes' if episode.explicit else 'no')
+        fe.podcast.itunes_subtitle(episode.subtitle)
 
     return media_storage.upload(
         fg.rss_str(pretty=True), show_operation.get_show_unique_id(show),

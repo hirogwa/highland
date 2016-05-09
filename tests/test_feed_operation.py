@@ -89,16 +89,17 @@ class TestFeedOperation(unittest.TestCase):
         mocked_fe.link.assert_called_with(href=mocked_episode_url)
         mocked_fe.description.assert_called_with(mocked_episode.description)
         mocked_fe.enclosure.assert_called_with(
-            url=audio_url, length=mocked_audio.length, type=mocked_audio.type)
+            url=audio_url, length=str(mocked_audio.length),
+            type=mocked_audio.type)
         mocked_fe.guid.assert_called_with(mocked_episode.guid)
-        mocked_fe.pubDate.assert_called_with(mocked_episode.update_datetime)
-        mocked_fe.podcast_entry.itunes_author.\
+        mocked_fe.pubdate.assert_called_with(mocked_episode.update_datetime)
+        mocked_fe.podcast.itunes_author.\
             assert_called_with(mocked_show.author)
-        mocked_fe.podcast_entry.itunes_duration.\
+        mocked_fe.podcast.itunes_duration.\
             assert_called_with(formatted_seconds)
-        mocked_fe.podcast_entry.itunes_explicit.\
+        mocked_fe.podcast.itunes_explicit.\
             assert_called_with('yes' if mocked_episode.explicit else 'no')
-        mocked_fe.podcast_entry.itunes_subtitle.\
+        mocked_fe.podcast.itunes_subtitle.\
             assert_called_with(mocked_episode.subtitle)
 
         mocked_upload.assert_called_with(
