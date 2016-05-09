@@ -69,14 +69,16 @@ class Episode(db.Model):
                                      DraftStatus.scheduled.name,
                                      DraftStatus.published.name,
                                      name='draft_status'))
-    scheduled_datetime = db.Column(db.DateTime())
+    scheduled_datetime = db.Column(db.DateTime(timezone=True))
     explicit = db.Column(db.Boolean())
     guid = db.Column(db.String(32),
                      default=lambda x: uuid.uuid4().hex)
-    update_datetime = db.Column(db.DateTime(),
-                                onupdate=datetime.datetime.utcnow)
-    create_datetime = db.Column(db.DateTime(),
-                                default=datetime.datetime.utcnow)
+    update_datetime = db.Column(
+        db.DateTime(timezone=True),
+        onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
+    create_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     __table_args__ = (
         db.ForeignKeyConstraint(
@@ -118,8 +120,9 @@ class Audio(db.Model):
     duration = db.Column(db.Integer())
     length = db.Column(db.Integer())
     type = db.Column(db.String(30))
-    create_datetime = db.Column(db.DateTime(),
-                                default=datetime.datetime.utcnow)
+    create_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     def __init__(self, user, filename, duration, length, type):
         self.owner_user_id = user.id
@@ -141,10 +144,12 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
     name = db.Column(db.String(100))
-    update_datetime = db.Column(db.DateTime(),
-                                onupdate=datetime.datetime.utcnow)
-    create_datetime = db.Column(db.DateTime(),
-                                default=datetime.datetime.utcnow)
+    update_datetime = db.Column(
+        db.DateTime(timezone=True),
+        onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
+    create_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     def __init__(self, username, email, password, name):
         self.username = username
