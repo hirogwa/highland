@@ -1,3 +1,4 @@
+import dateutil.parser
 import traceback
 from flask import request, jsonify
 from highland import app, models,\
@@ -70,45 +71,59 @@ def episode():
     try:
         if 'POST' == request.method:
             args = request.get_json()
-            (show_id, draft_status, title, description, audio_id) = (
-                args.get('show_id'),
-                args.get('draft_status'),
-                args.get('title'),
-                args.get('description'),
-                args.get('audio_id'))
+            (show_id, draft_status, scheduled_datetime, title, subtitle,
+             description, audio_id, explicit) = (
+                 args.get('show_id'),
+                 args.get('draft_status'),
+                 args.get('scheduled_datetime'),
+                 args.get('title'),
+                 args.get('subtitle'),
+                 args.get('description'),
+                 args.get('audio_id'),
+                 args.get('explicit'))
 
             assert show_id, 'show id required'
             assert draft_status, 'draft status required'
             assert title, 'title required'
+            assert subtitle, 'subtitle required'
             assert description, 'description required'
             assert audio_id, 'audio id required'
+            assert explicit, 'explicit required'
 
             episode = episode_operation.create(
-                test_user(), show_id, draft_status, title, description,
-                audio_id)
+                test_user(), show_id, draft_status,
+                dateutil.parser.parse(scheduled_datetime), title,
+                subtitle, description, audio_id, explicit.lower() == 'true')
 
             return jsonify(episode=dict(episode), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
-            (show_id, id, draft_status, title, description, audio_id) = (
-                args.get('show_id'),
-                args.get('id'),
-                args.get('draft_status'),
-                args.get('title'),
-                args.get('description'),
-                args.get('audio_id'))
+            (show_id, id, draft_status, scheduled_datetime, title, subtitle,
+             description, audio_id, explicit) = (
+                 args.get('show_id'),
+                 args.get('id'),
+                 args.get('draft_status'),
+                 args.get('scheduled_datetime'),
+                 args.get('title'),
+                 args.get('subtitle'),
+                 args.get('description'),
+                 args.get('audio_id'),
+                 args.get('explicit'))
 
             assert show_id, 'show id required'
             assert id, 'id required'
             assert draft_status, 'draft status required'
             assert title, 'title required'
+            assert subtitle, 'subtitle required'
             assert description, 'description required'
             assert audio_id, 'audio id required'
+            assert explicit, 'explicit required'
 
             episode = episode_operation.update(
-                test_user(), show_id, id, draft_status, title, description,
-                audio_id)
+                test_user(), show_id, id, draft_status,
+                dateutil.parser.parse(scheduled_datetime), title, subtitle,
+                description, audio_id, explicit.lower() == 'true')
             return jsonify(episode=dict(episode), result='success')
 
     except Exception as e:

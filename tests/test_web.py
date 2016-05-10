@@ -1,3 +1,4 @@
+import datetime
 import io
 import unittest
 import highland
@@ -157,10 +158,12 @@ class TestEpisode(unittest.TestCase):
     def test_post(self, mocked_create):
         show_id = 2
         draft_status = 'draft'
+        scheduled_datetime = datetime.datetime.now(datetime.timezone.utc)
         title = 'my title'
         subtitle = 'my subtitle'
         description = 'my description'
         audio_id = 3
+        explicit = True
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -172,11 +175,15 @@ class TestEpisode(unittest.TestCase):
             models.Episode.DraftStatus.draft, None, False)
         mocked_create.return_value = episode
 
-        response = self.post_with_json(show_id=show_id,
-                                       draft_status=draft_status,
-                                       title=title,
-                                       description=description,
-                                       audio_id=audio_id)
+        response = self.post_with_json(
+            show_id=show_id,
+            draft_status=draft_status,
+            scheduled_datetime=scheduled_datetime.isoformat(),
+            title=title,
+            subtitle=subtitle,
+            description=description,
+            audio_id=audio_id,
+            explicit=str(explicit))
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -185,9 +192,15 @@ class TestEpisode(unittest.TestCase):
                          resp_episode.get('owner_user_id'))
         self.assertEqual(episode.show_id, resp_episode.get('show_id'))
         self.assertEqual(episode.id, resp_episode.get('id'))
+        self.assertEqual(episode.draft_status.name,
+                         resp_episode.get('draft_status'))
+        self.assertEqual(str(episode.scheduled_datetime),
+                         resp_episode.get('scheduled_datetime'))
         self.assertEqual(episode.title, resp_episode.get('title'))
+        self.assertEqual(episode.subtitle, resp_episode.get('subtitle'))
         self.assertEqual(episode.description, resp_episode.get('description'))
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
+        self.assertEqual(episode.explicit, resp_episode.get('explicit'))
 
     @unittest.mock.patch.object(episode_operation, 'create')
     def test_post_input_check_show_id(self, mocked_create):
@@ -222,10 +235,12 @@ class TestEpisode(unittest.TestCase):
         show_id = 2
         episode_id = 3
         draft_status = 'published'
+        scheduled_datetime = datetime.datetime.now(datetime.timezone.utc)
         title = 'my new title'
         subtitle = 'my new subtitle'
         description = 'my new description'
         audio_id = 4
+        explicit = True
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -237,12 +252,16 @@ class TestEpisode(unittest.TestCase):
             models.Episode.DraftStatus.published, None, False)
         mocked_update.return_value = episode
 
-        response = self.put_with_json(show_id=show_id,
-                                      id=episode_id,
-                                      draft_status=draft_status,
-                                      title=title,
-                                      description=description,
-                                      audio_id=audio_id)
+        response = self.put_with_json(
+            show_id=show_id,
+            id=episode_id,
+            draft_status=draft_status,
+            scheduled_datetime=scheduled_datetime.isoformat(),
+            title=title,
+            subtitle=subtitle,
+            description=description,
+            audio_id=audio_id,
+            explicit=str(explicit))
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -251,9 +270,15 @@ class TestEpisode(unittest.TestCase):
                          resp_episode.get('owner_user_id'))
         self.assertEqual(episode.show_id, resp_episode.get('show_id'))
         self.assertEqual(episode.id, resp_episode.get('id'))
+        self.assertEqual(episode.draft_status.name,
+                         resp_episode.get('draft_status'))
+        self.assertEqual(str(episode.scheduled_datetime),
+                         resp_episode.get('scheduled_datetime'))
         self.assertEqual(episode.title, resp_episode.get('title'))
+        self.assertEqual(episode.subtitle, resp_episode.get('subtitle'))
         self.assertEqual(episode.description, resp_episode.get('description'))
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
+        self.assertEqual(episode.explicit, resp_episode.get('explicit'))
 
     @unittest.mock.patch.object(episode_operation, 'update')
     def test_put_input_check_show_id(self, mocked_update):

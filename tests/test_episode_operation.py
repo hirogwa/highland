@@ -22,6 +22,8 @@ class TestEpisodeOperation(unittest.TestCase):
 
         title = 'my episode'
         description = 'my episode description'
+        subtitle = 'my episode subtitle'
+        explicit = True
 
         mocked_get_show.return_value = mocked_show
         mocked_get_audio.return_value = mocked_audio
@@ -32,15 +34,15 @@ class TestEpisodeOperation(unittest.TestCase):
 
         result = episode_operation.create(
             mocked_user, mocked_show.id, status_published.name, None,
-            title, description, mocked_audio.id)
+            title, subtitle, description, mocked_audio.id, explicit)
 
         self.assertEqual(mocked_episode, result)
         mocked_episode_class.DraftStatus.assert_called_with(
             status_published.name)
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_episode_class.assert_called_with(
-            mocked_show, title, description, mocked_audio.id, status_published,
-            None)
+            mocked_show, title, subtitle, description, mocked_audio.id,
+            status_published, None, explicit)
         mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_add.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
@@ -107,12 +109,11 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_episode.owner_user_id = mocked_show.owner_user_id
         mocked_episode.show_id = mocked_show.id
         mocked_episode.draft_status = models.Episode.DraftStatus.draft
-        mocked_episode.title = 'title original'
-        mocked_episode.description = 'desc original'
-        mocked_episode.audio_id = mocked_audio_original.id
 
         title = 'new title'
+        subtitle = 'new sub title'
         description = 'new desc'
+        explicit = True
         draft_status_new = models.Episode.DraftStatus.scheduled
         scheduled_datetime_new = datetime.datetime.utcnow()
         mocked_audio_new = MagicMock()
@@ -122,8 +123,8 @@ class TestEpisodeOperation(unittest.TestCase):
 
         result = episode_operation.update(
             mocked_user, mocked_show.id, mocked_episode.id,
-            draft_status_new.name, scheduled_datetime_new, title, description,
-            mocked_audio_new.id)
+            draft_status_new.name, scheduled_datetime_new, title, subtitle,
+            description, mocked_audio_new.id, explicit)
 
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_get_episode.assert_called_with(
@@ -134,11 +135,13 @@ class TestEpisodeOperation(unittest.TestCase):
                          mocked_episode.owner_user_id)
         self.assertEqual(mocked_show.id, mocked_episode.show_id)
         self.assertEqual(title, mocked_episode.title)
+        self.assertEqual(subtitle, mocked_episode.subtitle)
         self.assertEqual(description, mocked_episode.description)
         self.assertEqual(mocked_audio_new.id, mocked_episode.audio_id)
         self.assertEqual(draft_status_new, mocked_episode.draft_status)
         self.assertEqual(scheduled_datetime_new,
                          mocked_episode.scheduled_datetime)
+        self.assertEqual(explicit, mocked_episode.explicit)
         self.assertEqual(result, mocked_episode)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
