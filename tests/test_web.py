@@ -39,7 +39,10 @@ class TestShow(unittest.TestCase):
         show.id = 2
         mocked_create.return_value = show
 
-        response = self.post_with_json(title=title, description=description)
+        response = self.post_with_json(
+            title=title, description=description, subtitle=subtitle,
+            language=language, author=author, category=category,
+            explicit=str(explicit))
 
         resp_data = json.loads(response.data)
         resp_show = resp_data.get('show')
@@ -81,7 +84,9 @@ class TestShow(unittest.TestCase):
         mocked_update.return_value = show
 
         response = self.put_with_json(
-            id=show_id, title=title, description=description)
+            id=show_id, title=title, description=description,
+            subtitle=subtitle, language=language, author=author,
+            category=category, explicit=str(explicit))
 
         resp_data = json.loads(response.data)
         resp_show = resp_data.get('show')

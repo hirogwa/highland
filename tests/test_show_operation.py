@@ -11,13 +11,22 @@ class TestShowOperation(unittest.TestCase):
         mocked_user = MagicMock()
         title = 'my show'
         description = 'my show description'
+        subtitle = 'my show subtitle'
+        language = 'en-US'
+        author = 'Ultraman Taro, Ultraman Ace'
+        category = 'Technology'
+        explicit = False
 
         mocked_show = MagicMock()
         mocked_show_class.return_value = mocked_show
 
-        result = show_operation.create(mocked_user, title, description)
+        result = show_operation.create(
+            mocked_user, title, description, subtitle, language, author,
+            category, explicit)
 
-        mocked_show_class.assert_called_with(mocked_user, title, description)
+        mocked_show_class.assert_called_with(
+            mocked_user, title, description, subtitle, language, author,
+            category, explicit)
         mocked_add.assert_called_with(mocked_show)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
@@ -34,8 +43,6 @@ class TestShowOperation(unittest.TestCase):
         mocked_show = MagicMock()
         mocked_show.owner_user_id = owner_user_id
         mocked_show.id = show_id
-        mocked_show.title = 'title original'
-        mocked_show.description = 'desc original'
 
         mocked_filter = MagicMock()
         mocked_filter.first.return_value = mocked_show
@@ -43,9 +50,15 @@ class TestShowOperation(unittest.TestCase):
 
         title = 'title new'
         description = 'desc new'
+        subtitle = 'subtitle new'
+        language = 'en-US'
+        author = 'Ultra Seven, Ultraman Jack'
+        category = 'Arts'
+        explicit = False
 
         result = show_operation.update(
-            mocked_user, show_id, title, description)
+            mocked_user, show_id, title, description, subtitle, language,
+            author, category, explicit)
 
         mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
                                                   id=show_id)
@@ -53,6 +66,11 @@ class TestShowOperation(unittest.TestCase):
         mocked_commit.assert_called_with()
         self.assertEqual(title, mocked_show.title)
         self.assertEqual(description, mocked_show.description)
+        self.assertEqual(subtitle, mocked_show.subtitle)
+        self.assertEqual(language, mocked_show.language)
+        self.assertEqual(author, mocked_show.author)
+        self.assertEqual(category, mocked_show.category)
+        self.assertEqual(explicit, mocked_show.explicit)
         self.assertEqual(result, mocked_show)
 
     @unittest.mock.patch('highland.models.Show.query')
@@ -68,7 +86,9 @@ class TestShowOperation(unittest.TestCase):
         mocked_query.filter_by.return_value = mocked_filter
 
         with self.assertRaises(AssertionError):
-            show_operation.update(mocked_user, show_id, 'title', 'desc')
+            show_operation.update(
+                mocked_user, show_id, 'title', 'desc', 'subtitle', 'lang',
+                'author', 'category', False)
 
         mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
                                                   id=show_id)

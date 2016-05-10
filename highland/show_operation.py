@@ -2,14 +2,17 @@ import urllib.parse
 from highland import models, settings
 
 
-def create(user, title, description):
-    show = models.Show(user, title, description)
+def create(user, title, description, subtitle, language, author, category,
+           explicit):
+    show = models.Show(user, title, description, subtitle, language, author,
+                       category, explicit)
     models.db.session.add(show)
     models.db.session.commit()
     return show
 
 
-def update(user, show_id, title, description):
+def update(user, show_id, title, description, subtitle, language, author,
+           category, explicit):
     show = models.Show.query \
                       .filter_by(owner_user_id=user.id, id=show_id) \
                       .first()
@@ -17,6 +20,11 @@ def update(user, show_id, title, description):
 
     show.title = title
     show.description = description
+    show.subtitle = subtitle
+    show.language = language
+    show.author = author
+    show.category = category
+    show.explicit = explicit
     models.db.session.commit()
     return show
 

@@ -9,22 +9,52 @@ def show():
     try:
         if 'POST' == request.method:
             args = request.get_json()
-            title, description = args.get('title'), args.get('description')
+            (title, description, subtitle, language, author, category,
+             explicit) = (
+                 args.get('title'),
+                 args.get('description'),
+                 args.get('subtitle'),
+                 args.get('language'),
+                 args.get('author'),
+                 args.get('category'),
+                 args.get('explicit'))
             assert title, 'title required'
             assert description, 'description required'
+            assert subtitle, 'subtitle required'
+            assert language, 'language required'
+            assert author, 'author required'
+            assert category, 'category required'
+            assert explicit, 'explicit required'
 
-            show = show_operation.create(test_user(), title, description)
+            show = show_operation.create(
+                test_user(), title, description, subtitle, language, author,
+                category, explicit.lower() == 'True')
             return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
-            id, title, description = (
-                args.get('id'), args.get('title'), args.get('description'))
+            (id, title, description, subtitle, language, author, category,
+             explicit) = (
+                 args.get('id'),
+                 args.get('title'),
+                 args.get('description'),
+                 args.get('subtitle'),
+                 args.get('language'),
+                 args.get('author'),
+                 args.get('category'),
+                 args.get('explicit'))
             assert id, 'id required'
             assert title, 'title required'
             assert description, 'description required'
+            assert subtitle, 'subtitle required'
+            assert language, 'language required'
+            assert author, 'author required'
+            assert category, 'category required'
+            assert explicit, 'explicit required'
 
-            show = show_operation.update(test_user(), id, title, description)
+            show = show_operation.update(
+                test_user(), id, title, description, subtitle, language,
+                author, category, explicit)
             return jsonify(show=dict(show), result='success')
 
         if 'GET' == request.method:
