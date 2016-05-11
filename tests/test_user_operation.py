@@ -82,8 +82,9 @@ class TestUserOperation(unittest.TestCase):
         username = 'some username'
         email = 'some@example.com'
         password = 'some strong password'
+        name = 'Ultraman Taro'
 
-        result = user_operation.create(username, email, password)
+        result = user_operation.create(username, email, password, name)
 
         mocked_add.assert_called_with(mocked_user)
         mocked_commit.assert_called_with()
@@ -101,7 +102,8 @@ class TestUserOperation(unittest.TestCase):
         mocked_query.filter_by.return_value = mocked_filter
 
         with self.assertRaises(AssertionError):
-            user_operation.create(username, 'some@example.com', 'some pass')
+            user_operation.create(username, 'some@example.com', 'some pass',
+                                  'some name')
         mocked_query.filter_by.assert_called_with(username=username)
         mocked_filter.first.assert_called_with()
         mocked_add.assert_not_called()
@@ -111,15 +113,9 @@ class TestUserOperation(unittest.TestCase):
     @unittest.mock.patch('highland.models.User.query')
     def test_update(self, mocked_query, mocked_commit):
         id_original = 1
-        username_original = 'original name'
-        email_original = 'original@example.com'
-        password_original = 'original pass'
 
         mocked_user = MagicMock()
         mocked_user.id = id_original
-        mocked_user.username = username_original
-        mocked_user.email = email_original
-        mocked_user.password = password_original
 
         mocked_filter = MagicMock()
         mocked_filter.first.return_value = mocked_user
@@ -128,8 +124,10 @@ class TestUserOperation(unittest.TestCase):
         username = 'some username'
         email = 'some@example.com'
         password = 'some pass'
+        name = 'Ultraman Ace'
 
-        result = user_operation.update(id_original, username, email, password)
+        result = user_operation.update(id_original, username, email, password,
+                                       name)
 
         mocked_query.filter_by.assert_called_with(id=id_original)
         mocked_filter.first.assert_called_with()
@@ -139,6 +137,7 @@ class TestUserOperation(unittest.TestCase):
         self.assertEqual(username, result.username)
         self.assertEqual(email, result.email)
         self.assertEqual(user_operation._hash(password), result.password)
+        self.assertEqual(name, result.name)
 
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch('highland.models.User.query')
@@ -148,7 +147,8 @@ class TestUserOperation(unittest.TestCase):
         mocked_query.filter_by.return_value = mocked_filter
         id = 1
         with self.assertRaises(AssertionError):
-            user_operation.update(id, 'username', 'some@example.com', 'pass')
+            user_operation.update(id, 'username', 'some@example.com', 'pass',
+                                  'name')
         mocked_query.filter_by.assert_called_with(id=id)
         mocked_filter.first.assert_called_with()
         mocked_commit.assert_not_called()

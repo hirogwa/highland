@@ -436,11 +436,11 @@ class TestUser(unittest.TestCase):
         mocked_create.return_value = user
 
         response = self.post_with_json(
-            username=username, email=email, password=password)
+            username=username, email=email, password=password, name=name)
 
         resp_data = json.loads(response.data)
         resp_user = resp_data.get('user')
-        mocked_create.assert_called_with(username, email, password)
+        mocked_create.assert_called_with(username, email, password, name)
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(dict(user), resp_user)
 
@@ -474,11 +474,13 @@ class TestUser(unittest.TestCase):
         mocked_update.return_value = user
 
         response = self.put_with_json(
-            id=id, username=username, email=email, password=password)
+            id=id, username=username, email=email, password=password,
+            name=name)
 
         resp_data = json.loads(response.data)
         resp_user = resp_data.get('user')
-        mocked_update.assert_called_with(int(id), username, email, password)
+        mocked_update.assert_called_with(int(id), username, email, password,
+                                         name)
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(dict(user), resp_user)
 
