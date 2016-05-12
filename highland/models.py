@@ -120,20 +120,22 @@ class Audio(db.Model):
     duration = db.Column(db.Integer())
     length = db.Column(db.Integer())
     type = db.Column(db.String(30))
+    guid = db.Column(db.String(32))
     create_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, filename, duration, length, type):
+    def __init__(self, user, filename, duration, length, type, guid):
         self.owner_user_id = user.id
         self.filename = filename
         self.duration = duration
         self.length = length
         self.type = type
+        self.guid = guid
 
     def __iter__(self):
         for key in ['owner_user_id', 'id', 'filename', 'duration', 'length',
-                    'type']:
+                    'type', 'guid']:
             yield(key, getattr(self, key))
         yield('create_datetime', str(self.create_datetime))
 

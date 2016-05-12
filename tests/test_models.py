@@ -73,19 +73,21 @@ class TestAudio(unittest.TestCase):
     def test_iter(self):
         user = MagicMock()
         user.id = 1
-        audio = models.Audio(user, 'my file name', 1800, 5000000, 'audio/mpeg')
+        audio = models.Audio(user, 'my file name', 1800, 5000000, 'audio/mpeg',
+                             uuid.uuid4().hex)
         audio.id = 2
         audio.create_datetime = datetime.datetime.now(datetime.timezone.utc)
 
         audio_d = dict(audio)
 
-        self.assertEqual(7, len(audio_d))
+        self.assertEqual(8, len(audio_d))
         self.assertEqual(audio.owner_user_id, audio_d.get('owner_user_id'))
         self.assertEqual(audio.id, audio_d.get('id'))
         self.assertEqual(audio.filename, audio_d.get('filename'))
         self.assertEqual(audio.duration, audio_d.get('duration'))
         self.assertEqual(audio.length, audio_d.get('length'))
         self.assertEqual(audio.type, audio_d.get('type'))
+        self.assertEqual(audio.guid, audio_d.get('guid'))
         self.assertEqual(str(audio.create_datetime),
                          audio_d.get('create_datetime'))
 

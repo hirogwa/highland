@@ -1,6 +1,7 @@
 import datetime
 import io
 import unittest
+import uuid
 import highland
 from flask import json
 from unittest.mock import MagicMock
@@ -362,7 +363,9 @@ class TestAudio(unittest.TestCase):
         duration = 1812
         length = 4000000
         type = 'audio/mpeg'
-        audio = models.Audio(mocked_user, filename, duration, length, type)
+        guid = uuid.uuid4().hex
+        audio = models.Audio(
+            mocked_user, filename, duration, length, type, guid)
         mocked_create.return_value = audio
 
         response = self.app.post(
@@ -380,9 +383,13 @@ class TestAudio(unittest.TestCase):
     def test_get(self, mocked_load):
         mocked_user = MagicMock()
         mocked_user.id = 1
+        guid01 = uuid.uuid4().hex
+        guid02 = uuid.uuid4().hex
         audios = [
-            models.Audio(mocked_user, 'f01.mp4', 1821, 4000000, 'audio/mpeg'),
-            models.Audio(mocked_user, 'f02.mp4', 1717, 3012012, 'audio/mpeg')
+            models.Audio(
+                mocked_user, 'f01.mp4', 1821, 4000000, 'audio/mpeg', guid01),
+            models.Audio(
+                mocked_user, 'f02.mp4', 1717, 3012012, 'audio/mpeg', guid02)
         ]
         mocked_load.return_value = audios
 
