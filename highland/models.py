@@ -140,6 +140,27 @@ class Audio(db.Model):
         yield('create_datetime', str(self.create_datetime))
 
 
+class Image(db.Model):
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                              primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200))
+    guid = db.Column(db.String(32))
+    create_datetime = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda x: datetime.datetime.now(datetime.timezone.utc))
+
+    def __init__(self, user, filename, guid):
+        self.owner_user_id = user.id
+        self.filename = filename
+        self.guid = guid
+
+    def __iter__(self):
+        for key in ['owner_user_id', 'id', 'filename', 'guid']:
+            yield(key, getattr(self, key))
+        yield('create_datetime', str(self.create_datetime))
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)

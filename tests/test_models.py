@@ -92,6 +92,25 @@ class TestAudio(unittest.TestCase):
                          audio_d.get('create_datetime'))
 
 
+class TestImage(unittest.TestCase):
+    def test_iter(self):
+        user = MagicMock()
+        user.id = 1
+        image = models.Image(user, 'image file name', uuid.uuid4().hex)
+        image.id = 2
+        image.create_datetime = datetime.datetime.now(datetime.timezone.utc)
+
+        image_d = dict(image)
+
+        self.assertEqual(5, len(image_d))
+        self.assertEqual(image.owner_user_id, image_d.get('owner_user_id'))
+        self.assertEqual(image.id, image_d.get('id'))
+        self.assertEqual(image.filename, image_d.get('filename'))
+        self.assertEqual(image.guid, image_d.get('guid'))
+        self.assertEqual(str(image.create_datetime),
+                         image_d.get('create_datetime'))
+
+
 class TestUser(unittest.TestCase):
     def test_iter(self):
         user = models.User('name', 'mail@example.com', 'strong password',
