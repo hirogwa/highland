@@ -5,6 +5,8 @@ from highland import show_operation, episode_operation, models, audio_operation
 
 
 class TestEpisodeOperation(unittest.TestCase):
+    @unittest.mock.patch.object(episode_operation,
+                                '_update_show_build_datetime')
     @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
     @unittest.mock.patch('highland.models.Episode')
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
@@ -12,7 +14,8 @@ class TestEpisodeOperation(unittest.TestCase):
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'add')
     def test_create(self, mocked_add, mocked_commit, mocked_get_show,
-                    mocked_get_audio, mocked_episode_class, mocked_valid):
+                    mocked_get_audio, mocked_episode_class, mocked_valid,
+                    mocked_build):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
         mocked_show.id = 2
@@ -46,6 +49,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_add.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
+        mocked_build.assert_called_with(mocked_user, mocked_episode)
 
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
     def test_valid_or_assert_valid_published(self, mocked_get_audio):
@@ -89,12 +93,15 @@ class TestEpisodeOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             episode_operation.valid_or_assert(mocked_user, episode)
 
+    @unittest.mock.patch.object(episode_operation,
+                                '_update_show_build_datetime')
     @unittest.mock.patch.object(episode_operation, 'valid_or_assert')
     @unittest.mock.patch.object(episode_operation, 'get_episode_or_assert')
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     def test_update(self, mocked_commit,
-                    mocked_get_show, mocked_get_episode, mocked_valid):
+                    mocked_get_show, mocked_get_episode, mocked_valid,
+                    mocked_build):
         mocked_user = MagicMock()
         mocked_user.id = 1
 
@@ -131,6 +138,7 @@ class TestEpisodeOperation(unittest.TestCase):
             mocked_user, mocked_show.id, mocked_episode.id)
         mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_commit.assert_called_with()
+        mocked_build.assert_called_with(mocked_user, mocked_episode)
         self.assertEqual(mocked_show.owner_user_id,
                          mocked_episode.owner_user_id)
         self.assertEqual(mocked_show.id, mocked_episode.show_id)
@@ -144,9 +152,12 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(explicit, mocked_episode.explicit)
         self.assertEqual(result, mocked_episode)
 
+    @unittest.mock.patch.object(episode_operation,
+                                '_update_show_build_datetime')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'delete')
-    def test_delete(self, mocked_delete, mocked_commit):
+    def test_delete(self, mocked_delete, mocked_commit, mocked_build):
+        mocked_user = MagicMock()
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
         mocked_show.id = 2
@@ -158,10 +169,11 @@ class TestEpisodeOperation(unittest.TestCase):
             mocked_show, 'title', 'subtitle', 'desc', mocked_audio.id,
             models.Episode.DraftStatus.published, None, False)
 
-        result = episode_operation.delete(episode)
+        result = episode_operation.delete(mocked_user, episode)
 
         mocked_delete.assert_called_with(episode)
         mocked_commit.assert_called_with()
+        mocked_build.assert_called_with(mocked_user, episode)
         self.assertTrue(result)
 
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
@@ -231,3 +243,20 @@ class TestEpisodeOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             episode_operation.get_episode_or_assert(
                 mocked_user, show_id, episode_id)
+
+    @unittest.mock.patch.object(models.db.session, 'commit')
+    @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
+    def test_update_show_build_datetime(self, mocked_get_show, mocked_commit):
+        mocked_user = MagicMock()
+        mocked_episode = MagicMock()
+        mocked_episode.draft_status = models.Episode.DraftStatus.published
+        mocked_show = MagicMock()
+
+        mocked_get_show.return_value = mocked_show
+
+        result = episode_operation._update_show_build_datetime(
+            mocked_user, mocked_episode)
+
+        mocked_get_show.assert_called_with(mocked_user, mocked_episode.show_id)
+        mocked_commit.assert_called_with()
+        self.assertEqual(mocked_show, result)

@@ -1,3 +1,4 @@
+import datetime
 import urllib.parse
 from highland import models, show_operation, settings, audio_operation
 
@@ -11,6 +12,8 @@ def create(user, show_id, draft_status, scheduled_datetime=None,
         scheduled_datetime, explicit))
     models.db.session.add(episode)
     models.db.session.commit()
+
+    _update_show_build_datetime(user, episode)
     return episode
 
 
@@ -28,12 +31,15 @@ def update(user, show_id, episode_id, draft_status, scheduled_datetime=None,
     episode.scheduled_datetime = scheduled_datetime
     valid_or_assert(user, episode)
     models.db.session.commit()
+
+    _update_show_build_datetime(user, episode)
     return episode
 
 
-def delete(episode):
+def delete(user, episode):
     models.db.session.delete(episode)
     models.db.session.commit()
+    _update_show_build_datetime(user, episode)
     return True
 
 
@@ -76,3 +82,13 @@ def get_episode_url(episode):
     return urllib.parse.urljoin(
         settings.HOST,
         'user/{}/show/{}'.format(episode.owner_user_id, episode.show_id))
+
+
+def _update_show_build_datetime(user, episode):
+    if episode.draft_status != models.Episode.DraftStatus.published:
+        return None
+
+    show = show_operation.get_show_or_assert(user, episode.show_id)
+    show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
+    models.db.session.commit()
+    return show

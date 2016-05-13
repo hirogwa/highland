@@ -1,3 +1,4 @@
+import datetime
 import urllib.parse
 from highland import models, settings
 
@@ -25,6 +26,7 @@ def update(user, show_id, title, description, subtitle, language, author,
     show.author = author
     show.category = category
     show.explicit = explicit
+    show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show
 
