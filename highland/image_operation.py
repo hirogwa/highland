@@ -1,3 +1,5 @@
+import imghdr
+import os
 import uuid
 from highland import models, media_storage
 
@@ -5,8 +7,8 @@ IMAGE_FOLDER = 'image'
 
 
 def create(user, image_file):
-    guid = store_image_data(user.id, image_file)
-    image = models.Image(user, image_file.filename, guid)
+    guid, type = store_image_data(user.id, image_file)
+    image = models.Image(user, image_file.filename, guid, type)
     models.db.session.add(image)
     models.db.session.commit()
     return image
@@ -24,6 +26,19 @@ def load(user):
 
 
 def store_image_data(user_id, image_file):
+    temp_path_dir = str(user_id)
+    if not os.path.exists(temp_path_dir):
+        os.mkdir(temp_path_dir)
+
     guid = uuid.uuid4().hex
-    media_storage.upload(image_file, guid, IMAGE_FOLDER)
-    return guid
+    temp_path = os.path.join(temp_path_dir, guid)
+    image_file.save(temp_path)
+
+    type = imghdr.what(temp_path)
+    assert type in ['jpeg', 'png'], 'image type not supported:{}'.format(type)
+
+    media_storage.upload(image_file, '{}.{}'.format(guid, type), IMAGE_FOLDER,
+                         ContentType='image/{}'.format(type))
+
+    os.remove(temp_path)
+    return guid, type

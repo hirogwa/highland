@@ -1,3 +1,5 @@
+import os
+import imghdr
 import uuid
 import unittest
 from unittest.mock import MagicMock
@@ -14,7 +16,8 @@ class TestImageOperation(unittest.TestCase):
         mocked_user = MagicMock()
         mocked_image_file = MagicMock()
         guid = 'some guid'
-        mocked_store.return_value = guid
+        type = 'jpeg'
+        mocked_store.return_value = guid, type
 
         mocked_image = MagicMock()
         mocked_image_class.return_value = mocked_image
@@ -55,9 +58,16 @@ class TestImageOperation(unittest.TestCase):
         mocked_filter.all.assert_called_with()
         self.assertEqual(image_list, result)
 
-    @unittest.mock.patch.object(uuid, 'uuid4')
+    @unittest.mock.patch.object(os, 'remove')
     @unittest.mock.patch.object(media_storage, 'upload')
-    def test_store_image_data(self, mocked_upload, mocked_uuid4):
+    @unittest.mock.patch.object(imghdr, 'what')
+    @unittest.mock.patch.object(uuid, 'uuid4')
+    @unittest.mock.patch.object(os.path, 'exists')
+    def test_store_image_data(self, mocked_exists, mocked_uuid4, mocked_what,
+                              mocked_upload, mocked_remove):
+        mocked_exists.return_value = True
+        type = 'jpeg'
+        mocked_what.return_value = type
         mocked_image = MagicMock()
         guid = 'test_guid'
         mocked_uuid = MagicMock()
@@ -66,6 +76,7 @@ class TestImageOperation(unittest.TestCase):
 
         result = image_operation.store_image_data(1, mocked_image)
 
-        mocked_upload.assert_called_with(mocked_image, guid,
-                                         image_operation.IMAGE_FOLDER)
-        self.assertEqual(guid, result)
+        mocked_upload.assert_called_with(mocked_image, guid + '.' + type,
+                                         image_operation.IMAGE_FOLDER,
+                                         ContentType='image/jpeg')
+        self.assertEqual((guid, type), result)

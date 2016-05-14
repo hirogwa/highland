@@ -412,7 +412,8 @@ class TestImage(unittest.TestCase):
         mocked_user.id = 1
         filename = 'somefile.jpg'
         guid = uuid.uuid4().hex
-        image = models.Image(mocked_user, filename, guid)
+        type = 'jpeg'
+        image = models.Image(mocked_user, filename, guid, type)
         mocked_create.return_value = image
 
         response = self.app.post(
@@ -431,8 +432,8 @@ class TestImage(unittest.TestCase):
         mocked_user = MagicMock()
         mocked_user.id = 1
         images = [
-            models.Image(mocked_user, 'f01.jpg', uuid.uuid4().hex),
-            models.Image(mocked_user, 'f02.jpg', uuid.uuid4().hex)
+            models.Image(mocked_user, 'f01.jpg', uuid.uuid4().hex, 'png'),
+            models.Image(mocked_user, 'f02.jpg', uuid.uuid4().hex, 'jpeg')
         ]
         mocked_load.return_value = images
 

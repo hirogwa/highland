@@ -146,17 +146,19 @@ class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     guid = db.Column(db.String(32))
+    type = db.Column(db.String(10))
     create_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, filename, guid):
+    def __init__(self, user, filename, guid, type):
         self.owner_user_id = user.id
         self.filename = filename
         self.guid = guid
+        self.type = type
 
     def __iter__(self):
-        for key in ['owner_user_id', 'id', 'filename', 'guid']:
+        for key in ['owner_user_id', 'id', 'filename', 'guid', 'type']:
             yield(key, getattr(self, key))
         yield('create_datetime', str(self.create_datetime))
 
