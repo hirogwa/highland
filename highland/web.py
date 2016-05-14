@@ -2,7 +2,8 @@ import dateutil.parser
 import traceback
 from flask import request, jsonify
 from highland import app, models,\
-    show_operation, episode_operation, audio_operation, user_operation
+    show_operation, episode_operation, audio_operation, user_operation,\
+    image_operation
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
@@ -150,6 +151,20 @@ def audio():
         if 'GET' == request.method:
             audios = audio_operation.load(test_user())
             return jsonify(audios=list(map(dict, audios)), result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
+@app.route('/image', methods=['POST', 'GET'])
+def image():
+    try:
+        if 'POST' == request.method:
+            image = image_operation.create(test_user(), request.files['file'])
+            return jsonify(image=dict(image), result='success'), 201
+        if 'GET' == request.method:
+            images = image_operation.load(test_user())
+            return jsonify(images=list(map(dict, images)), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e

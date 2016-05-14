@@ -6,7 +6,7 @@ import highland
 from flask import json
 from unittest.mock import MagicMock
 from highland import models, show_operation, episode_operation, audio_operation,\
-    user_operation
+    image_operation, user_operation
 
 
 class TestShow(unittest.TestCase):
@@ -399,6 +399,49 @@ class TestAudio(unittest.TestCase):
         resp_audios = resp_data.get('audios')
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(list(map(dict, audios)), resp_audios)
+
+
+class TestImage(unittest.TestCase):
+    def setUp(self):
+        highland.app.config['TESTING'] = True
+        self.app = highland.app.test_client()
+
+    @unittest.mock.patch.object(image_operation, 'create')
+    def test_post(self, mocked_create):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        filename = 'somefile.jpg'
+        guid = uuid.uuid4().hex
+        image = models.Image(mocked_user, filename, guid)
+        mocked_create.return_value = image
+
+        response = self.app.post(
+            '/image',
+            data={
+                'file': (io.BytesIO(b'test data'), filename)
+            })
+
+        resp_data = json.loads(response.data)
+        resp_image = resp_data.get('image')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(dict(image), resp_image)
+
+    @unittest.mock.patch.object(image_operation, 'load')
+    def test_get(self, mocked_load):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        images = [
+            models.Image(mocked_user, 'f01.jpg', uuid.uuid4().hex),
+            models.Image(mocked_user, 'f02.jpg', uuid.uuid4().hex)
+        ]
+        mocked_load.return_value = images
+
+        response = self.app.get('/image')
+
+        resp_data = json.loads(response.data)
+        resp_images = resp_data.get('images')
+        self.assertEqual('success', resp_data.get('result'))
+        self.assertEqual(list(map(dict, images)), resp_images)
 
 
 class TestUser(unittest.TestCase):
