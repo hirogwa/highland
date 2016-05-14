@@ -39,7 +39,7 @@ class TestAudioOperation(unittest.TestCase):
 
         result = audio_operation.delete(mocked_audio)
 
-        mocked_media_delete.assert_called_with(mocked_audio.filename,
+        mocked_media_delete.assert_called_with(mocked_audio.guid,
                                                audio_operation.AUDIO_FOLDER)
         mocked_delete.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
