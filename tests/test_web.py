@@ -33,18 +33,19 @@ class TestShow(unittest.TestCase):
         author = 'my author'
         category = 'my category'
         explicit = False
+        image_id = 3
 
         mocked_user = MagicMock()
         mocked_user.id = 1
         show = models.Show(mocked_user, title, description, subtitle,
-                           language, author, category, explicit)
+                           language, author, category, explicit, image_id)
         show.id = 2
         mocked_create.return_value = show
 
         response = self.post_with_json(
             title=title, description=description, subtitle=subtitle,
             language=language, author=author, category=category,
-            explicit=str(explicit))
+            explicit=str(explicit), image_id=str(image_id))
 
         resp_data = json.loads(response.data)
         resp_show = resp_data.get('show')
@@ -58,6 +59,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.author, resp_show.get('author'))
         self.assertEqual(show.category, resp_show.get('category'))
         self.assertEqual(show.explicit, resp_show.get('explicit'))
+        self.assertEqual(show.image_id, resp_show.get('image_id'))
 
     def test_show_post_input_check_title(self):
         with self.assertRaises(AssertionError):
@@ -77,18 +79,19 @@ class TestShow(unittest.TestCase):
         author = 'new author'
         category = 'new category'
         explicit = False
+        image_id = 3
 
         mocked_user = MagicMock()
         mocked_user.id = 1
         show = models.Show(mocked_user, title, description, subtitle,
-                           language, author, category, explicit)
+                           language, author, category, explicit, image_id)
         show.id = show_id
         mocked_update.return_value = show
 
         response = self.put_with_json(
             id=show_id, title=title, description=description,
             subtitle=subtitle, language=language, author=author,
-            category=category, explicit=str(explicit))
+            category=category, explicit=str(explicit), image_id=str(image_id))
 
         resp_data = json.loads(response.data)
         resp_show = resp_data.get('show')
@@ -102,6 +105,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.author, resp_show.get('author'))
         self.assertEqual(show.category, resp_show.get('category'))
         self.assertEqual(show.explicit, resp_show.get('explicit'))
+        self.assertEqual(show.image_id, resp_show.get('image_id'))
 
     def test_show_put_input_check_id(self):
         with self.assertRaises(AssertionError):
@@ -125,10 +129,10 @@ class TestShow(unittest.TestCase):
         shows = [
             models.Show(
                 mocked_user, 'title 01', 'description 01', 'subtitle 01',
-                'en-US', 'author 01', 'category 01', False),
+                'en-US', 'author 01', 'category 01', False, 2),
             models.Show(
                 mocked_user, 'title 02', 'description 02', 'subtitle 02',
-                'ja', 'author 02', 'category 02', True)
+                'ja', 'author 02', 'category 02', True, 3)
         ]
         mocked_load.return_value = shows
 
@@ -165,6 +169,7 @@ class TestEpisode(unittest.TestCase):
         description = 'my description'
         audio_id = 3
         explicit = True
+        image_id = 4
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -173,7 +178,7 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.draft, None, False)
+            models.Episode.DraftStatus.draft, None, False, image_id)
         mocked_create.return_value = episode
 
         response = self.post_with_json(
@@ -184,7 +189,8 @@ class TestEpisode(unittest.TestCase):
             subtitle=subtitle,
             description=description,
             audio_id=audio_id,
-            explicit=str(explicit))
+            explicit=str(explicit),
+            image_id=str(image_id))
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -202,6 +208,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.description, resp_episode.get('description'))
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
         self.assertEqual(episode.explicit, resp_episode.get('explicit'))
+        self.assertEqual(episode.image_id, resp_episode.get('image_id'))
 
     @unittest.mock.patch.object(episode_operation, 'create')
     def test_post_input_check_show_id(self, mocked_create):
@@ -242,6 +249,7 @@ class TestEpisode(unittest.TestCase):
         description = 'my new description'
         audio_id = 4
         explicit = True
+        image_id = 5
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -250,7 +258,7 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False)
+            models.Episode.DraftStatus.published, None, False, image_id)
         mocked_update.return_value = episode
 
         response = self.put_with_json(
@@ -262,7 +270,8 @@ class TestEpisode(unittest.TestCase):
             subtitle=subtitle,
             description=description,
             audio_id=audio_id,
-            explicit=str(explicit))
+            explicit=str(explicit),
+            image_id=str(image_id))
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -280,6 +289,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.description, resp_episode.get('description'))
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
         self.assertEqual(episode.explicit, resp_episode.get('explicit'))
+        self.assertEqual(episode.image_id, resp_episode.get('image_id'))
 
     @unittest.mock.patch.object(episode_operation, 'update')
     def test_put_input_check_show_id(self, mocked_update):
@@ -335,10 +345,10 @@ class TestEpisode(unittest.TestCase):
         episodes = [
             models.Episode(
                 mocked_show, 'title01', 'sub01', 'desc01', mocked_audio_01.id,
-                models.Episode.DraftStatus.published, None, False),
+                models.Episode.DraftStatus.published, None, False, 21),
             models.Episode(
                 mocked_show, 'title02', 'sub02', 'desc02', mocked_audio_02.id,
-                models.Episode.DraftStatus.draft, None, False)
+                models.Episode.DraftStatus.draft, None, False, 22)
         ]
         mocked_load.return_value = episodes
 

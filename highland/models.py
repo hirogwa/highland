@@ -22,6 +22,7 @@ class Show(db.Model):
     author = db.Column(db.String(100))
     category = db.Column(db.String(50))
     explicit = db.Column(db.Boolean())
+    image_id = db.Column(db.Integer)
     last_build_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -33,7 +34,7 @@ class Show(db.Model):
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     def __init__(self, user, title, description, subtitle, language, author,
-                 category, explicit):
+                 category, explicit, image_id):
         self.owner_user_id = user.id
         self.title = title
         self.description = description
@@ -42,10 +43,11 @@ class Show(db.Model):
         self.author = author
         self.category = category
         self.explicit = explicit
+        self.image_id = image_id
 
     def __iter__(self):
         for key in ['owner_user_id', 'id', 'title', 'description', 'subtitle',
-                    'language', 'author', 'category', 'explicit']:
+                    'language', 'author', 'category', 'explicit', 'image_id']:
             yield(key, getattr(self, key))
         yield('last_build_datetime', str(self.last_build_datetime))
         yield('update_datetime', str(self.update_datetime))
@@ -65,6 +67,7 @@ class Episode(db.Model):
     subtitle = db.Column(db.String(200))
     description = db.Column(db.Text())
     audio_id = db.Column(db.Integer)
+    image_id = db.Column(db.Integer)
     draft_status = db.Column(db.Enum(DraftStatus.draft.name,
                                      DraftStatus.scheduled.name,
                                      DraftStatus.published.name,
@@ -88,7 +91,7 @@ class Episode(db.Model):
     )
 
     def __init__(self, show, title, subtitle, description, audio_id,
-                 draft_status, scheduled_datetime, explicit):
+                 draft_status, scheduled_datetime, explicit, image_id):
         self.owner_user_id = show.owner_user_id
         self.show_id = show.id
         self.title = title
@@ -98,10 +101,11 @@ class Episode(db.Model):
         self.draft_status = draft_status
         self.scheduled_datetime = scheduled_datetime
         self.explicit = explicit
+        self.image_id = image_id
 
     def __iter__(self):
         for key in ['owner_user_id', 'show_id', 'id', 'title', 'subtitle',
-                    'description', 'audio_id', 'explicit', 'guid']:
+                    'description', 'audio_id', 'explicit', 'guid', 'image_id']:
             yield(key, getattr(self, key))
         yield('draft_status', self.draft_status.name)
         yield('scheduled_datetime', str(self.scheduled_datetime))

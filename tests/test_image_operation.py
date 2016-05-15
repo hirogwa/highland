@@ -58,6 +58,40 @@ class TestImageOperation(unittest.TestCase):
         mocked_filter.all.assert_called_with()
         self.assertEqual(image_list, result)
 
+    @unittest.mock.patch('highland.models.Image.query')
+    def test_get_image_or_assert(self, mocked_query):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        mocked_image = MagicMock()
+        mocked_image.owner_user_id = mocked_user.id
+        mocked_image.id = 2
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = mocked_image
+        mocked_query.filter_by.return_value = mocked_filter
+
+        result = image_operation.get_image_or_assert(
+            mocked_user, mocked_image.id)
+
+        mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id,
+                                                  id=mocked_image.id)
+        mocked_filter.first.assert_called_with()
+        self.assertEqual(mocked_image, result)
+
+    @unittest.mock.patch('highland.models.Image.query')
+    def test_get_image_or_assert_assert(self, mocked_query):
+        mocked_user = MagicMock()
+        mocked_user.id = 1
+        image_id = 2
+
+        mocked_filter = MagicMock()
+        mocked_filter.first.return_value = None
+        mocked_query.filter_by.return_value = mocked_filter
+
+        with self.assertRaises(AssertionError):
+            image_operation.get_image_or_assert(
+                mocked_user, image_id)
+
     @unittest.mock.patch.object(os, 'remove')
     @unittest.mock.patch.object(media_storage, 'upload')
     @unittest.mock.patch.object(imghdr, 'what')

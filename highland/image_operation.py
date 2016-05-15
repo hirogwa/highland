@@ -1,7 +1,8 @@
 import imghdr
 import os
+import urllib.parse
 import uuid
-from highland import models, media_storage
+from highland import models, media_storage, settings
 
 IMAGE_FOLDER = 'image'
 
@@ -23,6 +24,24 @@ def delete(image):
 
 def load(user):
     return models.Image.query.filter_by(owner_user_id=user.id).all()
+
+
+def get_image_or_assert(user, image_id):
+    image = models.Image.query.\
+        filter_by(owner_user_id=user.id, id=image_id).first()
+    if image:
+        return image
+    else:
+        raise AssertionError(
+            'No such image. (user,image)={}{}'.format(user.id, image_id))
+
+
+def get_image_url(image):
+    # TODO
+    return urllib.parse.urljoin(
+        settings.HOST,
+        'user/{}/image/{}.{}'.format(
+            image.owner_user_id, image.guid, image.type))
 
 
 def store_image_data(user_id, image_file):

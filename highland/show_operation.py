@@ -4,16 +4,16 @@ from highland import models, settings
 
 
 def create(user, title, description, subtitle, language, author, category,
-           explicit):
+           explicit, image_id):
     show = models.Show(user, title, description, subtitle, language, author,
-                       category, explicit)
+                       category, explicit, image_id)
     models.db.session.add(show)
     models.db.session.commit()
     return show
 
 
 def update(user, show_id, title, description, subtitle, language, author,
-           category, explicit):
+           category, explicit, image_id):
     show = models.Show.query \
                       .filter_by(owner_user_id=user.id, id=show_id) \
                       .first()
@@ -26,6 +26,7 @@ def update(user, show_id, title, description, subtitle, language, author,
     show.author = author
     show.category = category
     show.explicit = explicit
+    show.image_id = image_id
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show

@@ -16,17 +16,18 @@ class TestShowOperation(unittest.TestCase):
         author = 'Ultraman Taro, Ultraman Ace'
         category = 'Technology'
         explicit = False
+        image_id = 2
 
         mocked_show = MagicMock()
         mocked_show_class.return_value = mocked_show
 
         result = show_operation.create(
             mocked_user, title, description, subtitle, language, author,
-            category, explicit)
+            category, explicit, image_id)
 
         mocked_show_class.assert_called_with(
             mocked_user, title, description, subtitle, language, author,
-            category, explicit)
+            category, explicit, image_id)
         mocked_add.assert_called_with(mocked_show)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
@@ -55,10 +56,11 @@ class TestShowOperation(unittest.TestCase):
         author = 'Ultra Seven, Ultraman Jack'
         category = 'Arts'
         explicit = False
+        image_id = 2
 
         result = show_operation.update(
             mocked_user, show_id, title, description, subtitle, language,
-            author, category, explicit)
+            author, category, explicit, image_id)
 
         mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
                                                   id=show_id)
@@ -71,6 +73,7 @@ class TestShowOperation(unittest.TestCase):
         self.assertEqual(author, mocked_show.author)
         self.assertEqual(category, mocked_show.category)
         self.assertEqual(explicit, mocked_show.explicit)
+        self.assertEqual(image_id, mocked_show.image_id)
         self.assertEqual(result, mocked_show)
 
     @unittest.mock.patch('highland.models.Show.query')
@@ -88,7 +91,7 @@ class TestShowOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             show_operation.update(
                 mocked_user, show_id, 'title', 'desc', 'subtitle', 'lang',
-                'author', 'category', False)
+                'author', 'category', False, 2)
 
         mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
                                                   id=show_id)

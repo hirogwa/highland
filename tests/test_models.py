@@ -11,12 +11,12 @@ class TestShow(unittest.TestCase):
         user.id = 2
         show = models.Show(user, 'my title', 'my description',
                            'this is my fun talk show on arts', 'en-US',
-                           'Ultraman Ace, Ultraman Taro', 'Arts', False)
+                           'Ultraman Ace, Ultraman Taro', 'Arts', False, 2)
         show.id = 1
 
         show_d = dict(show)
 
-        self.assertEqual(12, len(show_d))
+        self.assertEqual(13, len(show_d))
         self.assertEqual(show.owner_user_id, show_d.get('owner_user_id'))
         self.assertEqual(show.id, show_d.get('id'))
         self.assertEqual(show.title, show_d.get('title'))
@@ -26,6 +26,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.author, show_d.get('author'))
         self.assertEqual(show.category, show_d.get('category'))
         self.assertEqual(show.explicit, show_d.get('explicit'))
+        self.assertEqual(show.image_id, show_d.get('image_id'))
         self.assertIsNotNone(show_d.get('last_build_datetime'))
         self.assertIsNotNone(show_d.get('update_datetime'))
         self.assertIsNotNone(show_d.get('create_datetime'))
@@ -41,7 +42,7 @@ class TestEpisode(unittest.TestCase):
         episode = models.Episode(
             show, 'my title', 'my subtitle', 'my description', audio.id,
             models.Episode.DraftStatus.scheduled,
-            datetime.datetime.now(datetime.timezone.utc), False)
+            datetime.datetime.now(datetime.timezone.utc), False, 4)
         episode.id = 4
         episode.guid = uuid.uuid4().hex
         episode.update_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -49,7 +50,7 @@ class TestEpisode(unittest.TestCase):
 
         episode_d = dict(episode)
 
-        self.assertEqual(13, len(episode_d))
+        self.assertEqual(14, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
@@ -61,6 +62,7 @@ class TestEpisode(unittest.TestCase):
                          episode_d.get('draft_status'))
         self.assertEqual(episode.explicit, episode_d.get('explicit'))
         self.assertEqual(episode.guid, episode_d.get('guid'))
+        self.assertEqual(episode.image_id, episode_d.get('image_id'))
         self.assertEqual(str(episode.update_datetime),
                          episode_d.get('update_datetime'))
         self.assertEqual(str(episode.create_datetime),

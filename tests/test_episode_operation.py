@@ -1,7 +1,8 @@
 import datetime
 import unittest
 from unittest.mock import MagicMock
-from highland import show_operation, episode_operation, models, audio_operation
+from highland import show_operation, episode_operation, models, audio_operation,\
+    image_operation
 
 
 class TestEpisodeOperation(unittest.TestCase):
@@ -51,44 +52,53 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_commit.assert_called_with()
         mocked_build.assert_called_with(mocked_user, mocked_episode)
 
+    @unittest.mock.patch.object(image_operation, 'get_image_or_assert')
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
-    def test_valid_or_assert_valid_published(self, mocked_get_audio):
+    def test_valid_or_assert_valid_published(self, mocked_get_audio,
+                                             mocked_get_image):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
         mocked_audio = MagicMock()
         mocked_audio.id = 3
+        mocked_image = MagicMock()
+        mocked_image.id = 4
 
         mocked_get_audio.return_value = mocked_audio
 
         episode = models.Episode(
             mocked_show, 'my episode', 'my subtitle', 'my episode desc',
-            mocked_audio.id, models.Episode.DraftStatus.published, None, False)
+            mocked_audio.id, models.Episode.DraftStatus.published, None, False,
+            mocked_image.id)
 
         result = episode_operation.valid_or_assert(mocked_user, episode)
 
         self.assertEqual(episode, result)
         mocked_get_audio.assert_called_with(mocked_user, episode.audio_id)
+        mocked_get_image.assert_called_with(mocked_user, episode.image_id)
 
+    @unittest.mock.patch.object(image_operation, 'get_image_or_assert')
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
-    def test_valid_or_assert_incomplete_draft(self, mocked_get_audio):
+    def test_valid_or_assert_incomplete_draft(self, mocked_get_audio,
+                                              mocked_get_image):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
 
         episode = models.Episode(
             mocked_show, '', '', '', -1, models.Episode.DraftStatus.draft,
-            None, False)
+            None, False, -1)
 
         result = episode_operation.valid_or_assert(mocked_user, episode)
 
         self.assertEqual(episode, result)
         mocked_get_audio.assert_not_called()
+        mocked_get_image.assert_not_called()
 
     def test_valid_or_assert_scheduled_with_no_time(self):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
         episode = models.Episode(
             mocked_show, '', '', '', -1, models.Episode.DraftStatus.scheduled,
-            None, False)
+            None, False, -1)
 
         with self.assertRaises(AssertionError):
             episode_operation.valid_or_assert(mocked_user, episode)
@@ -167,7 +177,7 @@ class TestEpisodeOperation(unittest.TestCase):
 
         episode = models.Episode(
             mocked_show, 'title', 'subtitle', 'desc', mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False)
+            models.Episode.DraftStatus.published, None, False, -1)
 
         result = episode_operation.delete(mocked_user, episode)
 
@@ -190,10 +200,10 @@ class TestEpisodeOperation(unittest.TestCase):
 
         ep_one = models.Episode(
             mocked_show, 'title one', 'sub one', 'desc one', mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False)
+            models.Episode.DraftStatus.published, None, False, -1)
         ep_two = models.Episode(
             mocked_show, 'title two', 'sub two', 'desc two', mocked_audio.id,
-            models.Episode.DraftStatus.draft, None, False)
+            models.Episode.DraftStatus.draft, None, False, -1)
         ep_list = [ep_one, ep_two]
 
         mocked_filter = MagicMock()

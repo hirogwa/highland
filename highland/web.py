@@ -12,14 +12,15 @@ def show():
         if 'POST' == request.method:
             args = request.get_json()
             (title, description, subtitle, language, author, category,
-             explicit) = (
+             explicit, image_id) = (
                  args.get('title'),
                  args.get('description'),
                  args.get('subtitle'),
                  args.get('language'),
                  args.get('author'),
                  args.get('category'),
-                 args.get('explicit'))
+                 args.get('explicit'),
+                 args.get('image_id'))
             assert title, 'title required'
             assert description, 'description required'
             assert subtitle, 'subtitle required'
@@ -27,16 +28,17 @@ def show():
             assert author, 'author required'
             assert category, 'category required'
             assert explicit, 'explicit required'
+            assert image_id, 'image id required'
 
             show = show_operation.create(
                 test_user(), title, description, subtitle, language, author,
-                category, explicit.lower() == 'True')
+                category, explicit.lower() == 'True', image_id)
             return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
             (id, title, description, subtitle, language, author, category,
-             explicit) = (
+             explicit, image_id) = (
                  args.get('id'),
                  args.get('title'),
                  args.get('description'),
@@ -44,7 +46,8 @@ def show():
                  args.get('language'),
                  args.get('author'),
                  args.get('category'),
-                 args.get('explicit'))
+                 args.get('explicit'),
+                 args.get('image_id'))
             assert id, 'id required'
             assert title, 'title required'
             assert description, 'description required'
@@ -53,10 +56,11 @@ def show():
             assert author, 'author required'
             assert category, 'category required'
             assert explicit, 'explicit required'
+            assert image_id, 'image id required'
 
             show = show_operation.update(
                 test_user(), id, title, description, subtitle, language,
-                author, category, explicit)
+                author, category, explicit, image_id)
             return jsonify(show=dict(show), result='success')
 
         if 'GET' == request.method:
@@ -73,7 +77,7 @@ def episode():
         if 'POST' == request.method:
             args = request.get_json()
             (show_id, draft_status, scheduled_datetime, title, subtitle,
-             description, audio_id, explicit) = (
+             description, audio_id, explicit, image_id) = (
                  args.get('show_id'),
                  args.get('draft_status'),
                  args.get('scheduled_datetime'),
@@ -81,7 +85,8 @@ def episode():
                  args.get('subtitle'),
                  args.get('description'),
                  args.get('audio_id'),
-                 args.get('explicit'))
+                 args.get('explicit'),
+                 args.get('image_id'))
 
             assert show_id, 'show id required'
             assert draft_status, 'draft status required'
@@ -90,18 +95,20 @@ def episode():
             assert description, 'description required'
             assert audio_id, 'audio id required'
             assert explicit, 'explicit required'
+            assert image_id, 'image id required'
 
             episode = episode_operation.create(
                 test_user(), show_id, draft_status,
                 dateutil.parser.parse(scheduled_datetime), title,
-                subtitle, description, audio_id, explicit.lower() == 'true')
+                subtitle, description, audio_id, explicit.lower() == 'true',
+                image_id)
 
             return jsonify(episode=dict(episode), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
             (show_id, id, draft_status, scheduled_datetime, title, subtitle,
-             description, audio_id, explicit) = (
+             description, audio_id, explicit, image_id) = (
                  args.get('show_id'),
                  args.get('id'),
                  args.get('draft_status'),
@@ -110,7 +117,8 @@ def episode():
                  args.get('subtitle'),
                  args.get('description'),
                  args.get('audio_id'),
-                 args.get('explicit'))
+                 args.get('explicit'),
+                 args.get('image_id'))
 
             assert show_id, 'show id required'
             assert id, 'id required'
@@ -120,11 +128,12 @@ def episode():
             assert description, 'description required'
             assert audio_id, 'audio id required'
             assert explicit, 'explicit required'
+            assert image_id, 'image id required'
 
             episode = episode_operation.update(
                 test_user(), show_id, id, draft_status,
                 dateutil.parser.parse(scheduled_datetime), title, subtitle,
-                description, audio_id, explicit.lower() == 'true')
+                description, audio_id, explicit.lower() == 'true', image_id)
             return jsonify(episode=dict(episode), result='success')
 
     except Exception as e:
