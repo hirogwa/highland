@@ -1,6 +1,6 @@
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, models, media_storage,\
-    audio_operation
+    audio_operation, image_operation
 
 FEED_FOLDER_RSS = 'feed_rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
@@ -22,6 +22,9 @@ def update(user, show_id):
     fg.podcast.itunes_owner(name=user.name, email=user.email)
     fg.podcast.itunes_subtitle(show.subtitle)
     fg.podcast.itunes_summary(show.description)
+    if show.image_id > 0:
+        image = image_operation.get_image_or_assert(user, show.image_id)
+        fg.podcast.itunes_image(image_operation.get_image_url(image))
 
     for episode in episode_operation.load(
             user, show_id,
@@ -40,6 +43,11 @@ def update(user, show_id):
         fe.podcast.itunes_duration(_format_seconds(audio.duration))
         fe.podcast.itunes_explicit('yes' if episode.explicit else 'no')
         fe.podcast.itunes_subtitle(episode.subtitle)
+        if episode.image_id > 0:
+            image_episode = image_operation.get_image_or_assert(
+                user, episode.image_id)
+            fe.podcast.itunes_image(
+                image_operation.get_image_url(image_episode))
 
     return media_storage.upload(
         fg.rss_str(pretty=True), show_operation.get_show_unique_id(show),

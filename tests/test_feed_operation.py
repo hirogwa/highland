@@ -3,15 +3,18 @@ from feedgen.feed import FeedGenerator
 from feedgen.ext.podcast import PodcastExtension
 from unittest.mock import MagicMock
 from highland import feed_operation, show_operation, episode_operation,\
-    media_storage, audio_operation
+    media_storage, audio_operation, image_operation
 
 
 class TestFeedOperation(unittest.TestCase):
+    @unittest.mock.patch.object(image_operation, 'get_image_url')
+    @unittest.mock.patch.object(image_operation, 'get_image_or_assert')
     @unittest.mock.patch.object(feed_operation, '_format_seconds')
     @unittest.mock.patch.object(audio_operation, 'get_audio_url')
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
     @unittest.mock.patch.object(FeedGenerator, 'add_entry')
     @unittest.mock.patch.object(FeedGenerator, 'rss_str')
+    @unittest.mock.patch.object(PodcastExtension, 'itunes_image')
     @unittest.mock.patch.object(PodcastExtension, 'itunes_summary')
     @unittest.mock.patch.object(PodcastExtension, 'itunes_subtitle')
     @unittest.mock.patch.object(PodcastExtension, 'itunes_owner')
@@ -38,12 +41,18 @@ class TestFeedOperation(unittest.TestCase):
             mocked_fg_language, mocked_fg_last_build_date,
             mocked_i_author, mocked_i_category, mocked_i_explicit,
             mocked_i_owner, mocked_i_subtitle, mocked_i_summary,
+            mocked_i_image,
             mocked_fg_rss_str, mocked_fg_add_entry,
-            mocked_get_audio, mocked_get_audio_url, mocked_format_seconds):
+            mocked_get_audio, mocked_get_audio_url, mocked_format_seconds,
+            mocked_get_image, mocked_get_image_url):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
+        mocked_show.image_id = 1
+        image_url_show = 'some_url_show_image'
         mocked_show_url = MagicMock()
         mocked_episode = MagicMock()
+        mocked_episode.image_id = 2
+        image_url_episode = 'some_url_episode_image'
         mocked_episode_url = MagicMock()
         mocked_content = MagicMock()
         mocked_audio = MagicMock()
@@ -51,6 +60,8 @@ class TestFeedOperation(unittest.TestCase):
         unique_id = 'someid'
         formatted_seconds = '0:25:12'
         mocked_fe = MagicMock()
+        mocked_image_show = MagicMock()
+        mocked_image_episode = MagicMock()
 
         mocked_get_show.return_value = mocked_show
         mocked_get_show_url.return_value = mocked_show_url
@@ -63,6 +74,22 @@ class TestFeedOperation(unittest.TestCase):
         mocked_get_audio.return_value = mocked_audio
         mocked_get_audio_url.return_value = audio_url
         mocked_format_seconds.return_value = formatted_seconds
+
+        def get_image_side_effect(user, image_id):
+            if image_id == mocked_show.image_id:
+                return mocked_image_show
+            elif image_id == mocked_episode.image_id:
+                return mocked_image_episode
+            assert False
+        mocked_get_image.side_effect = get_image_side_effect
+
+        def get_image_url_side_effect(image):
+            if image == mocked_image_show:
+                return image_url_show
+            elif image == mocked_image_episode:
+                return image_url_episode
+            assert False
+        mocked_get_image_url.side_effect = get_image_url_side_effect
 
         feed_operation.update(mocked_user, mocked_show.id)
 
@@ -79,8 +106,10 @@ class TestFeedOperation(unittest.TestCase):
             'yes' if mocked_show.explicit else 'no')
         mocked_i_owner.assert_called_with(name=mocked_user.name,
                                           email=mocked_user.email)
-        mocked_i_subtitle(mocked_show.subtitle)
-        mocked_i_summary(mocked_show.description)
+        mocked_i_subtitle.assert_called_with(mocked_show.subtitle)
+        mocked_i_summary.assert_called_with(mocked_show.description)
+        mocked_get_image.assert_any_call(mocked_user, mocked_show.image_id)
+        mocked_i_image.assert_called_with(image_url_show)
 
         mocked_fg_rss_str.assert_called_with(pretty=True)
         mocked_get_episode_url.assert_called_with(mocked_episode)
@@ -101,6 +130,8 @@ class TestFeedOperation(unittest.TestCase):
             assert_called_with('yes' if mocked_episode.explicit else 'no')
         mocked_fe.podcast.itunes_subtitle.\
             assert_called_with(mocked_episode.subtitle)
+        mocked_get_image.assert_any_call(mocked_user, mocked_episode.image_id)
+        mocked_fe.podcast.itunes_image.assert_called_with(image_url_episode)
 
         mocked_upload.assert_called_with(
             mocked_content, unique_id, feed_operation.FEED_FOLDER_RSS,

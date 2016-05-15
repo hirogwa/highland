@@ -41,7 +41,8 @@ def get_image_url(image):
     return urllib.parse.urljoin(
         settings.HOST,
         'user/{}/image/{}.{}'.format(
-            image.owner_user_id, image.guid, image.type))
+            image.owner_user_id, image.guid,
+            image.type.replace('jpeg', 'jpg')))
 
 
 def store_image_data(user_id, image_file):
@@ -56,8 +57,11 @@ def store_image_data(user_id, image_file):
     type = imghdr.what(temp_path)
     assert type in ['jpeg', 'png'], 'image type not supported:{}'.format(type)
 
-    media_storage.upload(image_file, '{}.{}'.format(guid, type), IMAGE_FOLDER,
-                         ContentType='image/{}'.format(type))
+    media_storage.upload(
+        image_file,
+        '{}.{}'.format(guid, type.replace('jpeg', 'jpg')),
+        IMAGE_FOLDER,
+        ContentType='image/{}'.format(type))
 
     os.remove(temp_path)
     return guid, type

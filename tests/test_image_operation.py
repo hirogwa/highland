@@ -100,8 +100,7 @@ class TestImageOperation(unittest.TestCase):
     def test_store_image_data(self, mocked_exists, mocked_uuid4, mocked_what,
                               mocked_upload, mocked_remove):
         mocked_exists.return_value = True
-        type = 'jpeg'
-        mocked_what.return_value = type
+        mocked_what.return_value = 'jpeg'
         mocked_image = MagicMock()
         guid = 'test_guid'
         mocked_uuid = MagicMock()
@@ -110,7 +109,7 @@ class TestImageOperation(unittest.TestCase):
 
         result = image_operation.store_image_data(1, mocked_image)
 
-        mocked_upload.assert_called_with(mocked_image, guid + '.' + type,
+        mocked_upload.assert_called_with(mocked_image, guid + '.jpg',
                                          image_operation.IMAGE_FOLDER,
                                          ContentType='image/jpeg')
-        self.assertEqual((guid, type), result)
+        self.assertEqual((guid, 'jpeg'), result)
