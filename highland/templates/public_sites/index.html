@@ -1,0 +1,10 @@
+{% extends "public_sites/base.html" %}
+
+{% block content %}
+{% for episode in episodes %}
+<h2>{{ episode.title }}</h2>
+<p>
+  {{ episode.description }}
+</p>
+{% endfor %}
+{% endblock %}
