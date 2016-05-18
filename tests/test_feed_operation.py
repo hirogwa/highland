@@ -3,7 +3,7 @@ from feedgen.feed import FeedGenerator
 from feedgen.ext.podcast import PodcastExtension
 from unittest.mock import MagicMock
 from highland import feed_operation, show_operation, episode_operation,\
-    media_storage, audio_operation, image_operation
+    media_storage, audio_operation, image_operation, settings
 
 
 class TestFeedOperation(unittest.TestCase):
@@ -134,7 +134,8 @@ class TestFeedOperation(unittest.TestCase):
         mocked_fe.podcast.itunes_image.assert_called_with(image_url_episode)
 
         mocked_upload.assert_called_with(
-            mocked_content, unique_id, feed_operation.FEED_FOLDER_RSS,
+            mocked_content, settings.S3_BUCKET_FEED, unique_id,
+            feed_operation.FEED_FOLDER_RSS,
             ContentType=feed_operation.FEED_CONTENT_TYPE)
 
     def test_format_seconds(self):

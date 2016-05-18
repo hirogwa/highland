@@ -1,6 +1,6 @@
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, models, media_storage,\
-    audio_operation, image_operation
+    audio_operation, image_operation, settings
 
 FEED_FOLDER_RSS = 'feed_rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
@@ -50,7 +50,8 @@ def update(user, show_id):
                 image_operation.get_image_url(image_episode))
 
     return media_storage.upload(
-        fg.rss_str(pretty=True), show_operation.get_show_unique_id(show),
+        fg.rss_str(pretty=True), settings.S3_BUCKET_FEED,
+        show_operation.get_show_unique_id(show),
         FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
 
 

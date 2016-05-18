@@ -4,8 +4,6 @@ import urllib.parse
 import uuid
 from highland import models, media_storage, settings
 
-IMAGE_FOLDER = 'image'
-
 
 def create(user, image_file):
     guid, type = store_image_data(user.id, image_file)
@@ -16,7 +14,7 @@ def create(user, image_file):
 
 
 def delete(image):
-    media_storage.delete(image.guid, IMAGE_FOLDER)
+    media_storage.delete(image.guid, settings.S3_BUCKET_IMAGE)
     models.db.session.delete(image)
     models.db.session.commit()
     return True
@@ -58,9 +56,8 @@ def store_image_data(user_id, image_file):
     assert type in ['jpeg', 'png'], 'image type not supported:{}'.format(type)
 
     media_storage.upload(
-        image_file,
+        image_file, settings.S3_BUCKET_IMAGE,
         '{}.{}'.format(guid, type.replace('jpeg', 'jpg')),
-        IMAGE_FOLDER,
         ContentType='image/{}'.format(type))
 
     os.remove(temp_path)

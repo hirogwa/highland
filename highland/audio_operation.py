@@ -4,8 +4,6 @@ import urllib.parse
 from mutagen.mp3 import MP3
 from highland import models, media_storage, settings
 
-AUDIO_FOLDER = 'audio'
-
 
 def create(user, audio_file):
     guid, duration, length, type = store_audio_data(user.id, audio_file)
@@ -17,7 +15,7 @@ def create(user, audio_file):
 
 
 def delete(audio):
-    media_storage.delete(audio.guid, AUDIO_FOLDER)
+    media_storage.delete(audio.guid, settings.S3_BUCKET_AUDIO)
     models.db.session.delete(audio)
     models.db.session.commit()
     return True
@@ -57,7 +55,8 @@ def store_audio_data(user_id, audio_file):
 
     type = 'audio/mpeg'
     audio_data = open(temp_path, 'rb')
-    media_storage.upload(audio_data, guid, AUDIO_FOLDER, ContentType=type)
+    media_storage.upload(audio_data, settings.S3_BUCKET_AUDIO,  guid,
+                         ContentType=type)
     d, l = MP3(temp_path).info.length, os.stat(temp_path).st_size
 
     os.remove(temp_path)

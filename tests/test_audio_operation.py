@@ -1,7 +1,7 @@
 import uuid
 import unittest
 from unittest.mock import MagicMock
-from highland import audio_operation, models, media_storage
+from highland import audio_operation, models, media_storage, settings
 
 
 class TestAudioOperation(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestAudioOperation(unittest.TestCase):
         result = audio_operation.delete(mocked_audio)
 
         mocked_media_delete.assert_called_with(mocked_audio.guid,
-                                               audio_operation.AUDIO_FOLDER)
+                                               settings.S3_BUCKET_AUDIO)
         mocked_delete.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
         self.assertTrue(result)

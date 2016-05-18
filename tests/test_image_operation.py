@@ -3,7 +3,7 @@ import imghdr
 import uuid
 import unittest
 from unittest.mock import MagicMock
-from highland import media_storage, image_operation, models
+from highland import media_storage, image_operation, models, settings
 
 
 class TestImageOperation(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestImageOperation(unittest.TestCase):
         result = image_operation.delete(mocked_image)
 
         mocked_storage_delete.assert_called_with(
-            mocked_image.guid, image_operation.IMAGE_FOLDER)
+            mocked_image.guid, settings.S3_BUCKET_IMAGE)
         mocked_db_delete.assert_called_with(mocked_image)
         mocked_db_commit.assert_called_with()
         self.assertTrue(result)
@@ -109,7 +109,7 @@ class TestImageOperation(unittest.TestCase):
 
         result = image_operation.store_image_data(1, mocked_image)
 
-        mocked_upload.assert_called_with(mocked_image, guid + '.jpg',
-                                         image_operation.IMAGE_FOLDER,
-                                         ContentType='image/jpeg')
+        mocked_upload.assert_called_with(
+            mocked_image, settings.S3_BUCKET_IMAGE, guid + '.jpg',
+            ContentType='image/jpeg')
         self.assertEqual((guid, 'jpeg'), result)
