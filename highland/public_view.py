@@ -1,5 +1,5 @@
 from flask import render_template
-from highland import show_operation, episode_operation, media_storage
+from highland import show_operation, episode_operation, media_storage, settings
 
 
 def update(user, show_id):
@@ -7,8 +7,7 @@ def update(user, show_id):
     episodes = episode_operation.load(user, show_id)
     html = render_template('public_sites/index.html',
                            show=show, episodes=episodes)
-    # TODO key name
-    media_storage.upload(html, str(show_id), 'show',
+    media_storage.upload(html, settings.S3_BUCKET_SITES, show.alias,
                          ContentType='text/html; charset=utf-8')
     return html
 
