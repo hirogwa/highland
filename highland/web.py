@@ -12,7 +12,7 @@ def show():
         if 'POST' == request.method:
             args = request.get_json()
             (title, description, subtitle, language, author, category,
-             explicit, image_id) = (
+             explicit, image_id, alias) = (
                  args.get('title'),
                  args.get('description'),
                  args.get('subtitle'),
@@ -20,7 +20,8 @@ def show():
                  args.get('author'),
                  args.get('category'),
                  args.get('explicit'),
-                 args.get('image_id'))
+                 args.get('image_id'),
+                 args.get('alias'))
             assert title, 'title required'
             assert description, 'description required'
             assert subtitle, 'subtitle required'
@@ -29,10 +30,11 @@ def show():
             assert category, 'category required'
             assert explicit, 'explicit required'
             assert image_id, 'image id required'
+            assert alias, 'alias required'
 
             show = show_operation.create(
                 test_user(), title, description, subtitle, language, author,
-                category, explicit.lower() == 'True', image_id)
+                category, explicit.lower() == 'True', image_id, alias)
             return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:

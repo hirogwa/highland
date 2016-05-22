@@ -47,7 +47,7 @@ class TestShow(unittest.TestCase):
         response = self.post_with_json(
             title=title, description=description, subtitle=subtitle,
             language=language, author=author, category=category,
-            explicit=str(explicit), image_id=str(image_id))
+            explicit=str(explicit), image_id=str(image_id), alias=alias)
 
         resp_data = json.loads(response.data)
         resp_show = resp_data.get('show')

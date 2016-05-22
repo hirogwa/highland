@@ -4,9 +4,9 @@ from highland import models, settings
 
 
 def create(user, title, description, subtitle, language, author, category,
-           explicit, image_id):
+           explicit, image_id, alias):
     show = models.Show(user, title, description, subtitle, language, author,
-                       category, explicit, image_id)
+                       category, explicit, image_id, alias)
     models.db.session.add(show)
     models.db.session.commit()
     return show

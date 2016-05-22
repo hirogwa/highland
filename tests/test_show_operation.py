@@ -17,17 +17,18 @@ class TestShowOperation(unittest.TestCase):
         category = 'Technology'
         explicit = False
         image_id = 2
+        alias = 'ultra-space-show'
 
         mocked_show = MagicMock()
         mocked_show_class.return_value = mocked_show
 
         result = show_operation.create(
             mocked_user, title, description, subtitle, language, author,
-            category, explicit, image_id)
+            category, explicit, image_id, alias)
 
         mocked_show_class.assert_called_with(
             mocked_user, title, description, subtitle, language, author,
-            category, explicit, image_id)
+            category, explicit, image_id, alias)
         mocked_add.assert_called_with(mocked_show)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
