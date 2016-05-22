@@ -23,6 +23,7 @@ class Show(db.Model):
     category = db.Column(db.String(50))
     explicit = db.Column(db.Boolean())
     image_id = db.Column(db.Integer)
+    alias = db.Column(db.String(100), unique=True)
     last_build_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -34,7 +35,7 @@ class Show(db.Model):
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     def __init__(self, user, title, description, subtitle, language, author,
-                 category, explicit, image_id):
+                 category, explicit, image_id, alias):
         self.owner_user_id = user.id
         self.title = title
         self.description = description
@@ -44,10 +45,12 @@ class Show(db.Model):
         self.category = category
         self.explicit = explicit
         self.image_id = image_id
+        self.alias = alias
 
     def __iter__(self):
         for key in ['owner_user_id', 'id', 'title', 'description', 'subtitle',
-                    'language', 'author', 'category', 'explicit', 'image_id']:
+                    'language', 'author', 'category', 'explicit', 'image_id',
+                    'alias']:
             yield(key, getattr(self, key))
         yield('last_build_datetime', str(self.last_build_datetime))
         yield('update_datetime', str(self.update_datetime))

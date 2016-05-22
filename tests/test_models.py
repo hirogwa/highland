@@ -11,12 +11,13 @@ class TestShow(unittest.TestCase):
         user.id = 2
         show = models.Show(user, 'my title', 'my description',
                            'this is my fun talk show on arts', 'en-US',
-                           'Ultraman Ace, Ultraman Taro', 'Arts', False, 2)
+                           'Ultraman Ace, Ultraman Taro', 'Arts', False, 2,
+                           'ultra-space-show')
         show.id = 1
 
         show_d = dict(show)
 
-        self.assertEqual(13, len(show_d))
+        self.assertEqual(14, len(show_d))
         self.assertEqual(show.owner_user_id, show_d.get('owner_user_id'))
         self.assertEqual(show.id, show_d.get('id'))
         self.assertEqual(show.title, show_d.get('title'))
@@ -27,6 +28,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.category, show_d.get('category'))
         self.assertEqual(show.explicit, show_d.get('explicit'))
         self.assertEqual(show.image_id, show_d.get('image_id'))
+        self.assertEqual(show.alias, show_d.get('alias'))
         self.assertIsNotNone(show_d.get('last_build_datetime'))
         self.assertIsNotNone(show_d.get('update_datetime'))
         self.assertIsNotNone(show_d.get('create_datetime'))

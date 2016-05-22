@@ -34,11 +34,13 @@ class TestShow(unittest.TestCase):
         category = 'my category'
         explicit = False
         image_id = 3
+        alias = 'my alias'
 
         mocked_user = MagicMock()
         mocked_user.id = 1
         show = models.Show(mocked_user, title, description, subtitle,
-                           language, author, category, explicit, image_id)
+                           language, author, category, explicit, image_id,
+                           alias)
         show.id = 2
         mocked_create.return_value = show
 
@@ -60,6 +62,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.category, resp_show.get('category'))
         self.assertEqual(show.explicit, resp_show.get('explicit'))
         self.assertEqual(show.image_id, resp_show.get('image_id'))
+        self.assertEqual(show.alias, resp_show.get('alias'))
 
     def test_show_post_input_check_title(self):
         with self.assertRaises(AssertionError):
@@ -80,11 +83,13 @@ class TestShow(unittest.TestCase):
         category = 'new category'
         explicit = False
         image_id = 3
+        alias = 'original alias'
 
         mocked_user = MagicMock()
         mocked_user.id = 1
         show = models.Show(mocked_user, title, description, subtitle,
-                           language, author, category, explicit, image_id)
+                           language, author, category, explicit, image_id,
+                           alias)
         show.id = show_id
         mocked_update.return_value = show
 
@@ -106,6 +111,7 @@ class TestShow(unittest.TestCase):
         self.assertEqual(show.category, resp_show.get('category'))
         self.assertEqual(show.explicit, resp_show.get('explicit'))
         self.assertEqual(show.image_id, resp_show.get('image_id'))
+        self.assertEqual(show.alias, resp_show.get('alias'))
 
     def test_show_put_input_check_id(self):
         with self.assertRaises(AssertionError):
@@ -129,10 +135,10 @@ class TestShow(unittest.TestCase):
         shows = [
             models.Show(
                 mocked_user, 'title 01', 'description 01', 'subtitle 01',
-                'en-US', 'author 01', 'category 01', False, 2),
+                'en-US', 'author 01', 'category 01', False, 2, 'myShow01'),
             models.Show(
                 mocked_user, 'title 02', 'description 02', 'subtitle 02',
-                'ja', 'author 02', 'category 02', True, 3)
+                'ja', 'author 02', 'category 02', True, 3, 'myShow02')
         ]
         mocked_load.return_value = shows
 
