@@ -18,7 +18,6 @@ def update_episode(user, show_id, episode_id):
         user, show_id, episode_id)
     html = render_template('public_sites/episode.html',
                            show=show, episode=episode)
-    # TODO key name
-    media_storage.upload(html, str(episode_id), 'episode',
-                         ContentType='text/html; charset=utf-8')
+    media_storage.upload(html, settings.S3_BUCKET_SITES, episode.alias,
+                         show.alias, ContentType='text/html; charset=utf-8')
     return html

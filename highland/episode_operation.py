@@ -87,11 +87,11 @@ def valid_or_assert(user, episode):
     return episode
 
 
-def get_episode_url(episode):
-    # TODO
+def get_episode_url(user, episode, show=None):
+    if not show:
+        show = show_operation.get_show_or_assert(user, episode.show_id)
     return urllib.parse.urljoin(
-        settings.HOST,
-        'user/{}/show/{}'.format(episode.owner_user_id, episode.show_id))
+        settings.HOST_SITE, '{}/{}'.format(show.alias, episode.alias))
 
 
 def _update_show_build_datetime(user, episode):

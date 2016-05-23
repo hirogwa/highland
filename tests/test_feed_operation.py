@@ -112,7 +112,8 @@ class TestFeedOperation(unittest.TestCase):
         mocked_i_image.assert_called_with(image_url_show)
 
         mocked_fg_rss_str.assert_called_with(pretty=True)
-        mocked_get_episode_url.assert_called_with(mocked_episode)
+        mocked_get_episode_url.assert_called_with(mocked_user, mocked_episode,
+                                                  mocked_show)
         mocked_fg_add_entry.assert_called_with()
         mocked_fe.title.assert_called_with(mocked_episode.title)
         mocked_fe.link.assert_called_with(href=mocked_episode_url)

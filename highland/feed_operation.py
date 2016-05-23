@@ -32,7 +32,7 @@ def update(user, show_id):
         audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
         fe = fg.add_entry()
         fe.title(episode.title)
-        fe.link(href=episode_operation.get_episode_url(episode))
+        fe.link(href=episode_operation.get_episode_url(user, episode, show))
         fe.description(episode.description)
         fe.enclosure(url=audio_operation.get_audio_url(audio),
                      length=str(audio.length), type=audio.type)
