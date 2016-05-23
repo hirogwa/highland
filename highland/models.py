@@ -92,6 +92,7 @@ class Episode(db.Model):
             ['owner_user_id', 'show_id'],
             ['show.owner_user_id', 'show.id'],
         ),
+        db.UniqueConstraint('owner_user_id', 'show_id', 'alias')
     )
 
     def __init__(self, show, title, subtitle, description, audio_id,
