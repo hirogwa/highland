@@ -4,14 +4,14 @@ from highland import models, show_operation, settings, audio_operation,\
     image_operation
 
 
-def create(user, show_id, draft_status, scheduled_datetime=None,
+def create(user, show_id, draft_status, alias, scheduled_datetime=None,
            title='', subtitle='', description='', audio_id=-1, explicit=False,
            image_id=-1):
     draft_status = models.Episode.DraftStatus(draft_status)
     show = show_operation.get_show_or_assert(user, show_id)
     episode = valid_or_assert(user, models.Episode(
         show, title, subtitle, description, audio_id, draft_status,
-        scheduled_datetime, explicit))
+        scheduled_datetime, explicit, alias))
     models.db.session.add(episode)
     models.db.session.commit()
 
@@ -19,9 +19,9 @@ def create(user, show_id, draft_status, scheduled_datetime=None,
     return episode
 
 
-def update(user, show_id, episode_id, draft_status, scheduled_datetime=None,
-           title='', subtitle='', description='', audio_id=-1, explicit=False,
-           image_id=-1):
+def update(user, show_id, episode_id, draft_status, alias,
+           scheduled_datetime=None, title='', subtitle='', description='',
+           audio_id=-1, explicit=False, image_id=-1):
     show_operation.get_show_or_assert(user, show_id)
     episode = get_episode_or_assert(user, show_id, episode_id)
 
@@ -31,6 +31,7 @@ def update(user, show_id, episode_id, draft_status, scheduled_datetime=None,
     episode.audio_id = audio_id
     episode.explicit = explicit
     episode.image_id = image_id
+    episode.alias = alias
     episode.draft_status = models.Episode.DraftStatus(draft_status)
     episode.scheduled_datetime = scheduled_datetime
     valid_or_assert(user, episode)

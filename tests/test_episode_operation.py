@@ -28,6 +28,7 @@ class TestEpisodeOperation(unittest.TestCase):
         description = 'my episode description'
         subtitle = 'my episode subtitle'
         explicit = True
+        alias = 'my alias'
 
         mocked_get_show.return_value = mocked_show
         mocked_get_audio.return_value = mocked_audio
@@ -37,7 +38,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_valid.return_value = mocked_episode
 
         result = episode_operation.create(
-            mocked_user, mocked_show.id, status_published.name, None,
+            mocked_user, mocked_show.id, status_published.name, alias, None,
             title, subtitle, description, mocked_audio.id, explicit)
 
         self.assertEqual(mocked_episode, result)
@@ -46,7 +47,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_episode_class.assert_called_with(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            status_published, None, explicit)
+            status_published, None, explicit, alias)
         mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_add.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
@@ -137,13 +138,14 @@ class TestEpisodeOperation(unittest.TestCase):
         scheduled_datetime_new = datetime.datetime.utcnow()
         mocked_audio_new = MagicMock()
         mocked_audio_new.id = 11
+        alias = 'new alias'
 
         mocked_get_episode.return_value = mocked_episode
 
         result = episode_operation.update(
             mocked_user, mocked_show.id, mocked_episode.id,
-            draft_status_new.name, scheduled_datetime_new, title, subtitle,
-            description, mocked_audio_new.id, explicit)
+            draft_status_new.name, alias, scheduled_datetime_new, title,
+            subtitle, description, mocked_audio_new.id, explicit)
 
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_get_episode.assert_called_with(
@@ -162,6 +164,7 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(scheduled_datetime_new,
                          mocked_episode.scheduled_datetime)
         self.assertEqual(explicit, mocked_episode.explicit)
+        self.assertEqual(alias, mocked_episode.alias)
         self.assertEqual(result, mocked_episode)
 
     @unittest.mock.patch.object(episode_operation,
