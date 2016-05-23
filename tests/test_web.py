@@ -176,6 +176,7 @@ class TestEpisode(unittest.TestCase):
         audio_id = 3
         explicit = True
         image_id = 4
+        alias = 'my alias'
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -184,7 +185,7 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.draft, None, False, image_id)
+            models.Episode.DraftStatus.draft, None, False, image_id, alias)
         mocked_create.return_value = episode
 
         response = self.post_with_json(
@@ -196,7 +197,8 @@ class TestEpisode(unittest.TestCase):
             description=description,
             audio_id=audio_id,
             explicit=str(explicit),
-            image_id=str(image_id))
+            image_id=str(image_id),
+            alias=alias)
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -215,6 +217,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
         self.assertEqual(episode.explicit, resp_episode.get('explicit'))
         self.assertEqual(episode.image_id, resp_episode.get('image_id'))
+        self.assertEqual(episode.alias, resp_episode.get('alias'))
 
     @unittest.mock.patch.object(episode_operation, 'create')
     def test_post_input_check_show_id(self, mocked_create):
@@ -256,6 +259,7 @@ class TestEpisode(unittest.TestCase):
         audio_id = 4
         explicit = True
         image_id = 5
+        alias = 'my new alias'
 
         mocked_show = MagicMock()
         mocked_show.owner_user_id = 1
@@ -264,7 +268,8 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False, image_id)
+            models.Episode.DraftStatus.published, None, False, image_id,
+            alias)
         mocked_update.return_value = episode
 
         response = self.put_with_json(
@@ -277,7 +282,8 @@ class TestEpisode(unittest.TestCase):
             description=description,
             audio_id=audio_id,
             explicit=str(explicit),
-            image_id=str(image_id))
+            image_id=str(image_id),
+            alias=alias)
 
         resp_data = json.loads(response.data)
         resp_episode = resp_data.get('episode')
@@ -296,6 +302,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.audio_id, resp_episode.get('audio_id'))
         self.assertEqual(episode.explicit, resp_episode.get('explicit'))
         self.assertEqual(episode.image_id, resp_episode.get('image_id'))
+        self.assertEqual(episode.alias, resp_episode.get('alias'))
 
     @unittest.mock.patch.object(episode_operation, 'update')
     def test_put_input_check_show_id(self, mocked_update):
@@ -351,10 +358,12 @@ class TestEpisode(unittest.TestCase):
         episodes = [
             models.Episode(
                 mocked_show, 'title01', 'sub01', 'desc01', mocked_audio_01.id,
-                models.Episode.DraftStatus.published, None, False, 21),
+                models.Episode.DraftStatus.published, None, False, 21,
+                'alias01'),
             models.Episode(
                 mocked_show, 'title02', 'sub02', 'desc02', mocked_audio_02.id,
-                models.Episode.DraftStatus.draft, None, False, 22)
+                models.Episode.DraftStatus.draft, None, False, 22,
+                'alias02')
         ]
         mocked_load.return_value = episodes
 

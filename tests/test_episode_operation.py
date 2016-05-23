@@ -57,51 +57,53 @@ class TestEpisodeOperation(unittest.TestCase):
     def test_valid_or_assert_valid_published(self, mocked_get_audio,
                                              mocked_get_image):
         mocked_user = MagicMock()
-        mocked_show = MagicMock()
         mocked_audio = MagicMock()
         mocked_audio.id = 3
         mocked_image = MagicMock()
         mocked_image.id = 4
+        mocked_episode = MagicMock()
+        mocked_episode.audio_id = 11
+        mocked_episode.image_id = 21
+        mocked_episode.title = 'title'
+        mocked_episode.description = 'desc'
+        mocked_episode.draft_status = models.Episode.DraftStatus.published
 
         mocked_get_audio.return_value = mocked_audio
 
-        episode = models.Episode(
-            mocked_show, 'my episode', 'my subtitle', 'my episode desc',
-            mocked_audio.id, models.Episode.DraftStatus.published, None, False,
-            mocked_image.id)
+        result = episode_operation.valid_or_assert(mocked_user, mocked_episode)
 
-        result = episode_operation.valid_or_assert(mocked_user, episode)
-
-        self.assertEqual(episode, result)
-        mocked_get_audio.assert_called_with(mocked_user, episode.audio_id)
-        mocked_get_image.assert_called_with(mocked_user, episode.image_id)
+        self.assertEqual(mocked_episode, result)
+        mocked_get_audio.assert_called_with(mocked_user,
+                                            mocked_episode.audio_id)
+        mocked_get_image.assert_called_with(mocked_user,
+                                            mocked_episode.image_id)
 
     @unittest.mock.patch.object(image_operation, 'get_image_or_assert')
     @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
     def test_valid_or_assert_incomplete_draft(self, mocked_get_audio,
                                               mocked_get_image):
         mocked_user = MagicMock()
-        mocked_show = MagicMock()
+        mocked_episode = MagicMock()
+        mocked_episode.audio_id = -1
+        mocked_episode.image_id = -1
+        mocked_episode.draft_status = models.Episode.DraftStatus.draft
 
-        episode = models.Episode(
-            mocked_show, '', '', '', -1, models.Episode.DraftStatus.draft,
-            None, False, -1)
+        result = episode_operation.valid_or_assert(mocked_user, mocked_episode)
 
-        result = episode_operation.valid_or_assert(mocked_user, episode)
-
-        self.assertEqual(episode, result)
+        self.assertEqual(mocked_episode, result)
         mocked_get_audio.assert_not_called()
         mocked_get_image.assert_not_called()
 
     def test_valid_or_assert_scheduled_with_no_time(self):
         mocked_user = MagicMock()
-        mocked_show = MagicMock()
-        episode = models.Episode(
-            mocked_show, '', '', '', -1, models.Episode.DraftStatus.scheduled,
-            None, False, -1)
+        mocked_episode = MagicMock()
+        mocked_episode.audio_id = -1
+        mocked_episode.image_id = -1
+        mocked_episode.draft_status = models.Episode.DraftStatus.scheduled
+        mocked_episode.scheduled_datetime = None
 
         with self.assertRaises(AssertionError):
-            episode_operation.valid_or_assert(mocked_user, episode)
+            episode_operation.valid_or_assert(mocked_user, mocked_episode)
 
     @unittest.mock.patch.object(episode_operation,
                                 '_update_show_build_datetime')
@@ -168,22 +170,12 @@ class TestEpisodeOperation(unittest.TestCase):
     @unittest.mock.patch.object(models.db.session, 'delete')
     def test_delete(self, mocked_delete, mocked_commit, mocked_build):
         mocked_user = MagicMock()
-        mocked_show = MagicMock()
-        mocked_show.owner_user_id = 1
-        mocked_show.id = 2
+        mocked_episode = MagicMock()
+        result = episode_operation.delete(mocked_user, mocked_episode)
 
-        mocked_audio = MagicMock()
-        mocked_audio.id = 3
-
-        episode = models.Episode(
-            mocked_show, 'title', 'subtitle', 'desc', mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False, -1)
-
-        result = episode_operation.delete(mocked_user, episode)
-
-        mocked_delete.assert_called_with(episode)
+        mocked_delete.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
-        mocked_build.assert_called_with(mocked_user, episode)
+        mocked_build.assert_called_with(mocked_user, mocked_episode)
         self.assertTrue(result)
 
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
@@ -194,17 +186,9 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_show = MagicMock()
         mocked_show.owner_user_id = mocked_user.id
         mocked_show.id = 2
-        mocked_audio = MagicMock()
-        mocked_audio.id = 3
         mocked_get_show.return_value = mocked_show
 
-        ep_one = models.Episode(
-            mocked_show, 'title one', 'sub one', 'desc one', mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False, -1)
-        ep_two = models.Episode(
-            mocked_show, 'title two', 'sub two', 'desc two', mocked_audio.id,
-            models.Episode.DraftStatus.draft, None, False, -1)
-        ep_list = [ep_one, ep_two]
+        ep_list = [MagicMock(), MagicMock()]
 
         mocked_filter = MagicMock()
         mocked_filter.all.return_value = ep_list

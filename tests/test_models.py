@@ -44,7 +44,7 @@ class TestEpisode(unittest.TestCase):
         episode = models.Episode(
             show, 'my title', 'my subtitle', 'my description', audio.id,
             models.Episode.DraftStatus.scheduled,
-            datetime.datetime.now(datetime.timezone.utc), False, 4)
+            datetime.datetime.now(datetime.timezone.utc), False, 4, 'my alias')
         episode.id = 4
         episode.guid = uuid.uuid4().hex
         episode.update_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -52,7 +52,7 @@ class TestEpisode(unittest.TestCase):
 
         episode_d = dict(episode)
 
-        self.assertEqual(14, len(episode_d))
+        self.assertEqual(15, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
@@ -65,6 +65,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.explicit, episode_d.get('explicit'))
         self.assertEqual(episode.guid, episode_d.get('guid'))
         self.assertEqual(episode.image_id, episode_d.get('image_id'))
+        self.assertEqual(episode.alias, episode_d.get('alias'))
         self.assertEqual(str(episode.update_datetime),
                          episode_d.get('update_datetime'))
         self.assertEqual(str(episode.create_datetime),

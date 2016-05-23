@@ -79,6 +79,7 @@ class Episode(db.Model):
     explicit = db.Column(db.Boolean())
     guid = db.Column(db.String(32),
                      default=lambda x: uuid.uuid4().hex)
+    alias = db.Column(db.String(100))
     update_datetime = db.Column(
         db.DateTime(timezone=True),
         onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -94,7 +95,7 @@ class Episode(db.Model):
     )
 
     def __init__(self, show, title, subtitle, description, audio_id,
-                 draft_status, scheduled_datetime, explicit, image_id):
+                 draft_status, scheduled_datetime, explicit, image_id, alias):
         self.owner_user_id = show.owner_user_id
         self.show_id = show.id
         self.title = title
@@ -105,10 +106,12 @@ class Episode(db.Model):
         self.scheduled_datetime = scheduled_datetime
         self.explicit = explicit
         self.image_id = image_id
+        self.alias = alias
 
     def __iter__(self):
         for key in ['owner_user_id', 'show_id', 'id', 'title', 'subtitle',
-                    'description', 'audio_id', 'explicit', 'guid', 'image_id']:
+                    'description', 'audio_id', 'explicit', 'guid', 'image_id',
+                    'alias']:
             yield(key, getattr(self, key))
         yield('draft_status', self.draft_status.name)
         yield('scheduled_datetime', str(self.scheduled_datetime))
