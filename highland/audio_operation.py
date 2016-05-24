@@ -38,10 +38,7 @@ def get_audio_or_assert(user, audio_id):
 
 
 def get_audio_url(audio):
-    # TODO
-    return urllib.parse.urljoin(
-        settings.HOST,
-        'user/{}/audio/{}'.format(audio.owner_user_id, audio.id))
+    return urllib.parse.urljoin(settings.HOST_AUDIO, audio.guid)
 
 
 def store_audio_data(user_id, audio_file):
