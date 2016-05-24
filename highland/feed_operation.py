@@ -51,8 +51,7 @@ def update(user, show_id):
 
     return media_storage.upload(
         fg.rss_str(pretty=True), settings.S3_BUCKET_FEED,
-        show_operation.get_show_unique_id(show),
-        FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
+        show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
 
 
 def _format_seconds(sec):

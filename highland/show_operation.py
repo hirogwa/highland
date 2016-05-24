@@ -53,11 +53,4 @@ def get_show_or_assert(user, show_id):
 
 
 def get_show_url(show):
-    # TODO
-    return urllib.parse.urljoin(
-        settings.HOST, 'user/{}/show/{}'.format(show.owner_user_id, show.id))
-
-
-def get_show_unique_id(show):
-    # TODO
-    return '{}-{}'.format(show.owner_user_id, show.id)
+    return urllib.parse.urljoin(settings.HOST_SITE, show.alias)

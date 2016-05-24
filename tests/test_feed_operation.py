@@ -30,11 +30,10 @@ class TestFeedOperation(unittest.TestCase):
     @unittest.mock.patch.object(episode_operation, 'get_episode_url')
     @unittest.mock.patch.object(episode_operation, 'load')
     @unittest.mock.patch.object(show_operation, 'get_show_url')
-    @unittest.mock.patch.object(show_operation, 'get_show_unique_id')
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     def test_update(
             self,
-            mocked_get_show, mocked_unique_id, mocked_get_show_url,
+            mocked_get_show, mocked_get_show_url,
             mocked_load_episode, mocked_get_episode_url,
             mocked_upload,
             mocked_fg_title, mocked_fg_description, mocked_fg_link,
@@ -57,7 +56,6 @@ class TestFeedOperation(unittest.TestCase):
         mocked_content = MagicMock()
         mocked_audio = MagicMock()
         audio_url = 'some_audio_url'
-        unique_id = 'someid'
         formatted_seconds = '0:25:12'
         mocked_fe = MagicMock()
         mocked_image_show = MagicMock()
@@ -68,7 +66,6 @@ class TestFeedOperation(unittest.TestCase):
         mocked_load_episode.return_value = [mocked_episode]
         mocked_get_episode_url.return_value = mocked_episode_url
         mocked_fg_rss_str.return_value = mocked_content
-        mocked_unique_id.return_value = unique_id
         mocked_fg_add_entry.return_value = mocked_fe
 
         mocked_get_audio.return_value = mocked_audio
@@ -135,7 +132,7 @@ class TestFeedOperation(unittest.TestCase):
         mocked_fe.podcast.itunes_image.assert_called_with(image_url_episode)
 
         mocked_upload.assert_called_with(
-            mocked_content, settings.S3_BUCKET_FEED, unique_id,
+            mocked_content, settings.S3_BUCKET_FEED, mocked_show.alias,
             feed_operation.FEED_FOLDER_RSS,
             ContentType=feed_operation.FEED_CONTENT_TYPE)
 
