@@ -35,12 +35,9 @@ def get_image_or_assert(user, image_id):
 
 
 def get_image_url(image):
-    # TODO
     return urllib.parse.urljoin(
-        settings.HOST,
-        'user/{}/image/{}.{}'.format(
-            image.owner_user_id, image.guid,
-            image.type.replace('jpeg', 'jpg')))
+        settings.HOST_IMAGE, '{}.{}'.format(
+            image.guid, image.type.replace('jpeg', 'jpg')))
 
 
 def store_image_data(user_id, image_file):
