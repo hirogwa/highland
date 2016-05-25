@@ -1,13 +1,15 @@
 import unittest
 from unittest.mock import MagicMock
-from highland import show_operation, models
+from highland import show_operation, models, common
 
 
 class TestShowOperation(unittest.TestCase):
     @unittest.mock.patch('highland.models.Show')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'add')
-    def test_create(self, mocked_add, mocked_commit, mocked_show_class):
+    @unittest.mock.patch.object(common, 'is_valid_alias')
+    def test_create(self, mocked_valid_alias, mocked_add, mocked_commit,
+                    mocked_show_class):
         mocked_user = MagicMock()
         title = 'my show'
         description = 'my show description'
@@ -17,15 +19,17 @@ class TestShowOperation(unittest.TestCase):
         category = 'Technology'
         explicit = False
         image_id = 2
-        alias = 'ultra-space-show'
+        alias = 'ultraSpaceShow'
 
         mocked_show = MagicMock()
         mocked_show_class.return_value = mocked_show
+        mocked_valid_alias.return_value = True
 
         result = show_operation.create(
             mocked_user, title, description, subtitle, language, author,
             category, explicit, image_id, alias)
 
+        mocked_valid_alias.assert_called_with(alias)
         mocked_show_class.assert_called_with(
             mocked_user, title, description, subtitle, language, author,
             category, explicit, image_id, alias)

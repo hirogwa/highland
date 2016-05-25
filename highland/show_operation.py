@@ -1,10 +1,13 @@
 import datetime
 import urllib.parse
-from highland import models, settings
+from highland import models, settings, common
 
 
 def create(user, title, description, subtitle, language, author, category,
            explicit, image_id, alias):
+    if not common.is_valid_alias(alias):
+        raise ValueError('alias not accepted. {}'.format(alias))
+
     show = models.Show(user, title, description, subtitle, language, author,
                        category, explicit, image_id, alias)
     models.db.session.add(show)

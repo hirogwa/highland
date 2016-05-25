@@ -2,7 +2,7 @@ import datetime
 import unittest
 from unittest.mock import MagicMock
 from highland import show_operation, episode_operation, models, audio_operation,\
-    image_operation
+    image_operation, common
 
 
 class TestEpisodeOperation(unittest.TestCase):
@@ -14,9 +14,10 @@ class TestEpisodeOperation(unittest.TestCase):
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'add')
-    def test_create(self, mocked_add, mocked_commit, mocked_get_show,
-                    mocked_get_audio, mocked_episode_class, mocked_valid,
-                    mocked_build):
+    @unittest.mock.patch.object(common, 'is_valid_alias')
+    def test_create(self, mocked_valid_alias, mocked_add, mocked_commit,
+                    mocked_get_show, mocked_get_audio, mocked_episode_class,
+                    mocked_valid, mocked_build):
         mocked_user = MagicMock()
         mocked_show = MagicMock()
         mocked_show.id = 2
@@ -28,7 +29,7 @@ class TestEpisodeOperation(unittest.TestCase):
         description = 'my episode description'
         subtitle = 'my episode subtitle'
         explicit = True
-        alias = 'my alias'
+        alias = 'myAlias'
 
         mocked_get_show.return_value = mocked_show
         mocked_get_audio.return_value = mocked_audio
@@ -36,12 +37,14 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_episode_class.return_value = mocked_episode
         mocked_episode_class.DraftStatus.return_value = status_published
         mocked_valid.return_value = mocked_episode
+        mocked_valid_alias.return_value = True
 
         result = episode_operation.create(
             mocked_user, mocked_show.id, status_published.name, alias, None,
             title, subtitle, description, mocked_audio.id, explicit)
 
         self.assertEqual(mocked_episode, result)
+        mocked_valid_alias.assert_called_with(alias)
         mocked_episode_class.DraftStatus.assert_called_with(
             status_published.name)
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)

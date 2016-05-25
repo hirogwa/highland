@@ -1,12 +1,15 @@
 import datetime
 import urllib.parse
 from highland import models, show_operation, settings, audio_operation,\
-    image_operation
+    image_operation, common
 
 
 def create(user, show_id, draft_status, alias, scheduled_datetime=None,
            title='', subtitle='', description='', audio_id=-1, explicit=False,
            image_id=-1):
+    if not common.is_valid_alias(alias):
+        raise ValueError('alias not accepted. {}'.format(alias))
+
     draft_status = models.Episode.DraftStatus(draft_status)
     show = show_operation.get_show_or_assert(user, show_id)
     episode = valid_or_assert(user, models.Episode(
