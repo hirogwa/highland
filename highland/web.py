@@ -1,6 +1,6 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation
@@ -241,3 +241,8 @@ def ping():
     print(request.get_json())
     user = models.User('name', 'email', 'somepass')
     return user.username
+
+
+@app.route('/page/show', methods=['GET'])
+def dashboard_show():
+    return render_template('dashboard/page_show.html')

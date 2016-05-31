@@ -6,3 +6,5 @@ postgres
 *.log
 test_files
 settings.py
+node_modules
+bundle.js
