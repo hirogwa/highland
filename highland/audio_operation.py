@@ -52,7 +52,7 @@ def store_audio_data(user_id, audio_file):
 
     type = 'audio/mpeg'
     audio_data = open(temp_path, 'rb')
-    media_storage.upload(audio_data, settings.S3_BUCKET_AUDIO,  guid,
+    media_storage.upload(audio_data, settings.S3_BUCKET_AUDIO, guid,
                          ContentType=type)
     d, l = MP3(temp_path).info.length, os.stat(temp_path).st_size
 

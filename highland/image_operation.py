@@ -35,9 +35,7 @@ def get_image_or_assert(user, image_id):
 
 
 def get_image_url(image):
-    return urllib.parse.urljoin(
-        settings.HOST_IMAGE, '{}.{}'.format(
-            image.guid, image.type.replace('jpeg', 'jpg')))
+    return urllib.parse.urljoin(settings.HOST_IMAGE, image.guid)
 
 
 def store_image_data(user_id, image_file):
@@ -52,10 +50,10 @@ def store_image_data(user_id, image_file):
     type = imghdr.what(temp_path)
     assert type in ['jpeg', 'png'], 'image type not supported:{}'.format(type)
 
+    image_data = open(temp_path, 'rb')
     media_storage.upload(
-        image_file, settings.S3_BUCKET_IMAGE,
-        '{}.{}'.format(guid, type.replace('jpeg', 'jpg')),
-        ContentType='image/{}'.format(type))
+        image_data, settings.S3_BUCKET_IMAGE,
+        guid, ContentType='image/{}'.format(type))
 
     os.remove(temp_path)
     return guid, type

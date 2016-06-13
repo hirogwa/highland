@@ -91,25 +91,3 @@ class TestImageOperation(unittest.TestCase):
         with self.assertRaises(AssertionError):
             image_operation.get_image_or_assert(
                 mocked_user, image_id)
-
-    @unittest.mock.patch.object(os, 'remove')
-    @unittest.mock.patch.object(media_storage, 'upload')
-    @unittest.mock.patch.object(imghdr, 'what')
-    @unittest.mock.patch.object(uuid, 'uuid4')
-    @unittest.mock.patch.object(os.path, 'exists')
-    def test_store_image_data(self, mocked_exists, mocked_uuid4, mocked_what,
-                              mocked_upload, mocked_remove):
-        mocked_exists.return_value = True
-        mocked_what.return_value = 'jpeg'
-        mocked_image = MagicMock()
-        guid = 'test_guid'
-        mocked_uuid = MagicMock()
-        mocked_uuid.hex = guid
-        mocked_uuid4.return_value = mocked_uuid
-
-        result = image_operation.store_image_data(1, mocked_image)
-
-        mocked_upload.assert_called_with(
-            mocked_image, settings.S3_BUCKET_IMAGE, guid + '.jpg',
-            ContentType='image/jpeg')
-        self.assertEqual((guid, 'jpeg'), result)
