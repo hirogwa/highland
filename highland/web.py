@@ -57,7 +57,7 @@ def show():
             assert language, 'language required'
             assert author, 'author required'
             assert category, 'category required'
-            assert explicit, 'explicit required'
+            assert explicit is not None, 'explicit required'
             assert image_id, 'image id required'
 
             show = show_operation.update(
