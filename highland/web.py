@@ -6,6 +6,16 @@ from highland import app, models,\
     image_operation
 
 
+@app.route('/show/<show_id>', methods=['GET'])
+def get_show(show_id):
+    try:
+        show = show_operation.get_show_or_assert(test_user(), show_id)
+        return jsonify(show=dict(show), result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
 def show():
     try:
@@ -28,13 +38,14 @@ def show():
             assert language, 'language required'
             assert author, 'author required'
             assert category, 'category required'
-            assert explicit, 'explicit required'
-            assert image_id, 'image id required'
+            assert explicit is not None, 'explicit required'
+            # TODO: UI not ready
+            # assert image_id, 'image id required'
             assert alias, 'alias required'
 
             show = show_operation.create(
                 test_user(), title, description, subtitle, language, author,
-                category, explicit.lower() == 'True', image_id, alias)
+                category, explicit, image_id, alias)
             return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:
@@ -167,6 +178,18 @@ def audio():
         raise e
 
 
+@app.route('/image/<image_id>', methods=['GET'])
+def get_image(image_id):
+    try:
+        image = image_operation.get_image_or_assert(test_user(), image_id)
+        image_d = dict(image)
+        image_d['url'] = image_operation.get_image_url(image)
+        return jsonify(image=image_d, result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
 @app.route('/image', methods=['POST', 'GET'])
 def image():
     try:
@@ -243,6 +266,14 @@ def ping():
     return user.username
 
 
-@app.route('/page/show', methods=['GET'])
-def dashboard_show():
-    return render_template('dashboard/page_show.html')
+@app.route('/page/show/<id_or_new>', methods=['GET'])
+def dashboard_show(id_or_new):
+    if id_or_new == 'new':
+        mode = 'create'
+        show_id = -1
+    else:
+        mode = 'update'
+        show_id = id_or_new
+
+    return render_template(
+        'dashboard/page_show.html', show_id=show_id, mode=mode)
