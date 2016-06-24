@@ -2,17 +2,18 @@ import React from "react";
 import ReactDOM from "react-dom";
 import $ from "jquery";
 import _ from "underscore";
+import { Button, ControlLabel, Form, FormControl, FormGroup } from 'react-bootstrap';
 
 class TitleText extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Title</h3>
-              <input type="text"
-                     value={this.props.title}
-                     onChange={this.props.handleChange}
-                     />
-            </div>
+            <FormGroup controlId="formControlsTitle">
+              <ControlLabel>Title</ControlLabel>
+              <FormControl type="text" placeholder="Enter text"
+                           value={this.props.title}
+                           onChange={this.props.handleChange}
+                           />
+            </FormGroup>
         );
     }
 }
@@ -20,13 +21,13 @@ class TitleText extends React.Component {
 class DescriptionText extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Description</h3>
-              <input type="text"
-                     value={this.props.description}
-                     onChange={this.props.handleChange}
-                     />
-            </div>
+            <FormGroup controlId="formControlsDescription">
+              <ControlLabel>Description</ControlLabel>
+              <FormControl componentClass="textarea" placeholder="Enter text"
+                           value={this.props.description}
+                           onChange={this.props.handleChange}
+                           />
+            </FormGroup>
         );
     }
 }
@@ -34,13 +35,13 @@ class DescriptionText extends React.Component {
 class SubtitleText extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Subtitle</h3>
-              <input type="text"
-                     value={this.props.subtitle}
-                     onChange={this.props.handleChange}
-                     />
-            </div>
+            <FormGroup controlId="formControlsSubtitle">
+              <ControlLabel>Subtitle</ControlLabel>
+              <FormControl type="text" placeholder="Enter text"
+                           value={this.props.subtitle}
+                           onChange={this.props.handleChange}
+                           />
+            </FormGroup>
         );
     }
 }
@@ -48,14 +49,15 @@ class SubtitleText extends React.Component {
 class LanguageSelector extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Language</h3>
-              <select value={this.props.language}
-                      onChange={this.props.handleChange}>
+            <FormGroup controlId="formControlsLanguageSelect">
+              <ControlLabel>Language</ControlLabel>
+              <FormControl componentClass="select" placeholder="select"
+                       value={this.props.language}
+                       onChange={this.props.handleChange}>
                 <option value="en-US">English(US)</option>
                 <option value="ja">Japanese</option>
-              </select>
-            </div>
+              </FormControl>
+            </FormGroup>
         );
     }
 }
@@ -63,14 +65,13 @@ class LanguageSelector extends React.Component {
 class AuthorText extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Author</h3>
-              <input
-                 type="text"
-                 value={this.props.author}
-                 onChange={this.props.handleChange}
-                 />
-            </div>
+            <FormGroup controlId="formControlsAuthor">
+              <ControlLabel>Author</ControlLabel>
+              <FormControl type="text" placeholder="Enter text"
+                           value={this.props.author}
+                           onChange={this.props.handleChange}
+                           />
+            </FormGroup>
         );
     }
 }
@@ -78,14 +79,15 @@ class AuthorText extends React.Component {
 class CategorySelector extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Category</h3>
-              <select value={this.props.category}
-                      onChange={this.props.handleChange}>
+            <FormGroup controlId="formControlsCategorySelect">
+              <ControlLabel>Category</ControlLabel>
+              <FormControl componentClass="select" placeholder="select"
+                           value={this.props.category}
+                           onChange={this.props.handleChange}>
                 <option value="Technology">Technology</option>
                 <option value="Arts">Arts</option>
-              </select>
-            </div>
+              </FormControl>
+            </FormGroup>
         );
     }
 }
@@ -93,14 +95,15 @@ class CategorySelector extends React.Component {
 class ExplicitSelector extends React.Component {
     render() {
         return (
-            <div>
-              <h3>Explicit</h3>
-              <select value={this.props.explicit ? 'yes' : 'no'}
-                      onChange={this.props.handleChange}>
+            <FormGroup controlId="formControlsExplicitSelect">
+              <ControlLabel>Explicit</ControlLabel>
+              <FormControl componentClass="select" placeholder="select"
+                           value={this.props.explicit ? 'yes' : 'no'}
+                           onChange={this.props.handleChange}>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
-              </select>
-            </div>
+              </FormControl>
+            </FormGroup>
         );
     }
 }
@@ -132,8 +135,7 @@ class Image extends React.Component {
     render() {
         return (
             <div>
-              <h3>(Thumbnail)</h3>
-              <img src={this.state.url} />
+              <img src={this.state.url} className="img-thumbnail"/>
             </div>
         );
     }
@@ -142,12 +144,13 @@ class Image extends React.Component {
 class AliasText extends React.Component {
     render() {
         return (
-            <div>
-              <h3>(Alias)</h3>
-              <input value={this.props.alias}
-                     onChange={this.props.handleChange}
-                     />
-            </div>
+            <FormGroup controlId="formControlsAlias">
+              <ControlLabel>Alias</ControlLabel>
+              <FormControl type="text" placeholder="Enter text"
+                           value={this.props.alias}
+                           onChange={this.props.handleChange}
+                           />
+            </FormGroup>
         );
     }
 }
@@ -255,7 +258,7 @@ var App = React.createClass({
 
     render: function() {
         return (
-            <div>
+            <Form>
               <Image imageId={this.state.show.image_id}
                      />
               <AliasText alias={this.state.show.alias}
@@ -282,8 +285,8 @@ var App = React.createClass({
               <ExplicitSelector explicit={this.state.show.explicit}
                                 handleChange={this.handleChangeExplicit}
                                 />
-              <input type="submit" value="Save" onClick={this.saveShow} />
-            </div>
+              <Button bsStyle="primary" onClick={this.saveShow}>Save</Button>
+            </Form>
         );
     }
 });
