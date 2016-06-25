@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Dashboard - Show</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css">
-  </head>
+{% extends "dashboard/base.html" %}
 
-  <body>
-    <div class="mainContainer"></div>
-    <script>
-      var mode = '{{ mode }}'
-      var showId = '{{ show_id }}';
-    </script>
-    <script src="/static/js/bundle.js" type="text/javascript"></script>
-  </body>
-</html>
+{% block header %}
+<title>Dashboard - Show</title>
+{% endblock %}
+
+{% block body %}
+<div class="mainContainer"></div>
+<script>
+  var mode = '{{ mode }}'
+  var showId = '{{ show_id }}';
+</script>
+<script src="/static/js/bundled-show.js" type="text/javascript"></script>
+{% endblock %}
