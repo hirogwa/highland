@@ -198,7 +198,12 @@ def image():
             return jsonify(image=dict(image), result='success'), 201
         if 'GET' == request.method:
             images = image_operation.load(test_user())
-            return jsonify(images=list(map(dict, images)), result='success')
+
+            def _dict(x):
+                d = dict(x)
+                d['url'] = image_operation.get_image_url(x)
+                return d
+            return jsonify(images=[_dict(x) for x in images], result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
