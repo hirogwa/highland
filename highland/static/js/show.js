@@ -1,156 +1,43 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import $ from "jquery";
 import _ from "underscore";
-import { Button, ControlLabel, Form, FormControl, FormGroup } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
+import { TextArea, TextInput, OptionSelector, ExplicitSelector, Image } from './common.js';
 
-class TitleText extends React.Component {
+class CategorySelector extends React.Component {
     render() {
-        return (
-            <FormGroup controlId="formControlsTitle">
-              <ControlLabel>Title</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
-                           value={this.props.title}
-                           onChange={this.props.handleChange}
-                           />
-            </FormGroup>
-        );
-    }
-}
+        let options = [{
+            value: 'Arts',
+            caption: 'Arts'
+        }, {
+            value: 'Technology',
+            caption: 'Technology'
+        }];
 
-class DescriptionText extends React.Component {
-    render() {
         return (
-            <FormGroup controlId="formControlsDescription">
-              <ControlLabel>Description</ControlLabel>
-              <FormControl componentClass="textarea" placeholder="Enter text"
-                           value={this.props.description}
-                           onChange={this.props.handleChange}
-                           />
-            </FormGroup>
-        );
-    }
-}
-
-class SubtitleText extends React.Component {
-    render() {
-        return (
-            <FormGroup controlId="formControlsSubtitle">
-              <ControlLabel>Subtitle</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
-                           value={this.props.subtitle}
-                           onChange={this.props.handleChange}
-                           />
-            </FormGroup>
+            <OptionSelector name='Category'
+                            value={this.props.category}
+                            options={options}
+                            handleChange={this.props.handleChange} />
         );
     }
 }
 
 class LanguageSelector extends React.Component {
     render() {
+        let options = [{
+            value: 'en-US',
+            caption: 'English(US)'
+        }, {
+            value: 'ja',
+            caption: 'Japanese'
+        }];
+
         return (
-            <FormGroup controlId="formControlsLanguageSelect">
-              <ControlLabel>Language</ControlLabel>
-              <FormControl componentClass="select" placeholder="select"
-                       value={this.props.language}
-                       onChange={this.props.handleChange}>
-                <option value="en-US">English(US)</option>
-                <option value="ja">Japanese</option>
-              </FormControl>
-            </FormGroup>
-        );
-    }
-}
-
-class AuthorText extends React.Component {
-    render() {
-        return (
-            <FormGroup controlId="formControlsAuthor">
-              <ControlLabel>Author</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
-                           value={this.props.author}
-                           onChange={this.props.handleChange}
-                           />
-            </FormGroup>
-        );
-    }
-}
-
-class CategorySelector extends React.Component {
-    render() {
-        return (
-            <FormGroup controlId="formControlsCategorySelect">
-              <ControlLabel>Category</ControlLabel>
-              <FormControl componentClass="select" placeholder="select"
-                           value={this.props.category}
-                           onChange={this.props.handleChange}>
-                <option value="Technology">Technology</option>
-                <option value="Arts">Arts</option>
-              </FormControl>
-            </FormGroup>
-        );
-    }
-}
-
-class ExplicitSelector extends React.Component {
-    render() {
-        return (
-            <FormGroup controlId="formControlsExplicitSelect">
-              <ControlLabel>Explicit</ControlLabel>
-              <FormControl componentClass="select" placeholder="select"
-                           value={this.props.explicit ? 'yes' : 'no'}
-                           onChange={this.props.handleChange}>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </FormControl>
-            </FormGroup>
-        );
-    }
-}
-
-class Image extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {url: ''};
-        this.componentWillReceiveProps = this.componentWillReceiveProps.bind(this);
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (this.props.imageId === nextProps.imageId) {
-            return;
-        }
-
-        this.serverRequest = $.get('/image/' + nextProps.imageId, function (data) {
-            console.info(data);
-            this.setState({
-                url: data.image.url
-            });
-        }.bind(this));
-
-        this.serverRequest.fail(function(data) {
-            console.error(data);
-        });
-    }
-
-    render() {
-        return (
-            <div>
-              <img src={this.state.url} className="img-thumbnail"/>
-            </div>
-        );
-    }
-}
-
-class AliasText extends React.Component {
-    render() {
-        return (
-            <FormGroup controlId="formControlsAlias">
-              <ControlLabel>Alias</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
-                           value={this.props.alias}
-                           onChange={this.props.handleChange}
-                           />
-            </FormGroup>
+            <OptionSelector name='Language'
+                            value={this.props.language}
+                            options={options}
+                            handleChange={this.props.handleChange} />
         );
     }
 }
@@ -179,16 +66,20 @@ var App = React.createClass({
 
     componentDidMount: function() {
         if (this.props.mode == Mode.UPDATE) {
-            this.serverRequest = $.get('/show/' + this.props.show_id, function (data) {
-                console.info(data);
-                this.setState({
-                    show: data.show
-                });
-            }.bind(this));
-
-            this.serverRequest.fail(function(data) {
-                console.error(data);
-            });
+            let self = this;
+            let xhr = new XMLHttpRequest();
+            xhr.open('get', '/show/' + this.props.show_id, true);
+            xhr.onload = function() {
+                if (this.status == 200) {
+                    let data = JSON.parse(this.response);
+                    self.setState({
+                        show: data.show
+                    });
+                } else {
+                    console.error(this.statusText);
+                }
+            };
+            xhr.send();
         }
     },
 
@@ -241,19 +132,18 @@ var App = React.createClass({
     },
 
     saveShow: function() {
-        $.ajax({
-            type: this.props.mode == Mode.UPDATE ? 'PUT' : 'POST',
-            url: '/show',
-            contentType: 'application/json',
-            dataType: 'json',
-            data: JSON.stringify(this.state.show),
-            success: function() {
-                console.info(arguments);
-            },
-            error: function(xhr, status, error) {
-                console.error(arguments);
+        let xhr = new XMLHttpRequest();
+        xhr.open(this.props.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function() {
+            let data = JSON.parse(this.response);
+            if (this.status == 200) {
+                console.info(data);
+            } else {
+                console.error(this.statusText);
             }
-        });
+        };
+        xhr.send(JSON.stringify(this.state.show));
     },
 
     render: function() {
@@ -261,24 +151,24 @@ var App = React.createClass({
             <Form>
               <Image imageId={this.state.show.image_id}
                      />
-              <AliasText alias={this.state.show.alias}
-                         handleChange={this.handleChangeAlias}
-                         />
-              <TitleText title={this.state.show.title}
-                         handleChange={this.handleChangeTitle}
-                         />
-              <DescriptionText description={this.state.show.description}
-                               handleChange={this.handleChangeDescription}
-                               />
-              <SubtitleText subtitle={this.state.show.subtitle}
-                            handleChange={this.handleChangeSubtitle}
-                            />
+              <TextInput name='Alias'
+                         value={this.state.show.alias}
+                         handleChange={this.handleChangeAlias} />
+              <TextInput name='Title'
+                         value={this.state.show.title}
+                         handleChange={this.handleChangeTitle} />
+              <TextArea name='Description'
+                        value={this.state.show.description}
+                        handleChange={this.handleChangeDescription} />
+              <TextInput name='Subtitle'
+                         value={this.state.show.subtitle}
+                         handleChange={this.handleChangeSubtitle} />
               <LanguageSelector language={this.state.show.language}
                               handleChange={this.handleChangeLanguage}
                               />
-              <AuthorText author={this.state.show.author}
-                          handleChange={this.handleChangeAuthor}
-                          />
+              <TextInput name='Author'
+                         value={this.state.show.author}
+                         handleChange={this.handleChangeAuthor} />
               <CategorySelector category={this.state.show.category}
                               handleChange={this.handleChangeCategory}
                               />
