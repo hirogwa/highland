@@ -7,4 +7,5 @@ postgres
 test_files
 settings.py
 node_modules
-bundle.js
+bundle*.js
+.eslintrc.js

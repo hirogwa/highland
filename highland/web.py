@@ -172,7 +172,12 @@ def audio():
             return jsonify(audio=dict(audio), result='success'), 201
         if 'GET' == request.method:
             audios = audio_operation.load(test_user())
-            return jsonify(audios=list(map(dict, audios)), result='success')
+
+            def _dict(x):
+                d = dict(x)
+                d['url'] = audio_operation.get_audio_url(x)
+                return d
+            return jsonify(audios=[_dict(x) for x in audios], result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
@@ -282,3 +287,8 @@ def dashboard_show(id_or_new):
 
     return render_template(
         'dashboard/page_show.html', show_id=show_id, mode=mode)
+
+
+@app.route('/page/audio', methods=['GET'])
+def dashboard_audio():
+    return render_template('dashboard/page_audio.html')
