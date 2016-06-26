@@ -114,10 +114,13 @@ class Episode(db.Model):
                     'description', 'audio_id', 'explicit', 'guid', 'image_id',
                     'alias']:
             yield(key, getattr(self, key))
-        yield('draft_status', self.draft_status.name)
-        yield('scheduled_datetime', str(self.scheduled_datetime))
-        yield('update_datetime', str(self.update_datetime))
-        yield('create_datetime', str(self.create_datetime))
+        yield('draft_status', self.draft_status)
+        yield('scheduled_datetime',
+              '' if self.scheduled_datetime is None else str(self.scheduled_datetime))
+        yield('update_datetime',
+              '' if self.update_datetime is None else str(self.update_datetime))
+        yield('create_datetime',
+              '' if self.create_datetime is None else str(self.create_datetime))
 
 
 class Audio(db.Model):

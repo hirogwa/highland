@@ -1,0 +1,15 @@
+{% extends "dashboard/base.html" %}
+
+{% block header %}
+<title>Dashboard - Episode</title>
+{% endblock %}
+
+{% block body %}
+<div class="mainContainer"></div>
+<script>
+  var mode = '{{ mode }}';
+  var showId = '{{ show_id }}';
+  var episodeId = '{{ episode_id }}';
+</script>
+<script src="/static/js/bundled-episode.js" type="text/javascript"></script>
+{% endblock %}

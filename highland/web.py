@@ -89,10 +89,11 @@ def episode():
     try:
         if 'POST' == request.method:
             args = request.get_json()
-            (show_id, draft_status, scheduled_datetime, title, subtitle,
+            (show_id, draft_status, alias, scheduled_datetime, title, subtitle,
              description, audio_id, explicit, image_id) = (
                  args.get('show_id'),
                  args.get('draft_status'),
+                 args.get('alias'),
                  args.get('scheduled_datetime'),
                  args.get('title'),
                  args.get('subtitle'),
@@ -103,28 +104,28 @@ def episode():
 
             assert show_id, 'show id required'
             assert draft_status, 'draft status required'
+            assert alias, 'alias required'
             assert title, 'title required'
             assert subtitle, 'subtitle required'
             assert description, 'description required'
             assert audio_id, 'audio id required'
-            assert explicit, 'explicit required'
-            assert image_id, 'image id required'
+            assert explicit is not None, 'explicit required'
 
             episode = episode_operation.create(
-                test_user(), show_id, draft_status,
-                dateutil.parser.parse(scheduled_datetime), title,
-                subtitle, description, audio_id, explicit.lower() == 'true',
-                image_id)
+                test_user(), show_id, draft_status, alias,
+                datetime_valid_or_none(scheduled_datetime), title,
+                subtitle, description, audio_id, explicit, image_id)
 
             return jsonify(episode=dict(episode), result='success'), 201
 
         if 'PUT' == request.method:
             args = request.get_json()
-            (show_id, id, draft_status, scheduled_datetime, title, subtitle,
-             description, audio_id, explicit, image_id) = (
+            (show_id, id, draft_status, alias, scheduled_datetime, title,
+             subtitle, description, audio_id, explicit, image_id) = (
                  args.get('show_id'),
                  args.get('id'),
                  args.get('draft_status'),
+                 args.get('alias'),
                  args.get('scheduled_datetime'),
                  args.get('title'),
                  args.get('subtitle'),
@@ -136,17 +137,17 @@ def episode():
             assert show_id, 'show id required'
             assert id, 'id required'
             assert draft_status, 'draft status required'
+            assert alias, 'alias required'
             assert title, 'title required'
             assert subtitle, 'subtitle required'
             assert description, 'description required'
             assert audio_id, 'audio id required'
-            assert explicit, 'explicit required'
-            assert image_id, 'image id required'
+            assert explicit is not None, 'explicit required'
 
             episode = episode_operation.update(
-                test_user(), show_id, id, draft_status,
-                dateutil.parser.parse(scheduled_datetime), title, subtitle,
-                description, audio_id, explicit.lower() == 'true', image_id)
+                test_user(), show_id, id, draft_status, alias,
+                datetime_valid_or_none(scheduled_datetime), title, subtitle,
+                description, audio_id, explicit, image_id)
             return jsonify(episode=dict(episode), result='success')
 
     except Exception as e:
@@ -155,10 +156,21 @@ def episode():
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])
-def episodes(show_id):
+def get_episode_list(show_id):
     try:
         episodes = episode_operation.load(test_user(), show_id)
-        return jsonify(episodes=list(map(dict, episodes)), result='success')
+        return jsonify(episodes=[dict(x) for x in episodes], result='success')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
+@app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
+def get_episode(show_id, episode_id):
+    try:
+        episode = episode_operation.get_episode_or_assert(
+            test_user(), show_id, episode_id)
+        return jsonify(episode=dict(episode), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
@@ -276,6 +288,13 @@ def ping():
     return user.username
 
 
+def datetime_valid_or_none(d):
+    try:
+        return dateutil.parser.parse(d)
+    except:
+        return None
+
+
 @app.route('/page/show/<id_or_new>', methods=['GET'])
 def dashboard_show(id_or_new):
     if id_or_new == 'new':
@@ -292,3 +311,18 @@ def dashboard_show(id_or_new):
 @app.route('/page/audio', methods=['GET'])
 def dashboard_audio():
     return render_template('dashboard/page_audio.html')
+
+
+@app.route('/page/episode/<show_id>/<id_or_new>', methods=['GET'])
+def dashboard_episode(show_id, id_or_new):
+    show_operation.get_show_or_assert(test_user(), show_id)
+    if id_or_new == 'new':
+        mode = 'create'
+        episode_id = -1
+    else:
+        mode = 'update'
+        episode_id = id_or_new
+
+    return render_template(
+        'dashboard/page_episode.html',
+        show_id=show_id, episode_id=episode_id, mode=mode)

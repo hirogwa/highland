@@ -10,11 +10,11 @@ def create(user, show_id, draft_status, alias, scheduled_datetime=None,
     if not common.is_valid_alias(alias):
         raise ValueError('alias not accepted. {}'.format(alias))
 
-    draft_status = models.Episode.DraftStatus(draft_status)
+    draft_status = models.Episode.DraftStatus(draft_status).name
     show = show_operation.get_show_or_assert(user, show_id)
     episode = valid_or_assert(user, models.Episode(
         show, title, subtitle, description, audio_id, draft_status,
-        scheduled_datetime, explicit, alias))
+        scheduled_datetime, explicit, image_id, alias))
     models.db.session.add(episode)
     models.db.session.commit()
 
@@ -35,7 +35,7 @@ def update(user, show_id, episode_id, draft_status, alias,
     episode.explicit = explicit
     episode.image_id = image_id
     episode.alias = alias
-    episode.draft_status = models.Episode.DraftStatus(draft_status)
+    episode.draft_status = models.Episode.DraftStatus(draft_status).name
     episode.scheduled_datetime = scheduled_datetime
     valid_or_assert(user, episode)
     models.db.session.commit()
