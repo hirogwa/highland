@@ -1,6 +1,3 @@
-import os
-import imghdr
-import uuid
 import unittest
 from unittest.mock import MagicMock
 from highland import media_storage, image_operation, models, settings

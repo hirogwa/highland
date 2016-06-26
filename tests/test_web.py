@@ -404,8 +404,9 @@ class TestAudio(unittest.TestCase):
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(dict(audio), resp_audio)
 
+    @unittest.mock.patch.object(audio_operation, 'get_audio_url')
     @unittest.mock.patch.object(audio_operation, 'load')
-    def test_get(self, mocked_load):
+    def test_get(self, mocked_load, mocked_url):
         mocked_user = MagicMock()
         mocked_user.id = 1
         guid01 = uuid.uuid4().hex
@@ -417,13 +418,17 @@ class TestAudio(unittest.TestCase):
                 mocked_user, 'f02.mp4', 1717, 3012012, 'audio/mpeg', guid02)
         ]
         mocked_load.return_value = audios
+        mocked_url.return_value = 'testurl'
 
         response = self.app.get('/audio')
 
         resp_data = json.loads(response.data)
         resp_audios = resp_data.get('audios')
+        expected = [dict(x) for x in audios]
+        for x in expected:
+            x['url'] = mocked_url.return_value
         self.assertEqual('success', resp_data.get('result'))
-        self.assertEqual(list(map(dict, audios)), resp_audios)
+        self.assertEqual(expected, resp_audios)
 
 
 class TestImage(unittest.TestCase):
@@ -452,8 +457,9 @@ class TestImage(unittest.TestCase):
         self.assertEqual('success', resp_data.get('result'))
         self.assertEqual(dict(image), resp_image)
 
+    @unittest.mock.patch.object(image_operation, 'get_image_url')
     @unittest.mock.patch.object(image_operation, 'load')
-    def test_get(self, mocked_load):
+    def test_get(self, mocked_load, mocked_url):
         mocked_user = MagicMock()
         mocked_user.id = 1
         images = [
@@ -461,13 +467,17 @@ class TestImage(unittest.TestCase):
             models.Image(mocked_user, 'f02.jpg', uuid.uuid4().hex, 'jpeg')
         ]
         mocked_load.return_value = images
+        mocked_url.return_value = 'test_url'
 
         response = self.app.get('/image')
 
         resp_data = json.loads(response.data)
         resp_images = resp_data.get('images')
+        expected = [dict(x) for x in images]
+        for x in expected:
+            x['url'] = mocked_url.return_value
         self.assertEqual('success', resp_data.get('result'))
-        self.assertEqual(list(map(dict, images)), resp_images)
+        self.assertEqual(expected, resp_images)
 
 
 class TestUser(unittest.TestCase):
