@@ -1,6 +1,44 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Button, ControlLabel, Form, FormControl, FormGroup, HelpBlock, Table } from 'react-bootstrap';
+import {
+    Button, Checkbox, ControlLabel, Form, FormControl, FormGroup, HelpBlock, Table
+} from 'react-bootstrap';
+
+class Deleter extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleDelete = this.handleDelete.bind(this);
+    }
+
+    handleDelete() {
+        let xhr = new XMLHttpRequest();
+        xhr.open('delete', '/audio', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function() {
+            if (this.status == 200) {
+                let data = JSON.parse(this.response);
+                console.info(data);
+            } else {
+                console.error(this.statusText);
+            }
+        };
+        xhr.send(
+            JSON.stringify({audio_ids: this.props.selectedIds})
+        );
+    }
+
+    render() {
+        return (
+            <Form>
+              <Button bsStyle="danger" onClick={this.handleDelete}
+                      type="submit"
+                      disabled={this.props.selectedIds.length < 1}>
+                      Delete Selected
+              </Button>
+            </Form>
+        );
+    }
+}
 
 class Uploader extends React.Component {
     constructor(props) {
@@ -52,6 +90,15 @@ class Uploader extends React.Component {
 }
 
 class SingleAudio extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleSelect = this.handleSelect.bind(this);
+    }
+
+    handleSelect(event) {
+        this.props.handleSelect(this.props.audio.id, event.target.checked);
+    }
+
     render() {
         var hours = parseInt(this.props.audio.duration / 3600, 10);
         var minutes = parseInt(this.props.audio.duration / 60, 10);
@@ -62,12 +109,17 @@ class SingleAudio extends React.Component {
         return (
             <tr>
               <td>
+                <Checkbox checked={this.props.selected}
+                          onChange={this.handleSelect} />
+              </td>
+              <td>
                 <a href={this.props.audio.url}>
                   {this.props.audio.filename}
                 </a>
               </td>
               <td>{duration}</td>
               <td>{this.props.audio.create_datetime}</td>
+              <td>{this.props.audio.guid}</td>
             </tr>
         );
     }
@@ -75,17 +127,24 @@ class SingleAudio extends React.Component {
 
 class AudioList extends React.Component {
     render() {
-        var rows = [];
+        let rows = [];
+        let self = this;
         this.props.audios.forEach(function(audio) {
-            rows.push(<SingleAudio audio={audio} key={audio.id} />);
+            rows.push(
+                <SingleAudio audio={audio} key={audio.id}
+                             selected={self.props.selectedIds.indexOf(audio.id) > -1}
+                             handleSelect={self.props.handleSelect} />
+            );
         });
         return (
             <Table>
               <thead>
                 <tr>
                   <th></th>
+                  <th>File</th>
                   <th>Duration</th>
                   <th>Created</th>
+                  <th>Guid</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,8 +158,29 @@ class AudioList extends React.Component {
 var App = React.createClass({
     getInitialState: function() {
         return {
-            audios: []
+            audios: [],
+            selectedIds: []
         };
+    },
+
+    handleSelectAudio: function(id, checked) {
+        let ids = this.state.selectedIds;
+        let index = ids.indexOf(id);
+        if (checked) {
+            if (index > -1) {
+                return;
+            }
+            ids.push(id);
+        } else {
+            if (index < 0) {
+                return;
+            }
+            ids.splice(index, 1);
+        }
+
+        this.setState({
+            selectedIds: ids
+        });
     },
 
     componentDidMount: function() {
@@ -124,7 +204,10 @@ var App = React.createClass({
         return (
             <div>
               <Uploader />
-              <AudioList audios={this.state.audios}/>
+              <AudioList audios={this.state.audios}
+                         selectedIds={this.state.selectedIds}
+                         handleSelect={this.handleSelectAudio} />
+              <Deleter selectedIds={this.state.selectedIds} />
             </div>
         );
     }

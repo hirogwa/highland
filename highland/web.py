@@ -176,7 +176,7 @@ def get_episode(show_id, episode_id):
         raise e
 
 
-@app.route('/audio', methods=['POST', 'GET'])
+@app.route('/audio', methods=['POST', 'GET', 'DELETE'])
 def audio():
     try:
         if 'POST' == request.method:
@@ -190,6 +190,10 @@ def audio():
                 d['url'] = audio_operation.get_audio_url(x)
                 return d
             return jsonify(audios=[_dict(x) for x in audios], result='success')
+        if 'DELETE' == request.method:
+            args = request.get_json()
+            audio_operation.delete(test_user(), args.get('audio_ids'))
+            return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e

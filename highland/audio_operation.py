@@ -2,7 +2,7 @@ import os
 import uuid
 import urllib.parse
 from mutagen.mp3 import MP3
-from highland import models, media_storage, settings
+from highland import models, media_storage, settings, app
 
 
 def create(user, audio_file):
@@ -14,9 +14,16 @@ def create(user, audio_file):
     return audio
 
 
-def delete(audio):
-    media_storage.delete(audio.guid, settings.S3_BUCKET_AUDIO)
-    models.db.session.delete(audio)
+def delete(user, audio_ids):
+    for id in audio_ids:
+        audio = get_audio_or_assert(user, id)
+        try:
+            media_storage.delete(audio.guid, settings.S3_BUCKET_AUDIO)
+        except:
+            app.logger.error(
+                'Failed to delete media:({},{})'.format(
+                    user.id, audio.id), exc_info=1)
+        models.db.session.delete(audio)
     models.db.session.commit()
     return True
 
