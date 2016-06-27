@@ -51,7 +51,9 @@ class Uploader extends React.Component {
     }
 
     handleFileChange(event) {
-        this.state.file = event.target.files[0];
+        this.setState({
+            file: event.target.files[0]
+        });
     }
 
     handleSubmit(){
@@ -79,7 +81,8 @@ class Uploader extends React.Component {
                 <ControlLabel>New audio</ControlLabel>
                 <FormControl type="file" onChange={this.handleFileChange} />
                 <HelpBlock>Upload new file here.</HelpBlock>
-                <Button type="submit" onClick={this.handleSubmit}>
+                <Button type="submit" onClick={this.handleSubmit}
+                        disabled={!this.state.file}>
                   Upload
                 </Button>
               </FormGroup>
