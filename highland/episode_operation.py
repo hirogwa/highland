@@ -44,8 +44,10 @@ def update(user, show_id, episode_id, draft_status, alias,
     return episode
 
 
-def delete(user, episode):
-    models.db.session.delete(episode)
+def delete(user, show_id, episode_ids):
+    for id in episode_ids:
+        episode = get_episode_or_assert(user, show_id, id)
+        models.db.session.delete(episode)
     models.db.session.commit()
     _update_show_build_datetime(user, episode)
     return True

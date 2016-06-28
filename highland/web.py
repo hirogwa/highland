@@ -84,7 +84,7 @@ def show():
         raise e
 
 
-@app.route('/episode', methods=['POST', 'PUT'])
+@app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
 def episode():
     try:
         if 'POST' == request.method:
@@ -150,6 +150,12 @@ def episode():
                 description, audio_id, explicit, image_id)
             return jsonify(episode=dict(episode), result='success')
 
+        if 'DELETE' == request.method:
+            args = request.get_json()
+            episode_operation.delete(test_user(),
+                                     args.get('show_id'),
+                                     args.get('episode_ids'))
+            return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
@@ -330,3 +336,9 @@ def dashboard_episode(show_id, id_or_new):
     return render_template(
         'dashboard/page_episode.html',
         show_id=show_id, episode_id=episode_id, mode=mode)
+
+
+@app.route('/page/episode/<show_id>', methods=['GET'])
+def dashboard_episode_list(show_id):
+    show_operation.get_show_or_assert(test_user(), show_id)
+    return render_template('dashboard/page_episode_list.html', show_id=show_id)
