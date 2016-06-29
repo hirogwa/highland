@@ -3,7 +3,7 @@ import traceback
 from flask import request, jsonify, render_template
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation
+    image_operation, public_view
 
 
 @app.route('/show/<show_id>', methods=['GET'])
@@ -306,6 +306,42 @@ def datetime_valid_or_none(d):
         return dateutil.parser.parse(d)
     except:
         return None
+
+
+@app.route('/publish_site', methods=['POST'])
+def publish_site():
+    '''
+    test only
+    '''
+    args = request.get_json()
+    public_view.update_full(test_user(), args.get('show_id'))
+    return 'done'
+
+
+@app.route('/preview_site/<show_id>', methods=['GET'])
+def preview_site(show_id):
+    '''
+    test only
+    '''
+    user = test_user()
+    return public_view._update_show(
+        user,
+        show_operation.get_show_or_assert(user, show_id),
+        episode_operation.load(user, show_id),
+        False)
+
+
+@app.route('/preview_site/<show_id>/<episode_id>', methods=['GET'])
+def preview_site_episode(show_id, episode_id):
+    '''
+    test only
+    '''
+    user = test_user()
+    return public_view._update_episode(
+        user,
+        show_operation.get_show_or_assert(user, show_id),
+        episode_operation.get_episode_or_assert(user, show_id, episode_id),
+        False)
 
 
 @app.route('/page/show/<id_or_new>', methods=['GET'])

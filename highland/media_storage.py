@@ -20,3 +20,9 @@ def upload(file_data, bucket, file_name=None, folder='', **kwargs):
 def delete(filename, bucket, folder=''):
     key_name = os.path.join(folder, filename)
     s3.Object(bucket, key_name).delete()
+
+
+def delete_folder(bucket, folder):
+    bucket = s3.Bucket(bucket)
+    for obj in bucket.objects.filter(Prefix='{}/'.format(folder)):
+        s3.Object(bucket.name, obj.key).delete()
