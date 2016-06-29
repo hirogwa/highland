@@ -189,11 +189,12 @@ def audio():
             audio = audio_operation.create(test_user(), request.files['file'])
             return jsonify(audio=dict(audio), result='success'), 201
         if 'GET' == request.method:
-            audios = audio_operation.load(test_user())
+            user = test_user()
+            audios = audio_operation.load(user)
 
             def _dict(x):
                 d = dict(x)
-                d['url'] = audio_operation.get_audio_url(x)
+                d['url'] = audio_operation.get_audio_url(user, x)
                 return d
             return jsonify(audios=[_dict(x) for x in audios], result='success')
         if 'DELETE' == request.method:

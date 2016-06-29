@@ -34,7 +34,7 @@ def update(user, show_id):
         fe.title(episode.title)
         fe.link(href=episode_operation.get_episode_url(user, episode, show))
         fe.description(episode.description)
-        fe.enclosure(url=audio_operation.get_audio_url(audio),
+        fe.enclosure(url=audio_operation.get_audio_url(user, audio),
                      length=str(audio.length), type=audio.type)
         fe.guid(episode.guid)
         fe.pubdate(episode.update_datetime or episode.create_datetime)
