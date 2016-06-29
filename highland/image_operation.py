@@ -6,7 +6,7 @@ from highland import models, media_storage, settings
 
 
 def create(user, image_file):
-    guid, type = store_image_data(user.id, image_file)
+    guid, type = store_image_data(user, image_file)
     image = models.Image(user, image_file.filename, guid, type)
     models.db.session.add(image)
     models.db.session.commit()
@@ -34,12 +34,14 @@ def get_image_or_assert(user, image_id):
             'No such image. (user,image)={}{}'.format(user.id, image_id))
 
 
-def get_image_url(image):
-    return urllib.parse.urljoin(settings.HOST_IMAGE, image.guid)
+def get_image_url(user, image):
+    assert user.id == image.owner_user_id
+    return urllib.parse.urljoin(settings.HOST_IMAGE,
+                                '{}/{}'.format(user.username, image.guid))
 
 
-def store_image_data(user_id, image_file):
-    temp_path_dir = str(user_id)
+def store_image_data(user, image_file):
+    temp_path_dir = user
     if not os.path.exists(temp_path_dir):
         os.mkdir(temp_path_dir)
 

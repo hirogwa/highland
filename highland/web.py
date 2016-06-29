@@ -209,9 +209,10 @@ def audio():
 @app.route('/image/<image_id>', methods=['GET'])
 def get_image(image_id):
     try:
-        image = image_operation.get_image_or_assert(test_user(), image_id)
+        user = test_user()
+        image = image_operation.get_image_or_assert(user, image_id)
         image_d = dict(image)
-        image_d['url'] = image_operation.get_image_url(image)
+        image_d['url'] = image_operation.get_image_url(user, image)
         return jsonify(image=image_d, result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -225,11 +226,12 @@ def image():
             image = image_operation.create(test_user(), request.files['file'])
             return jsonify(image=dict(image), result='success'), 201
         if 'GET' == request.method:
-            images = image_operation.load(test_user())
+            user = test_user()
+            images = image_operation.load(user)
 
             def _dict(x):
                 d = dict(x)
-                d['url'] = image_operation.get_image_url(x)
+                d['url'] = image_operation.get_image_url(user, x)
                 return d
             return jsonify(images=[_dict(x) for x in images], result='success')
     except Exception as e:

@@ -24,7 +24,7 @@ def update(user, show_id):
     fg.podcast.itunes_summary(show.description)
     if show.image_id > 0:
         image = image_operation.get_image_or_assert(user, show.image_id)
-        fg.podcast.itunes_image(image_operation.get_image_url(image))
+        fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
     for episode in episode_operation.load(
             user, show_id,
@@ -47,7 +47,7 @@ def update(user, show_id):
             image_episode = image_operation.get_image_or_assert(
                 user, episode.image_id)
             fe.podcast.itunes_image(
-                image_operation.get_image_url(image_episode))
+                image_operation.get_image_url(user, image_episode))
 
     return media_storage.upload(
         fg.rss_str(pretty=True), settings.S3_BUCKET_FEED,

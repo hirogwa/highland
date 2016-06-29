@@ -52,7 +52,7 @@ def get_audio_url(user, audio):
 
 
 def store_audio_data(user, audio_file):
-    temp_path_dir = str(user.username)
+    temp_path_dir = user.username
     if not os.path.exists(temp_path_dir):
         os.mkdir(temp_path_dir)
 
