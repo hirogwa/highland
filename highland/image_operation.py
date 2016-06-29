@@ -13,8 +13,8 @@ def create(user, image_file):
     return image
 
 
-def delete(image):
-    media_storage.delete(image.guid, settings.S3_BUCKET_IMAGE)
+def delete(user, image):
+    media_storage.delete(image.guid, settings.S3_BUCKET_IMAGE, user.username)
     models.db.session.delete(image)
     models.db.session.commit()
     return True
@@ -41,7 +41,7 @@ def get_image_url(user, image):
 
 
 def store_image_data(user, image_file):
-    temp_path_dir = user
+    temp_path_dir = user.username
     if not os.path.exists(temp_path_dir):
         os.mkdir(temp_path_dir)
 
@@ -54,8 +54,8 @@ def store_image_data(user, image_file):
 
     image_data = open(temp_path, 'rb')
     media_storage.upload(
-        image_data, settings.S3_BUCKET_IMAGE,
-        guid, ContentType='image/{}'.format(type))
+        image_data, settings.S3_BUCKET_IMAGE, guid,
+        user.username, ContentType='image/{}'.format(type))
 
     os.remove(temp_path)
     return guid, type
