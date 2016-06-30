@@ -13,6 +13,11 @@
     {{ episode.description }}
   </p>
   <p>
+    <small>
+      {{ duration }}, {{ length }}MB, <a href={{ audio_url }}>download</a>
+    </small>
+  </p>
+  <p>
     <audio controls>
       <source src={{ audio_url }} type="audio/mpeg">
     </audio>

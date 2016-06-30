@@ -26,11 +26,17 @@ def _update_show(user, show, episodes, upload=True):
 
 def _update_episode(user, show, episode, upload=True):
     audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
+    m, s = divmod(audio.duration, 60)
+    h, m = divmod(m, 60)
+    length = '{0:.2f}'.format(audio.length / 1000000)
+
     html = render_template(
         'public_sites/episode.html',
         show=show,
         home_url='/{}'.format(show.alias),
         episode=episode,
+        duration="%d:%02d:%02d" % (h, m, s),
+        length=length,
         audio_url=audio_operation.get_audio_url(user, audio))
     if upload:
         media_storage.upload(
