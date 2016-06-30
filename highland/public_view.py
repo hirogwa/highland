@@ -1,5 +1,6 @@
 from flask import render_template
-from highland import show_operation, episode_operation, media_storage, settings
+from highland import show_operation, episode_operation, media_storage, \
+    settings, audio_operation
 
 
 def update_full(user, show_id):
@@ -24,13 +25,17 @@ def _update_show(user, show, episodes, upload=True):
 
 
 def _update_episode(user, show, episode, upload=True):
-    html = render_template('public_sites/episode.html',
-                           show=show,
-                           home_url='/{}'.format(show.alias),
-                           episode=episode)
+    audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
+    html = render_template(
+        'public_sites/episode.html',
+        show=show,
+        home_url='/{}'.format(show.alias),
+        episode=episode,
+        audio_url=audio_operation.get_audio_url(user, audio))
     if upload:
-        media_storage.upload(html, settings.S3_BUCKET_SITES, episode.alias,
-                             show.alias, ContentType='text/html; charset=utf-8')
+        media_storage.upload(
+            html, settings.S3_BUCKET_SITES, episode.alias,
+            show.alias, ContentType='text/html; charset=utf-8')
     return html
 
 

@@ -1,10 +1,18 @@
 {% extends "public_sites/base.html" %}
 
 {% block content %}
-{% for episode in episodes %}
-<h2>{{ episode.title }}</h2>
-<p>
-  {{ episode.description }}
-</p>
-{% endfor %}
+<div class="home">
+  <ul class="post-list">
+    {% for episode in episodes %}
+    <li>
+      <span class="post-meta">{{ episode.create_datetime.strftime('%b %d, %Y') }}</span>
+      <h2>
+        <a class="post-link" href={{ "/%s/%s"|format(show.alias, episode.alias) }}>
+          {{ episode.title }}
+        </a>
+      </h2>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
 {% endblock %}

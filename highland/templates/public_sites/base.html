@@ -5,10 +5,35 @@
 </head>
 
 <body>
-  <h1><a href={{ home_url }}>{{ show.title }}</a></h1>
-  <p>
-    {{ show.description }}
-  </p>
-  {% block content %}
-  {% endblock %}
+  <header class="site-header">
+    <div class="wrapper">
+      <a class="site-title" href={{ home_url }}>{{ show.title }}</a>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div class="wrapper">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </div>
 </body>
+
+<footer class="site-footer">
+  <div class="wrapper">
+    <h2 class="footer-heading">{{ show.title }}</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>{{ show.author }}</li>
+        </ul>
+      </div>
+      <div class="footer-col  footer-col-2">
+      </div>
+      <div class="footer-col  footer-col-3">
+        <p class="text">{{ show.description }}</p>
+      </div>
+    </div>
+  </div>
+</footer>

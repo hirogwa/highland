@@ -137,7 +137,7 @@ var App = React.createClass({
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
-            if (this.status == 200) {
+            if (this.status == 200 || 201) {
                 console.info(data);
             } else {
                 console.error(this.statusText);
