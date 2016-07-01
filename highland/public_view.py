@@ -1,11 +1,12 @@
 from flask import render_template
 from highland import show_operation, episode_operation, media_storage, \
-    settings, audio_operation
+    settings, audio_operation, models
 
 
 def update_full(user, show_id):
     show = show_operation.get_show_or_assert(user, show_id)
-    episodes = episode_operation.load(user, show_id)
+    episodes = episode_operation.load(
+        user, show_id, draft_status=models.Episode.DraftStatus.published.name)
     _update_show(user, show, episodes)
     _delete_all_episodes(user, show)
     for episode in episodes:

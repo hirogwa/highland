@@ -69,7 +69,6 @@ def show():
             assert author, 'author required'
             assert category, 'category required'
             assert explicit is not None, 'explicit required'
-            assert image_id, 'image id required'
 
             show = show_operation.update(
                 test_user(), id, title, description, subtitle, language,
@@ -327,7 +326,9 @@ def preview_site(show_id):
     return public_view._update_show(
         user,
         show_operation.get_show_or_assert(user, show_id),
-        episode_operation.load(user, show_id),
+        episode_operation.load(
+            user, show_id,
+            draft_status=models.Episode.DraftStatus.published.name),
         False)
 
 
