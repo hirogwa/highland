@@ -101,6 +101,7 @@ class EpisodeList extends React.Component {
             <Table>
               <thead>
                 <tr>
+                  <th></th>
                   <th>Title</th>
                   <th>Subtitle</th>
                   <th>Draft status</th>
