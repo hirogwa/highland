@@ -44,6 +44,9 @@ def update(user, show_id, episode_id, draft_status, alias,
     if episode.draft_status == models.Episode.DraftStatus.published.name:
         episode.published_datetime = \
             datetime.datetime.now(datetime.timezone.utc)
+    if episode.draft_status == models.Episode.DraftStatus.draft.name:
+        episode.published_datetime = None
+
     valid_or_assert(user, episode)
     models.db.session.commit()
 
