@@ -1,9 +1,9 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view
+    image_operation, public_view, feed_operation
 
 
 @app.route('/show/<show_id>', methods=['GET'])
@@ -326,9 +326,7 @@ def preview_site(show_id):
     return public_view._update_show(
         user,
         show_operation.get_show_or_assert(user, show_id),
-        episode_operation.load(
-            user, show_id,
-            draft_status=models.Episode.DraftStatus.published.name),
+        episode_operation.load_public(user, show_id),
         False)
 
 
@@ -343,6 +341,18 @@ def preview_site_episode(show_id, episode_id):
         show_operation.get_show_or_assert(user, show_id),
         episode_operation.get_episode_or_assert(user, show_id, episode_id),
         False)
+
+
+@app.route('/preview_feed/<show_id>', methods=['GET'])
+def preview_feed(show_id):
+    '''
+    test only
+    '''
+    user = test_user()
+    return Response(
+        feed_operation.generate(
+            user, show_operation.get_show_or_assert(user, show_id)),
+        mimetype=feed_operation.FEED_CONTENT_TYPE)
 
 
 @app.route('/page/show/<id_or_new>', methods=['GET'])

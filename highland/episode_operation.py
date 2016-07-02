@@ -15,6 +15,10 @@ def create(user, show_id, draft_status, alias, scheduled_datetime=None,
     episode = valid_or_assert(user, models.Episode(
         show, title, subtitle, description, audio_id, draft_status,
         scheduled_datetime, explicit, image_id, alias))
+    if episode.draft_status == models.Episode.DraftStatus.published.name:
+        episode.published_datetime = \
+            datetime.datetime.now(datetime.timezone.utc)
+
     models.db.session.add(episode)
     models.db.session.commit()
 
@@ -37,6 +41,9 @@ def update(user, show_id, episode_id, draft_status, alias,
     episode.alias = alias
     episode.draft_status = models.Episode.DraftStatus(draft_status).name
     episode.scheduled_datetime = scheduled_datetime
+    if episode.draft_status == models.Episode.DraftStatus.published.name:
+        episode.published_datetime = \
+            datetime.datetime.now(datetime.timezone.utc)
     valid_or_assert(user, episode)
     models.db.session.commit()
 
@@ -57,6 +64,15 @@ def load(user, show_id, **kwargs):
     show = show_operation.get_show_or_assert(user, show_id)
     return models.Episode.query.\
         filter_by(owner_user_id=show.owner_user_id, show_id=show.id, **kwargs).\
+        all()
+
+
+def load_public(user, show_id):
+    show = show_operation.get_show_or_assert(user, show_id)
+    return models.Episode.query.\
+        filter_by(owner_user_id=show.owner_user_id, show_id=show.id,
+                  draft_status=models.Episode.DraftStatus.published.name).\
+        order_by(models.Episode.published_datetime.desc()).\
         all()
 
 
@@ -100,7 +116,7 @@ def get_episode_url(user, episode, show=None):
 
 
 def _update_show_build_datetime(user, episode):
-    if episode.draft_status != models.Episode.DraftStatus.published:
+    if episode.draft_status != models.Episode.DraftStatus.published.name:
         return None
 
     show = show_operation.get_show_or_assert(user, episode.show_id)

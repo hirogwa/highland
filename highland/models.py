@@ -76,6 +76,7 @@ class Episode(db.Model):
                                      DraftStatus.published.name,
                                      name='draft_status'))
     scheduled_datetime = db.Column(db.DateTime(timezone=True))
+    published_datetime = db.Column(db.DateTime(timezone=True))
     explicit = db.Column(db.Boolean())
     guid = db.Column(db.String(32),
                      default=lambda x: uuid.uuid4().hex)

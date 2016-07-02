@@ -1,5 +1,5 @@
 from feedgen.feed import FeedGenerator
-from highland import show_operation, episode_operation, models, media_storage,\
+from highland import show_operation, episode_operation, media_storage,\
     audio_operation, image_operation, settings
 
 FEED_FOLDER_RSS = 'feed_rss'
@@ -8,6 +8,12 @@ FEED_CONTENT_TYPE = 'application/rss+xml'
 
 def update(user, show_id):
     show = show_operation.get_show_or_assert(user, show_id)
+    return media_storage.upload(
+        generate(user, show), settings.S3_BUCKET_FEED,
+        show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
+
+
+def generate(user, show):
     fg = FeedGenerator()
     fg.title(show.title)
     fg.description(show.description)
@@ -26,9 +32,7 @@ def update(user, show_id):
         image = image_operation.get_image_or_assert(user, show.image_id)
         fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
-    for episode in episode_operation.load(
-            user, show_id,
-            draft_status=models.Episode.DraftStatus.published.name):
+    for episode in episode_operation.load_public(user, show.id):
         audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
         fe = fg.add_entry()
         fe.title(episode.title)
@@ -49,9 +53,7 @@ def update(user, show_id):
             fe.podcast.itunes_image(
                 image_operation.get_image_url(user, image_episode))
 
-    return media_storage.upload(
-        fg.rss_str(pretty=True), settings.S3_BUCKET_FEED,
-        show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
+    return fg.rss_str(pretty=True)
 
 
 def _format_seconds(sec):
