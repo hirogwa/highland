@@ -28,7 +28,7 @@ class TestFeedOperation(unittest.TestCase):
     @unittest.mock.patch.object(FeedGenerator, 'title')
     @unittest.mock.patch.object(media_storage, 'upload')
     @unittest.mock.patch.object(episode_operation, 'get_episode_url')
-    @unittest.mock.patch.object(episode_operation, 'load')
+    @unittest.mock.patch.object(episode_operation, 'load_public')
     @unittest.mock.patch.object(show_operation, 'get_show_url')
     @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
     def test_update(
@@ -80,7 +80,7 @@ class TestFeedOperation(unittest.TestCase):
             assert False
         mocked_get_image.side_effect = get_image_side_effect
 
-        def get_image_url_side_effect(image):
+        def get_image_url_side_effect(user, image):
             if image == mocked_image_show:
                 return image_url_show
             elif image == mocked_image_episode:

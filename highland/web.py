@@ -3,7 +3,7 @@ import traceback
 from flask import request, jsonify, render_template, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view, feed_operation
+    image_operation, public_view, feed_operation, settings
 
 
 @app.route('/show/<show_id>', methods=['GET'])
@@ -287,7 +287,7 @@ def user_get(user_id):
 
 
 def test_user():
-    return models.User.query.filter_by(id=1).first()
+    return models.User.query.filter_by(id=settings.TEST_USER_ID).first()
 
 
 @app.route('/ping', methods=['GET'])

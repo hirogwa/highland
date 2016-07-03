@@ -25,7 +25,7 @@ class TestAudioOperation(unittest.TestCase):
 
         result = audio_operation.create(mocked_user, mocked_audio_file)
 
-        mocked_store.assert_called_with(mocked_user.id, mocked_audio_file)
+        mocked_store.assert_called_with(mocked_user, mocked_audio_file)
         mocked_add.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_audio, result)
@@ -33,14 +33,20 @@ class TestAudioOperation(unittest.TestCase):
     @unittest.mock.patch.object(media_storage, 'delete')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'delete')
-    def test_delete(self, mocked_delete, mocked_commit, mocked_media_delete):
+    @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
+    def test_delete(self, mocked_get_audio, mocked_delete, mocked_commit,
+                    mocked_media_delete):
         mocked_audio = MagicMock()
-        mocked_audio.filename = 'test file.mp3'
+        mocked_user = MagicMock()
+        audio_ids = [2]
+        mocked_get_audio.return_value = mocked_audio
 
-        result = audio_operation.delete(mocked_audio)
+        result = audio_operation.delete(mocked_user, audio_ids)
 
+        mocked_get_audio.assert_called_with(mocked_user, audio_ids[0])
         mocked_media_delete.assert_called_with(mocked_audio.guid,
-                                               settings.S3_BUCKET_AUDIO)
+                                               settings.S3_BUCKET_AUDIO,
+                                               mocked_user.username)
         mocked_delete.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
         self.assertTrue(result)

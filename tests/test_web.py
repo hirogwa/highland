@@ -185,7 +185,8 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.draft, None, False, image_id, alias)
+            models.Episode.DraftStatus.draft.name, scheduled_datetime, False,
+            image_id, alias)
         mocked_create.return_value = episode
 
         response = self.post_with_json(
@@ -207,7 +208,7 @@ class TestEpisode(unittest.TestCase):
                          resp_episode.get('owner_user_id'))
         self.assertEqual(episode.show_id, resp_episode.get('show_id'))
         self.assertEqual(episode.id, resp_episode.get('id'))
-        self.assertEqual(episode.draft_status.name,
+        self.assertEqual(episode.draft_status,
                          resp_episode.get('draft_status'))
         self.assertEqual(str(episode.scheduled_datetime),
                          resp_episode.get('scheduled_datetime'))
@@ -268,8 +269,8 @@ class TestEpisode(unittest.TestCase):
         mocked_audio.id = audio_id
         episode = models.Episode(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            models.Episode.DraftStatus.published, None, False, image_id,
-            alias)
+            models.Episode.DraftStatus.published.name, scheduled_datetime,
+            False, image_id, alias)
         mocked_update.return_value = episode
 
         response = self.put_with_json(
@@ -292,7 +293,7 @@ class TestEpisode(unittest.TestCase):
                          resp_episode.get('owner_user_id'))
         self.assertEqual(episode.show_id, resp_episode.get('show_id'))
         self.assertEqual(episode.id, resp_episode.get('id'))
-        self.assertEqual(episode.draft_status.name,
+        self.assertEqual(episode.draft_status,
                          resp_episode.get('draft_status'))
         self.assertEqual(str(episode.scheduled_datetime),
                          resp_episode.get('scheduled_datetime'))
@@ -358,11 +359,11 @@ class TestEpisode(unittest.TestCase):
         episodes = [
             models.Episode(
                 mocked_show, 'title01', 'sub01', 'desc01', mocked_audio_01.id,
-                models.Episode.DraftStatus.published, None, False, 21,
+                models.Episode.DraftStatus.published.name, None, False, 21,
                 'alias01'),
             models.Episode(
                 mocked_show, 'title02', 'sub02', 'desc02', mocked_audio_02.id,
-                models.Episode.DraftStatus.draft, None, False, 22,
+                models.Episode.DraftStatus.draft.name, None, False, 22,
                 'alias02')
         ]
         mocked_load.return_value = episodes
@@ -372,7 +373,7 @@ class TestEpisode(unittest.TestCase):
         resp_data = json.loads(response.data)
         resp_episodes = resp_data.get('episodes')
         self.assertEqual('success', resp_data.get('result'))
-        self.assertEqual(list(map(dict, episodes)), resp_episodes)
+        self.assertEqual([dict(x) for x in episodes], resp_episodes)
 
 
 class TestAudio(unittest.TestCase):

@@ -50,7 +50,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
         mocked_episode_class.assert_called_with(
             mocked_show, title, subtitle, description, mocked_audio.id,
-            status_published, None, explicit, alias)
+            status_published.name, None, explicit, -1, alias)
         mocked_valid.assert_called_with(mocked_user, mocked_episode)
         mocked_add.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
@@ -163,7 +163,7 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(subtitle, mocked_episode.subtitle)
         self.assertEqual(description, mocked_episode.description)
         self.assertEqual(mocked_audio_new.id, mocked_episode.audio_id)
-        self.assertEqual(draft_status_new, mocked_episode.draft_status)
+        self.assertEqual(draft_status_new.name, mocked_episode.draft_status)
         self.assertEqual(scheduled_datetime_new,
                          mocked_episode.scheduled_datetime)
         self.assertEqual(explicit, mocked_episode.explicit)
@@ -174,11 +174,20 @@ class TestEpisodeOperation(unittest.TestCase):
                                 '_update_show_build_datetime')
     @unittest.mock.patch.object(models.db.session, 'commit')
     @unittest.mock.patch.object(models.db.session, 'delete')
-    def test_delete(self, mocked_delete, mocked_commit, mocked_build):
+    @unittest.mock.patch.object(episode_operation, 'get_episode_or_assert')
+    def test_delete(self, mocked_get_episode, mocked_delete, mocked_commit,
+                    mocked_build):
         mocked_user = MagicMock()
         mocked_episode = MagicMock()
-        result = episode_operation.delete(mocked_user, mocked_episode)
+        show_id = 1
+        episode_ids = [2]
 
+        mocked_get_episode.return_value = mocked_episode
+
+        result = episode_operation.delete(mocked_user, show_id, episode_ids)
+
+        mocked_get_episode.assert_called_with(
+            mocked_user, show_id, episode_ids[0])
         mocked_delete.assert_called_with(mocked_episode)
         mocked_commit.assert_called_with()
         mocked_build.assert_called_with(mocked_user, mocked_episode)
@@ -249,7 +258,7 @@ class TestEpisodeOperation(unittest.TestCase):
     def test_update_show_build_datetime(self, mocked_get_show, mocked_commit):
         mocked_user = MagicMock()
         mocked_episode = MagicMock()
-        mocked_episode.draft_status = models.Episode.DraftStatus.published
+        mocked_episode.draft_status = models.Episode.DraftStatus.published.name
         mocked_show = MagicMock()
 
         mocked_get_show.return_value = mocked_show

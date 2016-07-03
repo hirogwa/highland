@@ -21,7 +21,7 @@ class TestImageOperation(unittest.TestCase):
 
         result = image_operation.create(mocked_user, mocked_image_file)
 
-        mocked_store.assert_called_with(mocked_user.id, mocked_image_file)
+        mocked_store.assert_called_with(mocked_user, mocked_image_file)
         mocked_add.assert_called_with(mocked_image)
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_image, result)
@@ -31,12 +31,13 @@ class TestImageOperation(unittest.TestCase):
     @unittest.mock.patch.object(media_storage, 'delete')
     def test_delete(self, mocked_storage_delete, mocked_db_delete,
                     mocked_db_commit):
+        mocked_user = MagicMock()
         mocked_image = MagicMock()
 
-        result = image_operation.delete(mocked_image)
+        result = image_operation.delete(mocked_user, mocked_image)
 
         mocked_storage_delete.assert_called_with(
-            mocked_image.guid, settings.S3_BUCKET_IMAGE)
+            mocked_image.guid, settings.S3_BUCKET_IMAGE, mocked_user.username)
         mocked_db_delete.assert_called_with(mocked_image)
         mocked_db_commit.assert_called_with()
         self.assertTrue(result)

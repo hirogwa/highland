@@ -43,7 +43,7 @@ class TestEpisode(unittest.TestCase):
         audio.id = 3
         episode = models.Episode(
             show, 'my title', 'my subtitle', 'my description', audio.id,
-            models.Episode.DraftStatus.scheduled,
+            models.Episode.DraftStatus.scheduled.name,
             datetime.datetime.now(datetime.timezone.utc), False, 4, 'my alias')
         episode.id = 4
         episode.guid = uuid.uuid4().hex
@@ -60,7 +60,7 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.subtitle, episode_d.get('subtitle'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
-        self.assertEqual(episode.draft_status.name,
+        self.assertEqual(episode.draft_status,
                          episode_d.get('draft_status'))
         self.assertEqual(episode.explicit, episode_d.get('explicit'))
         self.assertEqual(episode.guid, episode_d.get('guid'))
