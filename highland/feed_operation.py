@@ -1,8 +1,9 @@
+import urllib.parse
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, media_storage,\
     audio_operation, image_operation, settings
 
-FEED_FOLDER_RSS = 'feed_rss'
+FEED_FOLDER_RSS = 'rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
 
 
@@ -54,6 +55,13 @@ def generate(user, show):
                 image_operation.get_image_url(user, image_episode))
 
     return fg.rss_str(pretty=True)
+
+
+def get_feed_url(user, show_id):
+    show = show_operation.get_show_or_assert(user, show_id)
+    assert user.id == show.owner_user_id
+    return urllib.parse.urljoin(settings.HOST_FEED,
+                                '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
 
 
 def _format_seconds(sec):

@@ -323,10 +323,13 @@ def preview_site(show_id):
     test only
     '''
     user = test_user()
+    show = show_operation.get_show_or_assert(user, show_id)
     return public_view._update_show(
         user,
-        show_operation.get_show_or_assert(user, show_id),
+        show,
         episode_operation.load_public(user, show_id),
+        '/{}'.format(show.alias),
+        feed_operation.get_feed_url(user, show_id),
         False)
 
 
@@ -336,10 +339,13 @@ def preview_site_episode(show_id, episode_id):
     test only
     '''
     user = test_user()
+    show = show_operation.get_show_or_assert(user, show_id)
     return public_view._update_episode(
         user,
-        show_operation.get_show_or_assert(user, show_id),
+        show,
         episode_operation.get_episode_or_assert(user, show_id, episode_id),
+        '/{}'.format(show.alias),
+        feed_operation.get_feed_url(user, show_id),
         False)
 
 
@@ -353,6 +359,16 @@ def preview_feed(show_id):
         feed_operation.generate(
             user, show_operation.get_show_or_assert(user, show_id)),
         mimetype=feed_operation.FEED_CONTENT_TYPE)
+
+
+@app.route('/publish_feed', methods=['POST'])
+def publish_feed():
+    '''
+    test only
+    '''
+    args = request.get_json()
+    feed_operation.update(test_user(), args.get('show_id'))
+    return 'feed published'
 
 
 @app.route('/page/show/<id_or_new>', methods=['GET'])
