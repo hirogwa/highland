@@ -158,11 +158,48 @@ class Uploader extends React.Component {
     }
 }
 
+class Deleter extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleDelete = this.handleDelete.bind(this);
+    }
+
+    handleDelete() {
+        let xhr = new XMLHttpRequest();
+        xhr.open('delete', this.props.url, true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function() {
+            if (this.status == 200) {
+                let data = JSON.parse(this.response);
+                console.info(data);
+            } else {
+                console.error(this.statusText);
+            }
+        };
+        xhr.send(
+            JSON.stringify({ids: this.props.selectedIds})
+        );
+    }
+
+    render() {
+        return (
+            <Form>
+              <Button bsStyle="danger" onClick={this.handleDelete}
+                      type="submit"
+                      disabled={this.props.selectedIds.length < 1}>
+                      Delete Selected
+              </Button>
+            </Form>
+        );
+    }
+}
+
 module.exports = {
     TextInput: TextInput,
     TextArea: TextArea,
     OptionSelector: OptionSelector,
     ExplicitSelector: ExplicitSelector,
     Image: Image,
-    Uploader: Uploader
+    Uploader: Uploader,
+    Deleter: Deleter
 };

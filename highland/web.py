@@ -198,7 +198,7 @@ def audio():
             return jsonify(audios=[_dict(x) for x in audios], result='success')
         if 'DELETE' == request.method:
             args = request.get_json()
-            audio_operation.delete(test_user(), args.get('audio_ids'))
+            audio_operation.delete(test_user(), args.get('ids'))
             return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -235,7 +235,7 @@ def image():
             return jsonify(images=[_dict(x) for x in images], result='success')
         if 'DELETE' == request.method:
             args = request.get_json()
-            image_operation.delete(test_user(), args.get('image_ids'))
+            image_operation.delete(test_user(), args.get('ids'))
             return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())

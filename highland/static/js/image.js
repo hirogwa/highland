@@ -1,43 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Button, Checkbox, Form, Table } from 'react-bootstrap';
-import { Uploader } from './common.js';
-
-class Deleter extends React.Component{
-    constructor(props) {
-        super(props);
-        this.handleDelete = this.handleDelete.bind(this);
-    }
-
-    handleDelete() {
-        let xhr = new XMLHttpRequest();
-        xhr.open('delete', '/image', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({image_ids: this.props.selectedIds})
-        );
-    }
-
-    render() {
-        return (
-            <Form>
-              <Button bsStyle="danger" onClick={this.handleDelete}
-                      type="submit"
-                      disabled={this.props.selectedIds.length < 1}>
-                      Delete Selected
-              </Button>
-            </Form>
-        );
-    }
-}
+import { Deleter, Uploader } from './common.js';
 
 class SingleImage extends React.Component {
     constructor(props) {
@@ -150,7 +114,8 @@ var App = React.createClass({
               <ImageList images={this.state.images}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectImage} />
-              <Deleter selectedIds={this.state.selectedIds} />
+              <Deleter selectedIds={this.state.selectedIds}
+                       url="/image" />
             </div>
         );
     }

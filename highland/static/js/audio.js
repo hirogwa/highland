@@ -1,96 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import {
-    Button, Checkbox, ControlLabel, Form, FormControl, FormGroup, HelpBlock, Table
-} from 'react-bootstrap';
-
-class Deleter extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleDelete = this.handleDelete.bind(this);
-    }
-
-    handleDelete() {
-        let xhr = new XMLHttpRequest();
-        xhr.open('delete', '/audio', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({audio_ids: this.props.selectedIds})
-        );
-    }
-
-    render() {
-        return (
-            <Form>
-              <Button bsStyle="danger" onClick={this.handleDelete}
-                      type="submit"
-                      disabled={this.props.selectedIds.length < 1}>
-                      Delete Selected
-              </Button>
-            </Form>
-        );
-    }
-}
-
-class Uploader extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            file: ''
-        };
-        this.handleFileChange = this.handleFileChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    handleFileChange(event) {
-        this.setState({
-            file: event.target.files[0]
-        });
-    }
-
-    handleSubmit(){
-        return new Promise((resolve, reject) => {
-            let formData = new FormData();
-            formData.append('file', this.state.file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('post', '/audio', true);
-            xhr.onload = function() {
-                if (this.status == 201) {
-                    resolve(this.response);
-                } else {
-                    reject(this.statusText);
-                }
-            };
-            xhr.send(formData);
-        });
-    }
-
-    render() {
-        return (
-            <Form>
-              <FormGroup controlId="formControlsFile">
-                <ControlLabel>New audio</ControlLabel>
-                <FormControl type="file" onChange={this.handleFileChange} />
-                <HelpBlock>Upload new file here.</HelpBlock>
-                <Button type="submit" onClick={this.handleSubmit}
-                        disabled={!this.state.file}>
-                  Upload
-                </Button>
-              </FormGroup>
-              {this.state.previewUrl}
-            </Form>
-        );
-    }
-}
+import { Checkbox, Table } from 'react-bootstrap';
+import { Deleter, Uploader } from './common.js';
 
 class SingleAudio extends React.Component {
     constructor(props) {
@@ -206,11 +117,13 @@ var App = React.createClass({
     render: function() {
         return (
             <div>
-              <Uploader />
+              <Uploader label="New Image"
+                        url="/audio" />
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />
-              <Deleter selectedIds={this.state.selectedIds} />
+              <Deleter selectedIds={this.state.selectedIds}
+                       url="/audio" />
             </div>
         );
     }
