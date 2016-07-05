@@ -218,7 +218,7 @@ def get_image(image_id):
         raise e
 
 
-@app.route('/image', methods=['POST', 'GET'])
+@app.route('/image', methods=['POST', 'GET', 'DELETE'])
 def image():
     try:
         if 'POST' == request.method:
@@ -233,6 +233,10 @@ def image():
                 d['url'] = image_operation.get_image_url(user, x)
                 return d
             return jsonify(images=[_dict(x) for x in images], result='success')
+        if 'DELETE' == request.method:
+            args = request.get_json()
+            image_operation.delete(test_user(), args.get('image_ids'))
+            return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         raise e
@@ -387,6 +391,11 @@ def dashboard_show(id_or_new):
 @app.route('/page/audio', methods=['GET'])
 def dashboard_audio():
     return render_template('dashboard/page_audio.html')
+
+
+@app.route('/page/image', methods=['GET'])
+def dashboard_image():
+    return render_template('dashboard/page_image.html')
 
 
 @app.route('/page/episode/<show_id>/<id_or_new>', methods=['GET'])

@@ -1,5 +1,7 @@
 import React from "react";
-import { ControlLabel, FormControl, FormGroup } from 'react-bootstrap';
+import {
+    Button, ControlLabel, Form, FormControl, FormGroup
+} from 'react-bootstrap';
 
 class OptionSelector extends React.Component {
     render() {
@@ -106,10 +108,61 @@ class Image extends React.Component {
     }
 }
 
+class Uploader extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            file: ''
+        };
+        this.handleFileChange = this.handleFileChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleFileChange(event) {
+        this.setState({
+            file: event.target.files[0]
+        });
+    }
+
+    handleSubmit(){
+        return new Promise((resolve, reject) => {
+            let formData = new FormData();
+            formData.append('file', this.state.file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('post', this.props.url, true);
+            xhr.onload = function() {
+                if (this.status == 201) {
+                    resolve(this.response);
+                } else {
+                    reject(this.statusText);
+                }
+            };
+            xhr.send(formData);
+        });
+    }
+
+    render() {
+        return (
+            <Form>
+              <FormGroup controlId="formControlsFile">
+                <ControlLabel>{this.props.label}</ControlLabel>
+                <FormControl type="file" onChange={this.handleFileChange} />
+                <Button type="submit" onClick={this.handleSubmit}
+                        disabled={!this.state.file}>
+                  Upload
+                </Button>
+              </FormGroup>
+            </Form>
+        );
+    }
+}
+
 module.exports = {
     TextInput: TextInput,
     TextArea: TextArea,
     OptionSelector: OptionSelector,
     ExplicitSelector: ExplicitSelector,
-    Image: Image
+    Image: Image,
+    Uploader: Uploader
 };

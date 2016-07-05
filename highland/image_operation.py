@@ -2,7 +2,7 @@ import imghdr
 import os
 import urllib.parse
 import uuid
-from highland import models, media_storage, settings
+from highland import models, media_storage, settings, app
 
 
 def create(user, image_file):
@@ -13,9 +13,17 @@ def create(user, image_file):
     return image
 
 
-def delete(user, image):
-    media_storage.delete(image.guid, settings.S3_BUCKET_IMAGE, user.username)
-    models.db.session.delete(image)
+def delete(user, image_ids):
+    for id in image_ids:
+        image = get_image_or_assert(user, id)
+        try:
+            media_storage.delete(
+                image.guid, settings.S3_BUCKET_IMAGE, user.username)
+        except:
+            app.logger.error(
+                'Failed to delete media:({},{})'.format(
+                    user.id, image.id), exc_info=1)
+        models.db.session.delete(image)
     models.db.session.commit()
     return True
 
