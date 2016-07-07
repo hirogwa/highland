@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import _ from "underscore";
 import { Button, Form, Table, Radio } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
+import { ImageSelector } from './image-util.js';
 
 class DraftStatusSelector extends React.Component {
     render() {
@@ -175,6 +176,12 @@ var App = React.createClass({
         });
     },
 
+    handleSelectImage: function(id) {
+        this.setState({
+            episode: _.extend(this.state.episode, {image_id: id})
+        });
+    },
+
     componentDidMount: function() {
         var self = this;
         if (this.props.mode === Mode.UPDATE) {
@@ -236,6 +243,8 @@ var App = React.createClass({
               <AudioSelector condensed={true}
                              selectedId={this.state.episode.audio_id}
                              handleChange={this.handleChangeAudioId} />
+              <ImageSelector selectedImageId={this.state.episode.image_id}
+                             handleSelect={this.handleSelectImage} />
               <Button bsStyle="primary" onClick={this.saveEpisode}>Save</Button>
             </Form>
         );

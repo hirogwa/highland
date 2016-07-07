@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Button, Checkbox, Form, Table } from 'react-bootstrap';
+import { Checkbox, Table } from 'react-bootstrap';
 import { Deleter, Uploader } from './common.js';
 
 class SingleImage extends React.Component {

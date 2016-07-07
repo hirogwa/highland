@@ -71,43 +71,6 @@ class TextArea extends React.Component {
     }
 }
 
-class Image extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {url: ''};
-        this.componentWillReceiveProps = this.componentWillReceiveProps.bind(this);
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (this.props.imageId === nextProps.imageId) {
-            return;
-        }
-
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/image/' + nextProps.imageId, true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                self.setState({
-                    url: data.image.url
-                });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
-    }
-
-    render() {
-        return (
-            <div>
-              <img src={this.state.url} className="img-thumbnail"/>
-            </div>
-        );
-    }
-}
-
 class Uploader extends React.Component {
     constructor(props) {
         super(props);
@@ -199,7 +162,6 @@ module.exports = {
     TextArea: TextArea,
     OptionSelector: OptionSelector,
     ExplicitSelector: ExplicitSelector,
-    Image: Image,
     Uploader: Uploader,
     Deleter: Deleter
 };

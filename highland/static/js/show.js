@@ -2,7 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import _ from "underscore";
 import { Button, Form } from 'react-bootstrap';
-import { TextArea, TextInput, OptionSelector, ExplicitSelector, Image } from './common.js';
+import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
+import { ImageSelector } from './image-util.js';
 
 class CategorySelector extends React.Component {
     render() {
@@ -59,7 +60,7 @@ var App = React.createClass({
                 category: '',
                 explicit: false,
                 alias: '',
-                image_id: 0
+                image_id: -1
             }
         };
     },
@@ -131,6 +132,12 @@ var App = React.createClass({
         });
     },
 
+    handleSelectImage: function(id) {
+        this.setState({
+            show: _.extend(this.state.show, {image_id: id})
+        });
+    },
+
     saveShow: function() {
         let xhr = new XMLHttpRequest();
         xhr.open(this.props.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
@@ -149,8 +156,6 @@ var App = React.createClass({
     render: function() {
         return (
             <Form>
-              <Image imageId={this.state.show.image_id}
-                     />
               <TextInput name='Alias'
                          value={this.state.show.alias}
                          handleChange={this.handleChangeAlias} />
@@ -175,6 +180,8 @@ var App = React.createClass({
               <ExplicitSelector explicit={this.state.show.explicit}
                                 handleChange={this.handleChangeExplicit}
                                 />
+              <ImageSelector selectedImageId={this.state.show.image_id}
+                             handleSelect={this.handleSelectImage} />
               <Button bsStyle="primary" onClick={this.saveShow}>Save</Button>
             </Form>
         );
