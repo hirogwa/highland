@@ -1,5 +1,10 @@
 {% extends "public_sites/base.html" %}
 
+{% block head %}
+  <meta property="og:type" content="blog" />
+  <meta property="og:description" content="{{ show.subtitle }}" />
+{% endblock %}
+
 {% block content %}
 <div class="home">
   <ul class="post-list">

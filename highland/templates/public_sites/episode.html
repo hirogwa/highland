@@ -1,5 +1,11 @@
 {% extends "public_sites/base.html" %}
 
+{% block head %}
+  <meta property="og:type" content="article" />
+  <meta property="og:description" content="{{ episode.subtitle }}" />
+  <meta property="og:audio" content="{{ audio_url }}" />
+{% endblock %}
+
 {% block content %}
 <div class="post">
   <header class="post-header">
