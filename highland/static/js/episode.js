@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import _ from "underscore";
-import { Button, Form, Table, Radio } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
 import { ImageSelector } from './image-util.js';
+import { AudioSelector } from './audio-util.js';
 
 class DraftStatusSelector extends React.Component {
     render() {
@@ -20,94 +21,6 @@ class DraftStatusSelector extends React.Component {
                             value={this.props.draftStatus}
                             options={options}
                             handleChange={this.props.handleChange} />
-        );
-    }
-}
-
-class AudioSelectorRow extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handler = this.handler.bind(this);
-    }
-
-    handler() {
-        this.props.handleChange(this.props.audio.id);
-    }
-
-    render() {
-        var hours = parseInt(this.props.audio.duration / 3600, 10);
-        var minutes = parseInt(this.props.audio.duration / 60, 10);
-        var seconds = parseInt(this.props.audio.duration % 60, 10);
-        var duration = "h:m:s".replace('h', hours)
-                .replace('m', minutes < 10 ? '0' + minutes : minutes)
-                .replace('s', seconds < 10 ? '0' + seconds : seconds);
-        return (
-            <tr>
-              <td>
-                <Radio checked={this.props.selected} onChange={this.handler} />
-              </td>
-              <td>
-                <a href={this.props.audio.url}>
-                  {this.props.audio.filename}
-                </a>
-              </td>
-              <td>{duration}</td>
-              <td>{this.props.audio.create_datetime}</td>
-            </tr>
-        );
-    }
-}
-
-class AudioSelector extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            audios: []
-        };
-        this.componentDidMount = this.componentDidMount.bind(this);
-    }
-
-    componentDidMount() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/audio', true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                self.setState({
-                    audios: data.audios
-                });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
-    }
-
-    render() {
-        var rows = [];
-        let self = this;
-        this.state.audios.forEach(function(audio) {
-            rows.push(
-                <AudioSelectorRow audio={audio}
-                                  key={audio.id}
-                                  selected={self.props.selectedId === audio.id}
-                                  handleChange={self.props.handleChange} />
-            );
-        });
-        return (
-            <Table condensed={this.props.condensed}>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Duration</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows}
-              </tbody>
-            </Table>
         );
     }
 }
@@ -176,6 +89,12 @@ var App = React.createClass({
         });
     },
 
+    handleSelectAudio: function(id) {
+        this.setState({
+            episode: _.extend(this.state.episode, {audio_id: id})
+        });
+    },
+
     handleSelectImage: function(id) {
         this.setState({
             episode: _.extend(this.state.episode, {image_id: id})
@@ -240,9 +159,8 @@ var App = React.createClass({
                                 handleChange={this.handleChangeExplicit} />
               <DraftStatusSelector draftStatus={this.state.episode.draft_status}
                                    handleChange={this.handleChangeDraftStatus} />
-              <AudioSelector condensed={true}
-                             selectedId={this.state.episode.audio_id}
-                             handleChange={this.handleChangeAudioId} />
+              <AudioSelector selectedAudioId={this.state.episode.audio_id}
+                             handleSelect={this.handleSelectAudio} />
               <ImageSelector selectedImageId={this.state.episode.image_id}
                              handleSelect={this.handleSelectImage} />
               <Button bsStyle="primary" onClick={this.saveEpisode}>Save</Button>
