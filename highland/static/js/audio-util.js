@@ -8,7 +8,7 @@ class AudioNone extends React.Component {
     }
 
     handleSelect() {
-        this.props.handleSelect(-1);
+        this.props.handleSelect(null);
     }
 
     render() {
@@ -71,7 +71,7 @@ class AudioList extends React.Component {
         let self = this;
         rows.push(
             <AudioNone key={-1}
-                       selected={self.props.selectedId === -1}
+                       selected={self.props.selectedId === null}
                        handleSelect={self.props.handleSelect} />
         );
         this.props.audios.forEach(function(audio) {

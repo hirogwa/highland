@@ -4,9 +4,9 @@ from highland import models, show_operation, settings, audio_operation,\
     image_operation, common
 
 
-def create(user, show_id, draft_status, alias, scheduled_datetime=None,
-           title='', subtitle='', description='', audio_id=-1, explicit=False,
-           image_id=-1):
+def create(user, show_id, draft_status, alias, audio_id,
+           scheduled_datetime=None, title='', subtitle='', description='',
+           explicit=False, image_id=-1):
     if not common.is_valid_alias(alias):
         raise ValueError('alias not accepted. {}'.format(alias))
 
@@ -26,9 +26,9 @@ def create(user, show_id, draft_status, alias, scheduled_datetime=None,
     return episode
 
 
-def update(user, show_id, episode_id, draft_status, alias,
+def update(user, show_id, episode_id, draft_status, alias, audio_id,
            scheduled_datetime=None, title='', subtitle='', description='',
-           audio_id=-1, explicit=False, image_id=-1):
+           explicit=False, image_id=-1):
     show_operation.get_show_or_assert(user, show_id)
     episode = get_episode_or_assert(user, show_id, episode_id)
 
@@ -98,7 +98,7 @@ def valid_or_assert(user, episode):
     if episode.image_id is not None:
         image_operation.get_image_or_assert(user, episode.image_id)
 
-    if episode.draft_status != models.Episode.DraftStatus.draft:
+    if episode.draft_status != models.Episode.DraftStatus.draft.name:
         assert episode.title, 'title required'
         assert episode.description, 'description required'
         assert episode.audio_id, 'audio required'
