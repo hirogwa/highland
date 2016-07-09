@@ -38,7 +38,7 @@ var App = React.createClass({
                 subtitle: '',
                 description: '',
                 audio_id: null,
-                image_id: -1,
+                image_id: null,
                 draft_status: 'draft',
                 scheduled_datetime: '',
                 explicit: false,

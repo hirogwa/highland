@@ -39,8 +39,6 @@ def show():
             assert author, 'author required'
             assert category, 'category required'
             assert explicit is not None, 'explicit required'
-            # TODO: UI not ready
-            # assert image_id, 'image id required'
             assert alias, 'alias required'
 
             show = show_operation.create(
@@ -110,9 +108,9 @@ def episode():
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.create(
-                test_user(), show_id, draft_status, alias, audio_id,
+                test_user(), show_id, draft_status, alias, audio_id, image_id,
                 datetime_valid_or_none(scheduled_datetime), title,
-                subtitle, description, explicit, image_id)
+                subtitle, description, explicit)
 
             return jsonify(episode=dict(episode), result='success'), 201
 
@@ -143,8 +141,8 @@ def episode():
 
             episode = episode_operation.update(
                 test_user(), show_id, id, draft_status, alias, audio_id,
-                datetime_valid_or_none(scheduled_datetime), title, subtitle,
-                description, explicit, image_id)
+                image_id, datetime_valid_or_none(scheduled_datetime), title,
+                subtitle, description, explicit)
             return jsonify(episode=dict(episode), result='success')
 
         if 'DELETE' == request.method:

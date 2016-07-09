@@ -60,7 +60,7 @@ var App = React.createClass({
                 category: '',
                 explicit: false,
                 alias: '',
-                image_id: -1
+                image_id: null
             }
         };
     },

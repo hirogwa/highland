@@ -8,7 +8,7 @@ class ImageNone extends React.Component {
     }
 
     handleSelect() {
-        this.props.handleSelect(-1);
+        this.props.handleSelect(null);
     }
 
     render() {
@@ -61,7 +61,7 @@ class ImageList extends React.Component {
         let self = this;
         rows.push(
             <ImageNone key={-1}
-                       selected={self.props.selectedId === -1}
+                       selected={self.props.selectedId === null}
                        handleSelect={self.props.handleSelect} />
         );
         this.props.images.forEach(function(image) {
