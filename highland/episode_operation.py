@@ -93,15 +93,15 @@ def get_episode_or_assert(user, show_id, episode_id):
 
 
 def valid_or_assert(user, episode):
-    if episode.audio_id > 0:
+    if episode.audio_id is not None:
         audio_operation.get_audio_or_assert(user, episode.audio_id)
-    if episode.image_id > 0:
+    if episode.image_id is not None:
         image_operation.get_image_or_assert(user, episode.image_id)
 
     if episode.draft_status != models.Episode.DraftStatus.draft:
         assert episode.title, 'title required'
         assert episode.description, 'description required'
-        assert episode.audio_id > 0, 'audio required'
+        assert episode.audio_id, 'audio required'
 
     if episode.draft_status == models.Episode.DraftStatus.scheduled:
         assert episode.scheduled_datetime, 'scheduled_datetime required'

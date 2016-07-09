@@ -29,7 +29,7 @@ def generate(user, show):
     fg.podcast.itunes_owner(name=user.name, email=user.email)
     fg.podcast.itunes_subtitle(show.subtitle)
     fg.podcast.itunes_summary(show.description)
-    if show.image_id > 0:
+    if show.image_id is not None:
         image = image_operation.get_image_or_assert(user, show.image_id)
         fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
@@ -48,7 +48,7 @@ def generate(user, show):
         fe.podcast.itunes_duration(_format_seconds(audio.duration))
         fe.podcast.itunes_explicit('yes' if episode.explicit else 'no')
         fe.podcast.itunes_subtitle(episode.subtitle)
-        if episode.image_id > 0:
+        if episode.image_id is not None:
             image_episode = image_operation.get_image_or_assert(
                 user, episode.image_id)
             fe.podcast.itunes_image(

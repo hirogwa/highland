@@ -6,7 +6,7 @@ from highland import show_operation, episode_operation, media_storage, \
 def update_full(user, show_id):
     show = show_operation.get_show_or_assert(user, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
-        if show.image_id > 0 else None
+        if show.image_id else None
     episodes = episode_operation.load_public(user, show_id)
     home_url = '/{}'.format(show.alias)
     feed_url = feed_operation.get_feed_url(user, show_id)
@@ -38,11 +38,11 @@ def _update_show(user, show, show_image, episodes, home_url, feed_url,
 
 def _update_episode(user, show, show_image, episode, home_url, feed_url,
                     upload=True):
-    if episode.image_id > 0:
+    if episode.image_id is None:
+        image_url = image_operation.get_image_url(user, show_image)
+    else:
         ep_image = image_operation.get_image_or_assert(user, episode.image_id)
         image_url = image_operation.get_image_url(user, ep_image)
-    else:
-        image_url = image_operation.get_image_url(user, show_image)
 
     audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
     m, s = divmod(audio.duration, 60)

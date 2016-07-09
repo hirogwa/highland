@@ -34,6 +34,13 @@ class Show(db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ['owner_user_id', 'image_id'],
+            ['image.owner_user_id', 'image.id']
+        ),
+    )
+
     def __init__(self, user, title, description, subtitle, language, author,
                  category, explicit, image_id, alias):
         self.owner_user_id = user.id
@@ -93,6 +100,14 @@ class Episode(db.Model):
             ['owner_user_id', 'show_id'],
             ['show.owner_user_id', 'show.id'],
         ),
+        db.ForeignKeyConstraint(
+            ['owner_user_id', 'audio_id'],
+            ['audio.owner_user_id', 'audio.id']
+        ),
+        db.ForeignKeyConstraint(
+            ['owner_user_id', 'image_id'],
+            ['image.owner_user_id', 'image.id']
+        ),
         db.UniqueConstraint('owner_user_id', 'show_id', 'alias')
     )
 
@@ -129,7 +144,8 @@ class Audio(db.Model):
     duration: in seconds
     length: in bytes
     '''
-    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                              primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     duration = db.Column(db.Integer())
