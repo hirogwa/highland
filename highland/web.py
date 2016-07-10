@@ -326,7 +326,7 @@ def preview_site(show_id):
     show = show_operation.get_show_or_assert(user, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
-    return public_view._update_show(
+    return public_view.show_html(
         user,
         show,
         show_image,
@@ -345,7 +345,7 @@ def preview_site_episode(show_id, episode_id):
     show = show_operation.get_show_or_assert(user, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
-    return public_view._update_episode(
+    return public_view.episode_html(
         user,
         show,
         show_image,

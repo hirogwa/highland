@@ -10,15 +10,15 @@ def update_full(user, show_id):
     episodes = episode_operation.load_public(user, show_id)
     home_url = '/{}'.format(show.alias)
     feed_url = feed_operation.get_feed_url(user, show_id)
-    _update_show(user, show, show_image, episodes, home_url, feed_url)
+    show_html(user, show, show_image, episodes, home_url, feed_url)
     _delete_all_episodes(user, show)
     for episode in episodes:
-        _update_episode(user, show, show_image, episode, home_url, feed_url)
+        episode_html(user, show, show_image, episode, home_url, feed_url)
     return True
 
 
-def _update_show(user, show, show_image, episodes, home_url, feed_url,
-                 upload=True):
+def show_html(user, show, show_image, episodes, home_url, feed_url,
+              upload=True):
     image_url = image_operation.get_image_url(user, show_image) \
         if show_image else ''
     html = render_template(
@@ -36,8 +36,8 @@ def _update_show(user, show, show_image, episodes, home_url, feed_url,
     return html
 
 
-def _update_episode(user, show, show_image, episode, home_url, feed_url,
-                    upload=True):
+def episode_html(user, show, show_image, episode, home_url, feed_url,
+                 upload=True):
     if episode.image_id is None:
         image_url = image_operation.get_image_url(user, show_image)
     else:
