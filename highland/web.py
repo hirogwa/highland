@@ -331,13 +331,11 @@ def preview_site(show_id):
         show,
         show_image,
         episode_operation.load_public(user, show_id),
-        '/{}'.format(show.alias),
-        feed_operation.get_feed_url(user, show_id),
         False)
 
 
 @app.route('/preview_site/<show_id>/<episode_id>', methods=['GET'])
-def preview_site_episode(show_id, episode_id):
+def preview_site_episode_test(show_id, episode_id):
     '''
     test only
     '''
@@ -350,9 +348,24 @@ def preview_site_episode(show_id, episode_id):
         show,
         show_image,
         episode_operation.get_episode_or_assert(user, show_id, episode_id),
-        '/{}'.format(show.alias),
-        feed_operation.get_feed_url(user, show_id),
         False)
+
+
+@app.route('/preview/site/', methods=['GET'])
+def preview_site_episode():
+    user = test_user()
+    args = request.args
+    show_id, title, subtitle, description, audio_id, image_id = \
+        args.get('show_id'), \
+        args.get('title'), \
+        args.get('subtitle'), \
+        args.get('description'), \
+        args.get('audio_id'), \
+        args.get('image_id')
+
+    show = show_operation.get_show_or_assert(user, show_id)
+    return public_view.preview_episode(
+        user, show, title, subtitle, description, audio_id, image_id)
 
 
 @app.route('/preview_feed/<show_id>', methods=['GET'])

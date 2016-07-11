@@ -57,8 +57,7 @@ def generate(user, show):
     return fg.rss_str(pretty=True)
 
 
-def get_feed_url(user, show_id):
-    show = show_operation.get_show_or_assert(user, show_id)
+def get_feed_url(user, show):
     assert user.id == show.owner_user_id
     return urllib.parse.urljoin(settings.HOST_FEED,
                                 '{}/{}'.format(FEED_FOLDER_RSS, show.alias))

@@ -118,6 +118,15 @@ def get_episode_url(user, episode, show=None):
         settings.HOST_SITE, '{}/{}'.format(show.alias, episode.alias))
 
 
+def get_preview_episode(user, show, title, subtitle, description, audio_id,
+                        image_id):
+    episode = models.Episode(show, title, subtitle, description, audio_id,
+                             models.Episode.DraftStatus.published.name,
+                             None, False, image_id, '_preview')
+    episode.published_datetime = datetime.datetime.now(datetime.timezone.utc)
+    return episode
+
+
 def _update_show_build_datetime(user, episode):
     if episode.draft_status != models.Episode.DraftStatus.published.name:
         return None
