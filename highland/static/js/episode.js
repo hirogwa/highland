@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import _ from "underscore";
-import { Button, Form } from 'react-bootstrap';
+import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
 import { ImageSelector } from './image-util.js';
 import { AudioSelector } from './audio-util.js';
@@ -140,6 +140,21 @@ var App = React.createClass({
         );
     },
 
+    previewUrl: function() {
+        let e = this.state.episode;
+        let p = function(attr) {
+            return e[attr] === null ? '' : attr + '=' + encodeURIComponent(e[attr]) + '&';
+        };
+
+        return '/preview/site/?'
+                         + p('show_id')
+                         + p('title')
+                         + p('subtitle')
+                         + p('description')
+                         + p('audio_id')
+                         + p('image_id');
+    },
+
     render: function() {
         return (
             <Form>
@@ -163,7 +178,14 @@ var App = React.createClass({
                              handleSelect={this.handleSelectAudio} />
               <ImageSelector selectedImageId={this.state.episode.image_id}
                              handleSelect={this.handleSelectImage} />
-              <Button bsStyle="primary" onClick={this.saveEpisode}>Save</Button>
+              <ButtonToolbar>
+                <Button bsStyle="default"
+                        target="_blank"
+                        href={this.previewUrl()}>
+                  Preview
+                </Button>
+                <Button bsStyle="primary" onClick={this.saveEpisode}>Save</Button>
+              </ButtonToolbar>
             </Form>
         );
     }
