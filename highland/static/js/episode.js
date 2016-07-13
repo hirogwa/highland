@@ -143,16 +143,16 @@ var App = React.createClass({
     previewUrl: function() {
         let e = this.state.episode;
         let p = function(attr) {
-            return e[attr] === null ? '' : attr + '=' + encodeURIComponent(e[attr]) + '&';
+            return '&' +
+                (e[attr] === null ? '' : attr + '=' + encodeURIComponent(e[attr]));
         };
 
-        return '/preview/site/?'
-                         + p('show_id')
-                         + p('title')
-                         + p('subtitle')
-                         + p('description')
-                         + p('audio_id')
-                         + p('image_id');
+        return '/preview/site/?show_id=' + this.props.showId
+            + p('title')
+            + p('subtitle')
+            + p('description')
+            + p('audio_id')
+            + p('image_id');
     },
 
     render: function() {
