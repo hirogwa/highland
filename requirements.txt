@@ -17,4 +17,5 @@ mutagen==1.32
 psycopg2==2.6.1
 python-dateutil==2.5.3
 pytz==2016.4
+requests==2.10.0
 six==1.10.0
