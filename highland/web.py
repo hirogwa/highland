@@ -3,7 +3,17 @@ import traceback
 from flask import request, jsonify, render_template, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view, feed_operation, settings
+    image_operation, public_view, feed_operation, stat_operation, settings
+
+
+@app.route('/stat/episode_by_day', methods=['GET'])
+def stat_episode_by_day():
+    return jsonify(stat_operation.get_episode_by_day())
+
+
+@app.route('/stat/episode_cumulative', methods=['GET'])
+def stat_episode_cumulative():
+    return jsonify(stat_operation.get_episode_cumulative())
 
 
 @app.route('/show/<show_id>', methods=['GET'])
