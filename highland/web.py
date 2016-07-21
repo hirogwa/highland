@@ -8,12 +8,16 @@ from highland import app, models,\
 
 @app.route('/stat/episode_by_day', methods=['GET'])
 def stat_episode_by_day():
-    return jsonify(stat_operation.get_episode_by_day())
+    show_id = request.args.get('show_id')
+    assert show_id, 'show_id required'
+    return jsonify(stat_operation.get_episode_by_day(test_user(), show_id))
 
 
 @app.route('/stat/episode_cumulative', methods=['GET'])
 def stat_episode_cumulative():
-    return jsonify(stat_operation.get_episode_cumulative())
+    show_id = request.args.get('show_id')
+    assert show_id, 'show_id required'
+    return jsonify(stat_operation.get_episode_cumulative(test_user(), show_id))
 
 
 @app.route('/show/<show_id>', methods=['GET'])

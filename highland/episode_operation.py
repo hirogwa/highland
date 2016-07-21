@@ -70,6 +70,20 @@ def load(user, show_id, **kwargs):
         all()
 
 
+def load_with_audio(user, show_id):
+    show = show_operation.get_show_or_assert(user, show_id)
+    return models.db.session. \
+        query(
+            models.Episode,
+            models.Audio). \
+        join(
+            models.Audio). \
+        filter(
+            models.Episode.owner_user_id == show.owner_user_id,
+            models.Episode.show_id == show.id). \
+        all()
+
+
 def load_public(user, show_id):
     show = show_operation.get_show_or_assert(user, show_id)
     return models.Episode.query.\
