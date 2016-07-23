@@ -180,7 +180,11 @@ def episode():
 @app.route('/episodes/<show_id>', methods=['GET'])
 def get_episode_list(show_id):
     try:
-        episodes = episode_operation.load(test_user(), show_id)
+        public = request.args.get('public')
+        if public:
+            episodes = episode_operation.load_public(test_user(), show_id)
+        else:
+            episodes = episode_operation.load(test_user(), show_id)
         return jsonify(episodes=[dict(x) for x in episodes], result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -453,3 +457,8 @@ def dashboard_episode(show_id, id_or_new):
 def dashboard_episode_list(show_id):
     show_operation.get_show_or_assert(test_user(), show_id)
     return render_template('dashboard/page_episode_list.html', show_id=show_id)
+
+
+@app.route('/page/stat/<show_id>', methods=['GET'])
+def dashboard_stat(show_id):
+    return render_template('dashboard/page_stat.html', show_id=show_id)
