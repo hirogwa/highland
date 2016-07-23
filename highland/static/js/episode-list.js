@@ -79,6 +79,8 @@ class SingleEpisode extends React.Component {
               </td>
               <td>{this.props.episode.subtitle}</td>
               <td>{this.props.episode.draft_status}</td>
+              <td>{this.props.episode.published_datetime}</td>
+              <td>{this.props.episode.create_datetime}</td>
             </tr>
         );
     }
@@ -105,6 +107,8 @@ class EpisodeList extends React.Component {
                   <th>Title</th>
                   <th>Subtitle</th>
                   <th>Draft status</th>
+                  <th>Published</th>
+                  <th>Created</th>
                 </tr>
               </thead>
               <tbody>

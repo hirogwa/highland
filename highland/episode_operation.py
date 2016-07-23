@@ -67,6 +67,7 @@ def load(user, show_id, **kwargs):
     show = show_operation.get_show_or_assert(user, show_id)
     return models.Episode.query.\
         filter_by(owner_user_id=show.owner_user_id, show_id=show.id, **kwargs).\
+        order_by(models.Episode.published_datetime.desc()).\
         all()
 
 
