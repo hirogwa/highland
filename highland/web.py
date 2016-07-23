@@ -13,6 +13,13 @@ def stat_episode_by_day():
     return jsonify(stat_operation.get_episode_by_day(test_user(), show_id))
 
 
+@app.route('/stat/episode_past_week', methods=['GET'])
+def stat_episode_past_week():
+    show_id = request.args.get('show_id')
+    assert show_id, 'show_id required'
+    return jsonify(stat_operation.get_episode_one_week(test_user(), show_id))
+
+
 @app.route('/stat/episode_cumulative', methods=['GET'])
 def stat_episode_cumulative():
     show_id = request.args.get('show_id')
