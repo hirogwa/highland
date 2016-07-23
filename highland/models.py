@@ -137,6 +137,8 @@ class Episode(db.Model):
               '' if self.update_datetime is None else str(self.update_datetime))
         yield('create_datetime',
               '' if self.create_datetime is None else str(self.create_datetime))
+        yield('published_datetime',
+              '' if self.published_datetime is None else str(self.published_datetime))
 
 
 class Audio(db.Model):

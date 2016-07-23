@@ -17,7 +17,7 @@ class StatTableRow extends React.Component {
               <td>
                 <a href={episode_url}>{this.props.episode.title}</a>
               </td>
-              <td>{this.props.episode.create_datetime}</td>
+              <td>{this.props.episode.published_datetime}</td>
               <td>{this.props.statWeek}</td>
               <td>{this.props.statCumulative}</td>
             </tr>
@@ -63,7 +63,7 @@ class StatTable extends React.Component {
               <thead>
                 <tr>
                   <th>Episode</th>
-                  <th>Created</th>
+                  <th>Published</th>
                   <th>Week</th>
                   <th>Cumulative</th>
                 </tr>
