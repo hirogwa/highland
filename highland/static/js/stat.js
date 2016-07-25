@@ -18,6 +18,7 @@ class StatTableRow extends React.Component {
                 <a href={episode_url}>{this.props.episode.title}</a>
               </td>
               <td>{this.props.episode.published_datetime}</td>
+              <td>{this.props.statToday}</td>
               <td>{this.props.statWeek}</td>
               <td>{this.props.statCumulative}</td>
             </tr>
@@ -28,8 +29,28 @@ class StatTableRow extends React.Component {
 class StatTable extends React.Component {
     constructor(props) {
         super(props);
+        this.getToday = this.getToday.bind(this);
         this.getWeek = this.getWeek.bind(this);
         this.getCumulative = this.getCumulative.bind(this);
+        this.todayString = this.getTodayString();
+    }
+
+    getTodayString() {
+        let today = new Date();
+        let month = today.getMonth() + 1;
+        month = (month < 10 ? '' : '0') + month;
+        return '' + today.getFullYear() +
+            (month < 10 ? '0' : '') + month + today.getDate();
+    }
+
+    getToday(episode) {
+        let stat = this.props.statByDay[episode.id];
+        if (stat) {
+            let s = stat[this.todayString];
+            return s ? s.users : 0;
+        } else {
+            return 0;
+        }
     }
 
     getWeek(episode) {
@@ -47,12 +68,14 @@ class StatTable extends React.Component {
         let self = this;
 
         this.props.episodes.forEach(function(episode) {
+            let today = self.getToday(episode);
             let week = self.getWeek(episode);
             let cumulative = self.getCumulative(episode);
 
             rows.push(
                 <StatTableRow episode={episode}
                               key={episode.id}
+                              statToday={today}
                               statWeek={week}
                               statCumulative={cumulative} />
             );
@@ -64,7 +87,8 @@ class StatTable extends React.Component {
                 <tr>
                   <th>Episode</th>
                   <th>Published</th>
-                  <th>Week</th>
+                  <th>Today</th>
+                  <th>Past Week</th>
                   <th>Cumulative</th>
                 </tr>
               </thead>
@@ -168,6 +192,7 @@ var App = React.createClass({
         return (
             <div>
               <StatTable episodes={this.state.episodes}
+                         statByDay={this.state.statByDay}
                          statWeek={this.state.statWeek}
                          statCumulative={this.state.statCumulative} />
             </div>
