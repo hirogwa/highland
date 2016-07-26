@@ -1,9 +1,11 @@
-import datetime
 import requests
 import urllib.parse
+from datetime import date, datetime, timedelta
 from highland import settings, show_operation, episode_operation
 
 DATE_FORMAT = '%Y%m%d'
+STAT_USERS = 'users'
+STAT_DOWNLOADS = 'downloads'
 
 
 def get_episode_by_day(user, show_id):
@@ -15,15 +17,22 @@ def get_episode_by_day(user, show_id):
     r = requests.get(
         urllib.parse.urljoin(settings.HOST_OLYMPIA, '/stat/key_by_day'),
         params=p)
-    return _convert_stat(user, show, r.json().get('keys'))
+    episode_stat = _stat_from_audio_to_episode(
+        user, show, r.json().get('keys'))
+    stat, date_from, date_to = _fill_in_missing_date(episode_stat)
+    return {
+        'stat': stat,
+        'date_from': date_from,
+        'date_to': date_to
+    }
 
 
 def get_episode_one_week(user, show_id, date_to=None):
     if date_to:
-        date_to = datetime.datetime.strptime(date_to, DATE_FORMAT)
+        date_to = datetime.strptime(date_to, DATE_FORMAT)
     else:
-        date_to = datetime.date.today()
-    date_from = date_to - datetime.timedelta(days=6)
+        date_to = date.today()
+    date_from = date_to - timedelta(days=6)
 
     return get_episode_cumulative(user, show_id,
                                   date_from.strftime(DATE_FORMAT),
@@ -41,10 +50,31 @@ def get_episode_cumulative(user, show_id, date_from=None, date_to=None):
     r = requests.get(
         urllib.parse.urljoin(settings.HOST_OLYMPIA, '/stat/key_cumulative'),
         params=p)
-    return _convert_stat(user, show, r.json().get('keys'), date_from, date_to)
+    return {
+        'stat': _stat_from_audio_to_episode(user, show, r.json().get('keys')),
+        'date_from': date_from,
+        'date_to': date_to
+    }
 
 
-def _convert_stat(user, show, key_stat, date_from=None, date_to=None):
+def _fill_in_missing_date(data, date_from=None, date_to=None):
+    dates_from_data = [x for inner in data.values() for x in inner]
+    date_from = date_from or min(dates_from_data)
+    date_to = date_to or max(dates_from_data)
+
+    dt_from = datetime.strptime(date_from, DATE_FORMAT)
+    dt_to = datetime.strptime(date_to, DATE_FORMAT)
+    days = (dt_to - dt_from + timedelta(days=1)).days
+    for d in [(dt_from + timedelta(days=x)).strftime(DATE_FORMAT)
+              for x in range(days)]:
+        for x in data.values():
+            if d not in x:
+                x[d] = {STAT_USERS: 0, STAT_DOWNLOADS: 0}
+
+    return data, date_from, date_to
+
+
+def _stat_from_audio_to_episode(user, show, key_stat):
     e_a_list = episode_operation.load_with_audio(user, show.id)
     key_to_episode = \
         {'{}/{}'.format(show.alias, a.guid): e for (e, a) in e_a_list}
@@ -53,8 +83,4 @@ def _convert_stat(user, show, key_stat, date_from=None, date_to=None):
     for k, v in [(k, v) for (k, v) in key_stat.items() if k in key_to_episode]:
         episode = key_to_episode.get(k)
         stat[episode.id] = v
-    return {
-        'stat': stat,
-        'date_from': date_from,
-        'date_to': date_to
-    }
+    return stat
