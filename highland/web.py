@@ -9,8 +9,12 @@ from highland import app, models,\
 @app.route('/stat/episode_by_day', methods=['GET'])
 def stat_episode_by_day():
     show_id = request.args.get('show_id')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
     assert show_id, 'show_id required'
-    return jsonify(stat_operation.get_episode_by_day(test_user(), show_id))
+    return jsonify(
+        stat_operation.get_episode_by_day(
+            test_user(), show_id, date_from, date_to))
 
 
 @app.route('/stat/episode_past_week', methods=['GET'])

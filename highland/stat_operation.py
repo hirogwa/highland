@@ -8,18 +8,24 @@ STAT_USERS = 'users'
 STAT_DOWNLOADS = 'downloads'
 
 
-def get_episode_by_day(user, show_id):
+def get_episode_by_day(user, show_id, date_from=None, date_to=None):
     show = show_operation.get_show_or_assert(user, show_id)
     p = {
         'bucket': settings.S3_BUCKET_AUDIO,
         'key_prefix': show.alias + '/'
     }
+    if date_from:
+        p['date_from'] = date_from
+    if date_to:
+        p['date_to'] = date_to
+
     r = requests.get(
         urllib.parse.urljoin(settings.HOST_OLYMPIA, '/stat/key_by_day'),
         params=p)
     episode_stat = _stat_from_audio_to_episode(
         user, show, r.json().get('keys'))
-    stat, date_from, date_to = _fill_in_missing_date(episode_stat)
+    stat, date_from, date_to = _fill_in_missing_date(
+        episode_stat, date_from, date_to)
     return {
         'stat': stat,
         'date_from': date_from,
@@ -57,10 +63,10 @@ def get_episode_cumulative(user, show_id, date_from=None, date_to=None):
     }
 
 
-def _fill_in_missing_date(data, date_from=None, date_to=None):
+def _fill_in_missing_date(data, date_from, date_to):
     dates_from_data = [x for inner in data.values() for x in inner]
     date_from = date_from or min(dates_from_data)
-    date_to = date_to or max(dates_from_data)
+    date_to = date_to or datetime.now().strftime(DATE_FORMAT)
 
     dt_from = datetime.strptime(date_from, DATE_FORMAT)
     dt_to = datetime.strptime(date_to, DATE_FORMAT)
