@@ -10,7 +10,7 @@
   <ul class="post-list">
     {% for episode in episodes %}
     <li>
-      <span class="post-meta">{{ episode.create_datetime.strftime('%b %d, %Y') }}</span>
+      <span class="post-meta">{{ episode.published_datetime.strftime('%b %d, %Y') }}</span>
       <h2>
         <a class="post-link" href={{ "/%s/%s"|format(show.alias, episode.alias) }}>
           {{ episode.title }}
