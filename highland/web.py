@@ -419,55 +419,6 @@ def publish_feed():
     return 'feed published'
 
 
-@app.route('/page/show/<id_or_new>', methods=['GET'])
-def dashboard_show(id_or_new):
-    if id_or_new == 'new':
-        mode = 'create'
-        show_id = -1
-    else:
-        mode = 'update'
-        show_id = id_or_new
-
-    return render_template(
-        'dashboard/page_show.html', show_id=show_id, mode=mode)
-
-
-@app.route('/page/audio', methods=['GET'])
-def dashboard_audio():
-    return render_template('dashboard/page_audio.html')
-
-
-@app.route('/page/image', methods=['GET'])
-def dashboard_image():
-    return render_template('dashboard/page_image.html')
-
-
-@app.route('/page/episode/<show_id>/<id_or_new>', methods=['GET'])
-def dashboard_episode(show_id, id_or_new):
-    show_operation.get_show_or_assert(test_user(), show_id)
-    if id_or_new == 'new':
-        mode = 'create'
-        episode_id = -1
-    else:
-        mode = 'update'
-        episode_id = id_or_new
-
-    return render_template(
-        'dashboard/page_episode.html',
-        show_id=show_id, episode_id=episode_id, mode=mode)
-
-
-@app.route('/page/episode/<show_id>', methods=['GET'])
-def dashboard_episode_list(show_id):
-    show_operation.get_show_or_assert(test_user(), show_id)
-    return render_template('dashboard/page_episode_list.html', show_id=show_id)
-
-
-@app.route('/page/stat/<show_id>', methods=['GET'])
-def dashboard_stat(show_id):
-    return render_template('dashboard/page_stat.html', show_id=show_id)
-
-
 @app.route('/dashboard/<show_id>', methods=['GET'])
 def dashboard_page(show_id):
     return render_template('dashboard/dashboard.html', show_id=show_id)
