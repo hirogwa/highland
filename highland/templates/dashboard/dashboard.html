@@ -1,0 +1,13 @@
+{% extends "dashboard/base.html" %}
+
+{% block header %}
+<title>Dashboard</title>
+{% endblock %}
+
+{% block body %}
+<div class="mainContainer"></div>
+<script>
+  var showId = '{{ show_id }}';
+</script>
+<script src="/static/js/bundled-dashboard.js" type="text/javascript"></script>
+{% endblock %}

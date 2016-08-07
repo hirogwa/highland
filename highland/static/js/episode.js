@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import _ from "underscore";
 import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
@@ -103,11 +102,11 @@ var App = React.createClass({
 
     componentDidMount: function() {
         var self = this;
-        if (this.props.mode === Mode.UPDATE) {
+        if (this.props.route.mode === Mode.UPDATE) {
             let xhr = new XMLHttpRequest();
             let url = '/episode/{s}/{e}'
-                    .replace('{s}', this.props.showId)
-                    .replace('{e}', this.props.episodeId);
+                    .replace('{s}', this.props.route.showId)
+                    .replace('{e}', this.props.routeParams.episodeId);
             xhr.open('get', url, true);
             xhr.onload = function() {
                 if (this.status == 200) {
@@ -125,7 +124,7 @@ var App = React.createClass({
 
     saveEpisode: function() {
         let xhr = new XMLHttpRequest();
-        xhr.open(this.props.mode == Mode.UPDATE ? 'put' : 'post', '/episode', true);
+        xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/episode', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
@@ -136,7 +135,7 @@ var App = React.createClass({
             }
         };
         xhr.send(
-            JSON.stringify(_.extend(this.state.episode, {show_id: this.props.showId}))
+            JSON.stringify(_.extend(this.state.episode, {show_id: this.props.route.showId}))
         );
     },
 
@@ -147,7 +146,7 @@ var App = React.createClass({
                 (e[attr] === null ? '' : attr + '=' + encodeURIComponent(e[attr]));
         };
 
-        return '/preview/site/?show_id=' + this.props.showId
+        return '/preview/site/?show_id=' + this.props.route.showId
             + p('title')
             + p('subtitle')
             + p('description')
@@ -191,5 +190,6 @@ var App = React.createClass({
     }
 });
 
-ReactDOM.render(<App showId={showId} episodeId={episodeId} mode={mode} />,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    Episode: App
+};

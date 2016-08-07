@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import _ from "underscore";
 import { Button, Form } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
@@ -66,10 +65,10 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        if (this.props.mode == Mode.UPDATE) {
+        if (this.props.route.mode == Mode.UPDATE) {
             let self = this;
             let xhr = new XMLHttpRequest();
-            xhr.open('get', '/show/' + this.props.show_id, true);
+            xhr.open('get', '/show/' + this.props.route.showId, true);
             xhr.onload = function() {
                 if (this.status == 200) {
                     let data = JSON.parse(this.response);
@@ -140,7 +139,7 @@ var App = React.createClass({
 
     saveShow: function() {
         let xhr = new XMLHttpRequest();
-        xhr.open(this.props.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
+        xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
@@ -188,5 +187,6 @@ var App = React.createClass({
     }
 });
 
-ReactDOM.render(<App show_id={showId} mode={mode} />,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    Show: App
+};

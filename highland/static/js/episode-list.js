@@ -1,16 +1,15 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import {
     Button, Checkbox, Form, Table
 } from 'react-bootstrap';
+import { NavLink } from './common.js';
 
 class AddNew extends React.Component {
     render() {
-        let url = '/page/episode/{}/new'.replace('{}', this.props.showId);
         return(
-            <a className="btn btn-default" href={url}>
+            <NavLink className="btn btn-default" to="/episode/new">
               Add New
-            </a>
+            </NavLink>
         );
     }
 }
@@ -65,9 +64,7 @@ class SingleEpisode extends React.Component {
     }
 
     render() {
-        let episode_url = "/page/episode/{s}/{e}"
-                .replace('{s}', this.props.episode.show_id)
-                .replace('{e}', this.props.episode.id);
+        let episode_link = "/episode/" + this.props.episode.id;
         return(
             <tr>
               <td>
@@ -75,7 +72,9 @@ class SingleEpisode extends React.Component {
                           onChange={this.handleSelect} />
               </td>
               <td>
-                <a href={episode_url}>{this.props.episode.title}</a>
+                <NavLink to={episode_link}>
+                  {this.props.episode.title}
+                </NavLink>
               </td>
               <td>{this.props.episode.subtitle}</td>
               <td>{this.props.episode.draft_status}</td>
@@ -150,7 +149,7 @@ var App = React.createClass({
     componentDidMount: function() {
         var self = this;
         var xhr = new XMLHttpRequest();
-        xhr.open('get', '/episodes/' + this.props.showId, true);
+        xhr.open('get', '/episodes/' + this.props.route.showId, true);
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -167,16 +166,17 @@ var App = React.createClass({
     render: function() {
         return (
             <div>
-              <AddNew showId={this.props.showId} />
+              <AddNew showId={this.props.route.showId} />
               <EpisodeList episodes={this.state.episodes}
                            selectedIds={this.state.selectedIds}
                            handleSelect={this.handleSelectEpisode} />
-              <Deleter showId={this.props.showId}
+              <Deleter showId={this.props.route.showId}
                        selectedIds={this.state.selectedIds} />
             </div>
         );
     }
 });
 
-ReactDOM.render(<App showId={showId} />,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    EpisodeList: App
+};

@@ -466,3 +466,8 @@ def dashboard_episode_list(show_id):
 @app.route('/page/stat/<show_id>', methods=['GET'])
 def dashboard_stat(show_id):
     return render_template('dashboard/page_stat.html', show_id=show_id)
+
+
+@app.route('/dashboard/<show_id>', methods=['GET'])
+def dashboard_page(show_id):
+    return render_template('dashboard/dashboard.html', show_id=show_id)

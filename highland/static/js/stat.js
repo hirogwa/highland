@@ -1,6 +1,6 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import { Table } from 'react-bootstrap';
+import { NavLink } from './common.js';
 
 class StatTableRow extends React.Component {
     constructor(props) {
@@ -8,14 +8,13 @@ class StatTableRow extends React.Component {
     }
 
     render() {
-        let episode_url = "/page/episode/{s}/{e}"
-                .replace('{s}', this.props.episode.show_id)
-                .replace('{e}', this.props.episode.id);
-
+        let episode_link = "/episode/" + this.props.episode.id;
         return (
             <tr>
               <td>
-                <a href={episode_url}>{this.props.episode.title}</a>
+                <NavLink to={episode_link}>
+                  {this.props.episode.title}
+                </NavLink>
               </td>
               <td>{this.props.episode.published_datetime}</td>
               <td>{this.props.statToday}</td>
@@ -113,7 +112,7 @@ var App = React.createClass({
     loadEpisodes: function() {
         let self = this;
         let xhr = new XMLHttpRequest();
-        xhr.open('get', '/episodes/' + this.props.showId + '?public=yes', true);
+        xhr.open('get', '/episodes/' + this.props.route.showId + '?public=yes', true);
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -131,7 +130,7 @@ var App = React.createClass({
         let self = this;
         let xhr = new XMLHttpRequest();
         xhr.open('get', '/stat/episode_by_day?show_id='
-                 + encodeURIComponent(this.props.showId));
+                 + encodeURIComponent(this.props.route.showId));
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -149,7 +148,7 @@ var App = React.createClass({
         let self = this;
         let xhr = new XMLHttpRequest();
         xhr.open('get', '/stat/episode_past_week?show_id='
-                 + encodeURIComponent(this.props.showId));
+                 + encodeURIComponent(this.props.route.showId));
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -167,7 +166,7 @@ var App = React.createClass({
         let self = this;
         let xhr = new XMLHttpRequest();
         xhr.open('get', '/stat/episode_cumulative?show_id='
-                 + encodeURIComponent(this.props.showId));
+                 + encodeURIComponent(this.props.route.showId));
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -200,5 +199,6 @@ var App = React.createClass({
     }
 });
 
-ReactDOM.render(<App showId={showId} />,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    Stat: App
+};

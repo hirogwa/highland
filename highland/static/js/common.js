@@ -2,6 +2,7 @@ import React from "react";
 import {
     Button, ControlLabel, Form, FormControl, FormGroup
 } from 'react-bootstrap';
+import { Link } from 'react-router';
 
 class OptionSelector extends React.Component {
     render() {
@@ -157,11 +158,22 @@ class Deleter extends React.Component {
     }
 }
 
+class NavLink extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return <Link {...this.props} activeClassName="active"/>;
+    }
+}
+
 module.exports = {
     TextInput: TextInput,
     TextArea: TextArea,
     OptionSelector: OptionSelector,
     ExplicitSelector: ExplicitSelector,
     Uploader: Uploader,
-    Deleter: Deleter
+    Deleter: Deleter,
+    NavLink: NavLink
 };

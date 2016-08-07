@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import { Checkbox, Table } from 'react-bootstrap';
 import { Deleter, Uploader } from './common.js';
 
@@ -117,7 +116,7 @@ var App = React.createClass({
     render: function() {
         return (
             <div>
-              <Uploader label="New Image"
+              <Uploader label="New Audio"
                         url="/audio" />
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
@@ -129,5 +128,6 @@ var App = React.createClass({
     }
 });
 
-ReactDOM.render(<App/>,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    Audio: App
+};

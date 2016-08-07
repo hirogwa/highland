@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import { Checkbox, Table } from 'react-bootstrap';
 import { Deleter, Uploader } from './common.js';
 
@@ -121,5 +120,6 @@ var App = React.createClass({
     }
 });
 
-ReactDOM.render(<App/>,
-                document.querySelector(".mainContainer"));
+module.exports = {
+    Image: App
+};
