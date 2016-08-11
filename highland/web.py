@@ -213,8 +213,13 @@ def audio():
             audio = audio_operation.create(test_user(), request.files['file'])
             return jsonify(audio=dict(audio), result='success'), 201
         if 'GET' == request.method:
+            args = request.args
+            unused_only = args.get('unused_only') == 'True'
+            whitelisted_id = args.get('whitelisted_id')
             user = test_user()
-            audios = audio_operation.load(user)
+            audios = audio_operation.load(
+                user, unused_only,
+                int(whitelisted_id) if whitelisted_id else None)
 
             def _dict(x):
                 d = dict(x)

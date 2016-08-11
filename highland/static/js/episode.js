@@ -32,6 +32,7 @@ var Mode = {
 var App = React.createClass({
     getInitialState: function() {
         return {
+            originalEpisodeId: null,
             episode: {
                 title: '',
                 subtitle: '',
@@ -112,6 +113,7 @@ var App = React.createClass({
                 if (this.status == 200) {
                     let data = JSON.parse(this.response);
                     self.setState({
+                        originalEpisodeId: data.episode.audio_id,
                         episode: data.episode
                     });
                 } else {
@@ -174,6 +176,7 @@ var App = React.createClass({
               <DraftStatusSelector draftStatus={this.state.episode.draft_status}
                                    handleChange={this.handleChangeDraftStatus} />
               <AudioSelector selectedAudioId={this.state.episode.audio_id}
+                             whitelistedId={this.state.originalEpisodeId}
                              handleSelect={this.handleSelectAudio} />
               <ImageSelector selectedImageId={this.state.episode.image_id}
                              handleSelect={this.handleSelectImage} />

@@ -109,10 +109,12 @@ class AudioSelector extends React.Component {
         };
     }
 
-    componentDidMount() {
+    loadAudioData(whitelistedId) {
         let self = this;
         let xhr = new XMLHttpRequest();
-        xhr.open('get', '/audio', true);
+        let url = '/audio?unused_only=True' +
+                (whitelistedId ? '&whitelisted_id=' + whitelistedId : '');
+        xhr.open('get', url, true);
         xhr.onload = function() {
             if (this.status == 200) {
                 let data = JSON.parse(this.response);
@@ -124,6 +126,14 @@ class AudioSelector extends React.Component {
             }
         };
         xhr.send();
+    }
+
+    componentDidMount() {
+        this.loadAudioData(this.props.whitelistedId);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.loadAudioData(nextProps.whitelistedId);
     }
 
     render() {
