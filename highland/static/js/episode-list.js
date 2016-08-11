@@ -64,7 +64,6 @@ class SingleEpisode extends React.Component {
     }
 
     render() {
-        let episode_link = "/episode/" + this.props.episode.id;
         return(
             <tr>
               <td>
@@ -72,7 +71,7 @@ class SingleEpisode extends React.Component {
                           onChange={this.handleSelect} />
               </td>
               <td>
-                <NavLink to={episode_link}>
+                <NavLink to={'/episode/' + this.props.episode.id}>
                   {this.props.episode.title}
                 </NavLink>
               </td>

@@ -30,20 +30,31 @@ def delete(user, audio_ids):
 
 
 def load(user, unused_only=False, whitelisted_id=None):
-    result = models.Audio.query.\
+    audios = models.Audio.query.\
+        filter_by(owner_user_id=user.id).\
+        all()
+
+    episodes = models.Episode.query.\
         filter_by(owner_user_id=user.id).\
         all()
 
     if unused_only:
-        q = models.db.session.\
-            query(models.Episode.audio_id). \
-            filter_by(owner_user_id=user.id). \
-            distinct(). \
-            all()
-        black_list = [i[0] for i in q if i[0] is not whitelisted_id]
-        return [x for x in result if x.id not in black_list]
-    else:
-        return result
+        black_list = \
+            [x.audio_id for x in episodes if x.audio_id is not whitelisted_id]
+        audios = [x for x in audios if x.id not in black_list]
+
+    a_to_e = {e.audio_id: e for e in episodes}
+
+    def _dict(audio):
+        d = dict(audio)
+        d['url'] = get_audio_url(user, audio)
+        e = a_to_e.get(audio.id)
+        d['show_id'] = e.show_id if e else None
+        d['episode_id'] = e.id if e else None
+        d['episode_title'] = e.title if e else None
+        return d
+
+    return [_dict(x) for x in audios]
 
 
 def get_audio_or_assert(user, audio_id):

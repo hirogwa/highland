@@ -221,11 +221,7 @@ def audio():
                 user, unused_only,
                 int(whitelisted_id) if whitelisted_id else None)
 
-            def _dict(x):
-                d = dict(x)
-                d['url'] = audio_operation.get_audio_url(user, x)
-                return d
-            return jsonify(audios=[_dict(x) for x in audios], result='success')
+            return jsonify(audios=audios, result='success')
         if 'DELETE' == request.method:
             args = request.get_json()
             audio_operation.delete(test_user(), args.get('ids'))

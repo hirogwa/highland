@@ -1,6 +1,6 @@
 import React from "react";
 import { Checkbox, Table } from 'react-bootstrap';
-import { Deleter, Uploader } from './common.js';
+import { Deleter, NavLink, Uploader } from './common.js';
 
 class SingleAudio extends React.Component {
     constructor(props) {
@@ -19,6 +19,15 @@ class SingleAudio extends React.Component {
         var duration = "h:m:s".replace('h', hours)
                 .replace('m', minutes < 10 ? '0' + minutes : minutes)
                 .replace('s', seconds < 10 ? '0' + seconds : seconds);
+
+        var episodeLink = 'N/A';
+        if (this.props.audio.episode_id) {
+            episodeLink = (
+                <NavLink to={'/episode/' + this.props.audio.episode_id}>
+                  {this.props.audio.episode_title}
+                </NavLink>);
+        }
+
         return (
             <tr>
               <td>
@@ -32,7 +41,7 @@ class SingleAudio extends React.Component {
               </td>
               <td>{duration}</td>
               <td>{this.props.audio.create_datetime}</td>
-              <td>{this.props.audio.guid}</td>
+              <td>{episodeLink}</td>
             </tr>
         );
     }
@@ -57,7 +66,7 @@ class AudioList extends React.Component {
                   <th>File</th>
                   <th>Duration</th>
                   <th>Created</th>
-                  <th>Guid</th>
+                  <th>Episode</th>
                 </tr>
               </thead>
               <tbody>
