@@ -113,16 +113,20 @@ var App = React.createClass({
             xhr.onload = function() {
                 if (this.status == 200) {
                     let data = JSON.parse(this.response);
-                    self.setState({
-                        originalEpisodeId: data.episode.audio_id,
-                        episode: data.episode
-                    });
+                    self.setEpisode(data);
                 } else {
                     console.error(this.statusText);
                 }
             };
             xhr.send();
         }
+    },
+
+    setEpisode: function(data) {
+        this.setState({
+            originalEpisodeId: data.episode.audio_id,
+            episode: data.episode
+        });
     },
 
     contextTypes: {
@@ -138,6 +142,7 @@ var App = React.createClass({
             let data = JSON.parse(this.response);
             if (this.status == 200 || 201) {
                 console.info(data);
+                self.setEpisode(data);
                 self.context.router.replace(episodePath(data.episode.id));
             } else {
                 console.error(this.statusText);
