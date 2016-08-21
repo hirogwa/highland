@@ -3,6 +3,7 @@ import {
     Button, Checkbox, Form, Table
 } from 'react-bootstrap';
 import { NavLink } from './common.js';
+import { episodePath } from './paths';
 
 class AddNew extends React.Component {
     render() {
@@ -71,7 +72,7 @@ class SingleEpisode extends React.Component {
                           onChange={this.handleSelect} />
               </td>
               <td>
-                <NavLink to={'/episode/' + this.props.episode.id}>
+                <NavLink to={episodePath(this.props.episode.id)}>
                   {this.props.episode.title}
                 </NavLink>
               </td>

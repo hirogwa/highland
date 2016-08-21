@@ -4,6 +4,7 @@ import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
 import { ImageSelector } from './image-util.js';
 import { AudioSelector } from './audio-util.js';
+import { episodePath } from './paths';
 
 class DraftStatusSelector extends React.Component {
     render() {
@@ -124,7 +125,12 @@ var App = React.createClass({
         }
     },
 
+    contextTypes: {
+        router: React.PropTypes.object.isRequired
+    },
+
     saveEpisode: function() {
+        let self = this;
         let xhr = new XMLHttpRequest();
         xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/episode', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -132,6 +138,7 @@ var App = React.createClass({
             let data = JSON.parse(this.response);
             if (this.status == 200 || 201) {
                 console.info(data);
+                self.context.router.replace(episodePath(data.episode.id));
             } else {
                 console.error(this.statusText);
             }
