@@ -21,19 +21,22 @@ class SingleAudio extends React.Component {
                 .replace('s', seconds < 10 ? '0' + seconds : seconds);
 
         var episodeLink = 'N/A';
+        var checkBox = <span></span>;
         if (this.props.audio.episode_id) {
             episodeLink = (
                 <NavLink to={'/episode/' + this.props.audio.episode_id}>
                   {this.props.audio.episode_title}
                 </NavLink>);
+        } else {
+            checkBox = (
+                <Checkbox checked={this.props.selected}
+                          onChange={this.handleSelect} />
+            );
         }
 
         return (
             <tr>
-              <td>
-                <Checkbox checked={this.props.selected}
-                          onChange={this.handleSelect} />
-              </td>
+              <td>{checkBox}</td>
               <td>
                 <a href={this.props.audio.url}>
                   {this.props.audio.filename}
