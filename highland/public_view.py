@@ -1,6 +1,12 @@
-from flask import render_template
+from flask import render_template, Markup
 from highland import show_operation, episode_operation, media_storage, \
     settings, audio_operation, feed_operation, image_operation
+import bleach
+
+
+ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
+    'br'
+]
 
 
 def update_full(user, show_id):
@@ -60,6 +66,7 @@ def episode_html(user, show, show_image, episode, upload=True):
         home_url=_get_site_url(show.alias),
         feed_url=feed_operation.get_feed_url(user, show),
         episode=episode,
+        episode_description=_escaped_markup(episode.description),
         duration="%d:%02d:%02d" % (h, m, s),
         length=length,
         audio_url=audio_url,
@@ -78,6 +85,10 @@ def preview_episode(user, show, title, subtitle, description, audio_id,
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
     return episode_html(user, show, show_image, episode)
+
+
+def _escaped_markup(s):
+    return Markup(bleach.clean(s, tags=ALLOWED_TAGS))
 
 
 def _delete_all_episodes(user, show):
