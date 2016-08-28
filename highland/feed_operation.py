@@ -1,7 +1,7 @@
 import urllib.parse
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, media_storage,\
-    audio_operation, image_operation, settings
+    audio_operation, image_operation, settings, common
 
 FEED_FOLDER_RSS = 'rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
@@ -38,7 +38,7 @@ def generate(user, show):
         fe = fg.add_entry()
         fe.title(episode.title)
         fe.link(href=episode_operation.get_episode_url(user, episode, show))
-        fe.description(episode.description)
+        fe.description(common.clean_html(episode.description))
         fe.enclosure(url=audio_operation.get_audio_url(user, audio),
                      length=str(audio.length), type=audio.type)
         fe.guid(episode.guid)
