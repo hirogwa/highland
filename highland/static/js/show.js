@@ -60,7 +60,8 @@ var App = React.createClass({
                 explicit: false,
                 alias: '',
                 image_id: null
-            }
+            },
+            modified: false
         };
     },
 
@@ -85,55 +86,64 @@ var App = React.createClass({
 
     handleChangeTitle: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {title: event.target.value})
+            show: _.extend(this.state.show, {title: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeDescription: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {description: event.target.value})
+            show: _.extend(this.state.show, {description: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeSubtitle: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {subtitle: event.target.value})
+            show: _.extend(this.state.show, {subtitle: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeLanguage: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {language: event.target.value})
+            show: _.extend(this.state.show, {language: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeAuthor: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {author: event.target.value})
+            show: _.extend(this.state.show, {author: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeCategory: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {category: event.target.value})
+            show: _.extend(this.state.show, {category: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeExplicit: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {explicit: event.target.value === 'yes'})
+            show: _.extend(this.state.show, {explicit: event.target.value === 'yes'}),
+            modified: true
         });
     },
 
     handleChangeAlias: function(event) {
         this.setState({
-            show: _.extend(this.state.show, {alias: event.target.value})
+            show: _.extend(this.state.show, {alias: event.target.value}),
+            modified: true
         });
     },
 
     handleSelectImage: function(id) {
         this.setState({
-            show: _.extend(this.state.show, {image_id: id})
+            show: _.extend(this.state.show, {image_id: id}),
+            modified: true
         });
     },
 
@@ -181,7 +191,11 @@ var App = React.createClass({
                                 />
               <ImageSelector selectedImageId={this.state.show.image_id}
                              handleSelect={this.handleSelectImage} />
-              <Button bsStyle="primary" onClick={this.saveShow}>Save</Button>
+              <Button bsStyle="primary"
+                      onClick={this.saveShow}
+                      disabled={!this.state.modified}>
+                Save
+              </Button>
             </Form>
         );
     }

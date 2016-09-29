@@ -44,61 +44,71 @@ var App = React.createClass({
                 scheduled_datetime: '',
                 explicit: false,
                 alias: ''
-            }
+            },
+            modified: false
         };
     },
 
     handleChangeTitle: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {title: event.target.value})
+            episode: _.extend(this.state.episode, {title: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeSubtitle: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {subtitle: event.target.value})
+            episode: _.extend(this.state.episode, {subtitle: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeDescription: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {description: event.target.value})
+            episode: _.extend(this.state.episode, {description: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeAlias: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {alias: event.target.value})
+            episode: _.extend(this.state.episode, {alias: event.target.value}),
+            modified: true
         });
     },
 
     handleChangeExplicit: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {explicit: event.target.value === 'yes'})
+            episode: _.extend(this.state.episode, {explicit: event.target.value === 'yes'}),
+            modified: true
         });
     },
 
     handleChangeAudioId: function(audioId) {
         this.setState({
-            episode: _.extend(this.state.episode, {audio_id: audioId})
+            episode: _.extend(this.state.episode, {audio_id: audioId}),
+            modified: true
         });
     },
 
     handleChangeDraftStatus: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {draft_status: event.target.value})
+            episode: _.extend(this.state.episode, {draft_status: event.target.value}),
+            modified: true
         });
     },
 
     handleSelectAudio: function(id) {
         this.setState({
-            episode: _.extend(this.state.episode, {audio_id: id})
+            episode: _.extend(this.state.episode, {audio_id: id}),
+            modified: true
         });
     },
 
     handleSelectImage: function(id) {
         this.setState({
-            episode: _.extend(this.state.episode, {image_id: id})
+            episode: _.extend(this.state.episode, {image_id: id}),
+            modified: true
         });
     },
 
@@ -125,7 +135,8 @@ var App = React.createClass({
     setEpisode: function(data) {
         this.setState({
             originalEpisodeId: data.episode.audio_id,
-            episode: data.episode
+            episode: data.episode,
+            modified: false
         });
     },
 
@@ -198,7 +209,11 @@ var App = React.createClass({
                         href={this.previewUrl()}>
                   Preview
                 </Button>
-                <Button bsStyle="primary" onClick={this.saveEpisode}>Save</Button>
+                <Button bsStyle="primary"
+                        onClick={this.saveEpisode}
+                        disabled={!this.state.modified}>
+                  Save
+                </Button>
               </ButtonToolbar>
             </Form>
         );
