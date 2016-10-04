@@ -149,12 +149,16 @@ var App = React.createClass({
 
     saveShow: function() {
         let xhr = new XMLHttpRequest();
+        let self = this;
         xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
             if (this.status == 200 || 201) {
                 console.info(data);
+                self.setState({
+                    modified: false
+                });
             } else {
                 console.error(this.statusText);
             }
@@ -162,7 +166,12 @@ var App = React.createClass({
         xhr.send(JSON.stringify(this.state.show));
     },
 
+    savable: function() {
+        return this.state.modified || this.props.route.mode == Mode.CREATE;
+    },
+
     render: function() {
+        let captionSaveButton = this.savable() ? 'Save' : 'Saved!';
         return (
             <Form>
               <TextInput name='Alias'
@@ -193,8 +202,8 @@ var App = React.createClass({
                              handleSelect={this.handleSelectImage} />
               <Button bsStyle="primary"
                       onClick={this.saveShow}
-                      disabled={!this.state.modified}>
-                Save
+                      disabled={!this.savable()}>
+                {captionSaveButton}
               </Button>
             </Form>
         );

@@ -155,6 +155,9 @@ var App = React.createClass({
                 console.info(data);
                 self.setEpisode(data);
                 self.context.router.replace(episodePath(data.episode.id));
+                self.setState({
+                    modified: false
+                });
             } else {
                 console.error(this.statusText);
             }
@@ -179,7 +182,12 @@ var App = React.createClass({
             + p('image_id');
     },
 
+    savable: function() {
+        return this.state.modified || this.props.route.mode == Mode.CREATE;
+    },
+
     render: function() {
+        let captionSaveButton = this.savable() ? 'Save' : 'Saved!';
         return (
             <Form>
               <TextInput name='Title'
@@ -211,8 +219,8 @@ var App = React.createClass({
                 </Button>
                 <Button bsStyle="primary"
                         onClick={this.saveEpisode}
-                        disabled={!this.state.modified}>
-                  Save
+                        disabled={!this.savable()}>
+                  {captionSaveButton}
                 </Button>
               </ButtonToolbar>
             </Form>
