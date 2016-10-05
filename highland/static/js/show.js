@@ -1,7 +1,7 @@
 import React from "react";
 import _ from "underscore";
 import { Button, Form } from 'react-bootstrap';
-import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
+import { TextArea, TextInput, OptionSelector, ExplicitSelector, AlertBox } from './common.js';
 import { ImageSelector } from './image-util.js';
 
 class CategorySelector extends React.Component {
@@ -61,7 +61,8 @@ var App = React.createClass({
                 alias: '',
                 image_id: null
             },
-            modified: false
+            modified: false,
+            activeAlert: null
         };
     },
 
@@ -154,13 +155,23 @@ var App = React.createClass({
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
-            if (this.status == 200 || 201) {
+            if (this.status == 200 || this.status == 201) {
                 console.info(data);
                 self.setState({
-                    modified: false
+                    modified: false,
+                    activeAlert: {
+                        style: 'success',
+                        content: 'Saved! :D'
+                    }
                 });
             } else {
                 console.error(this.statusText);
+                self.setState({
+                    activeAlert: {
+                        style: 'danger',
+                        content: 'Oops! Something went wrong. :('
+                    }
+                });
             }
         };
         xhr.send(JSON.stringify(this.state.show));
@@ -171,7 +182,12 @@ var App = React.createClass({
     },
 
     render: function() {
-        let captionSaveButton = this.savable() ? 'Save' : 'Saved!';
+        let alertBox = <div></div>;
+        if (this.state.activeAlert) {
+            alertBox = <AlertBox
+            style={this.state.activeAlert.style}
+            content={this.state.activeAlert.content} />;
+        }
         return (
             <Form>
               <TextInput name='Alias'
@@ -200,10 +216,11 @@ var App = React.createClass({
                                 />
               <ImageSelector selectedImageId={this.state.show.image_id}
                              handleSelect={this.handleSelectImage} />
+              {alertBox}
               <Button bsStyle="primary"
                       onClick={this.saveShow}
                       disabled={!this.savable()}>
-                {captionSaveButton}
+                Save
               </Button>
             </Form>
         );

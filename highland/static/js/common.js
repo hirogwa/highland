@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    Button, ControlLabel, Form, FormControl, FormGroup
+    Alert, Button, ControlLabel, Form, FormControl, FormGroup
 } from 'react-bootstrap';
 import { Link } from 'react-router';
 
@@ -158,6 +158,34 @@ class Deleter extends React.Component {
     }
 }
 
+class AlertBox extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
+        this.state = {
+            alertVisible: true
+        };
+    }
+
+    handleAlertDismiss() {
+        this.setState({
+            alertVisible: false
+        });
+    }
+
+    render() {
+        if (this.state.alertVisible) {
+            return (
+                <Alert bsStyle={this.props.style} onDismiss={this.handleAlertDismiss}>
+                  <p>{this.props.content}</p>
+                </Alert>
+            );
+        } else {
+            return (<div></div>);
+        }
+    }
+}
+
 class NavLink extends React.Component {
     constructor(props) {
         super(props);
@@ -175,5 +203,6 @@ module.exports = {
     ExplicitSelector: ExplicitSelector,
     Uploader: Uploader,
     Deleter: Deleter,
+    AlertBox: AlertBox,
     NavLink: NavLink
 };

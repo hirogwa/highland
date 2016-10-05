@@ -1,7 +1,7 @@
 import React from "react";
 import _ from "underscore";
 import { Button, ButtonToolbar, Form } from 'react-bootstrap';
-import { TextArea, TextInput, OptionSelector, ExplicitSelector } from './common.js';
+import { TextArea, TextInput, OptionSelector, ExplicitSelector, AlertBox } from './common.js';
 import { ImageSelector } from './image-util.js';
 import { AudioSelector } from './audio-util.js';
 import { episodePath } from './paths';
@@ -45,7 +45,8 @@ var App = React.createClass({
                 explicit: false,
                 alias: ''
             },
-            modified: false
+            modified: false,
+            activeAlert: null
         };
     },
 
@@ -151,15 +152,24 @@ var App = React.createClass({
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function() {
             let data = JSON.parse(this.response);
-            if (this.status == 200 || 201) {
+            if (this.status == 200 || this.status == 201) {
                 console.info(data);
                 self.setEpisode(data);
                 self.context.router.replace(episodePath(data.episode.id));
                 self.setState({
-                    modified: false
+                    modified: false,
+                    activeAlert: {
+                        style: 'success',
+                        content: 'Saved! :D'
+                    }
                 });
             } else {
-                console.error(this.statusText);
+                self.setState({
+                    activeAlert: {
+                        style: 'danger',
+                        content: 'Oops! Something went wrong. :('
+                    }
+                });
             }
         };
         xhr.send(
@@ -187,7 +197,12 @@ var App = React.createClass({
     },
 
     render: function() {
-        let captionSaveButton = this.savable() ? 'Save' : 'Saved!';
+        let alertBox = <div></div>;
+        if (this.state.activeAlert) {
+            alertBox = <AlertBox
+            style={this.state.activeAlert.style}
+            content={this.state.activeAlert.content} />;
+        }
         return (
             <Form>
               <TextInput name='Title'
@@ -211,6 +226,7 @@ var App = React.createClass({
                              handleSelect={this.handleSelectAudio} />
               <ImageSelector selectedImageId={this.state.episode.image_id}
                              handleSelect={this.handleSelectImage} />
+              {alertBox}
               <ButtonToolbar>
                 <Button bsStyle="default"
                         target="_blank"
@@ -220,7 +236,7 @@ var App = React.createClass({
                 <Button bsStyle="primary"
                         onClick={this.saveEpisode}
                         disabled={!this.savable()}>
-                  {captionSaveButton}
+                  Save
                 </Button>
               </ButtonToolbar>
             </Form>
