@@ -101,9 +101,9 @@ def show():
         if 'GET' == request.method:
             shows = show_operation.load(test_user())
             return jsonify(shows=list(map(dict, shows)), result='success')
-    except Exception as e:
+    except Exception:
         app.logger.error(traceback.format_exc())
-        raise e
+        return jsonify(result='error'), 500
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
@@ -127,9 +127,7 @@ def episode():
             assert show_id, 'show id required'
             assert draft_status, 'draft status required'
             assert alias, 'alias required'
-            assert title, 'title required'
             assert subtitle, 'subtitle required'
-            assert description, 'description required'
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.create(
@@ -159,9 +157,7 @@ def episode():
             assert id, 'id required'
             assert draft_status, 'draft status required'
             assert alias, 'alias required'
-            assert title, 'title required'
             assert subtitle, 'subtitle required'
-            assert description, 'description required'
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.update(
@@ -176,9 +172,9 @@ def episode():
                                      args.get('show_id'),
                                      args.get('episode_ids'))
             return jsonify(result='success')
-    except Exception as e:
+    except Exception:
         app.logger.error(traceback.format_exc())
-        raise e
+        return jsonify(result='error'), 500
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])

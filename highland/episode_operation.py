@@ -7,9 +7,6 @@ from highland import models, show_operation, settings, audio_operation,\
 def create(user, show_id, draft_status, alias, audio_id, image_id,
            scheduled_datetime=None, title='', subtitle='', description='',
            explicit=False):
-    if not common.is_valid_alias(alias):
-        raise ValueError('alias not accepted. {}'.format(alias))
-
     draft_status = models.Episode.DraftStatus(draft_status).name
     show = show_operation.get_show_or_assert(user, show_id)
     episode = valid_or_assert(user, models.Episode(
@@ -108,6 +105,9 @@ def get_episode_or_assert(user, show_id, episode_id):
 
 
 def valid_or_assert(user, episode):
+    assert common.is_valid_alias(episode.alias), \
+        'bad alias:{}'.format(episode.alias)
+
     if episode.audio_id is not None:
         audio_operation.get_audio_or_assert(user, episode.audio_id)
     if episode.image_id is not None:

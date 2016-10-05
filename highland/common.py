@@ -3,7 +3,8 @@ import bleach
 
 
 def is_valid_alias(alias):
-    return re.fullmatch('[a-zA-Z0-9_]+', alias) is not None
+    return alias is not None \
+        and re.fullmatch('[a-zA-Z0-9_]+', alias) is not None
 
 
 def clean_html(s):
