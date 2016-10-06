@@ -113,6 +113,12 @@ var App = React.createClass({
         });
     },
 
+    handleAlertDismiss: function() {
+        this.setState({
+            activeAlert: null
+        });
+    },
+
     componentDidMount: function() {
         var self = this;
         if (this.props.route.mode === Mode.UPDATE) {
@@ -192,54 +198,105 @@ var App = React.createClass({
             + p('image_id');
     },
 
-    savable: function() {
+    saveDraft: function() {
+        this.setState({
+            episode: _.extend(this.state.episode, {draft_status: 'draft'})
+        });
+        this.saveEpisode();
+    },
+
+    savePublished: function() {
+        this.setState({
+            episode: _.extend(this.state.episode, {draft_status: 'published'})
+        });
+        this.saveEpisode();
+    },
+
+    canSaveAsDraft: function() {
         return this.state.modified || this.props.route.mode == Mode.CREATE;
+    },
+
+    canSaveAsPublished: function() {
+        let fieldsComplete = this.state.episode.title
+                && this.state.episode.description
+                && this.state.episode.audio_id;
+        if (this.state.episode.draft_status === 'draft') {
+            return fieldsComplete;
+        } else {
+            return fieldsComplete && this.canSaveAsDraft();
+        }
+    },
+
+    saveDraftText: function() {
+        return 'Save as draft';
+    },
+
+    savePublishedText: function() {
+        return 'Publish!';
     },
 
     render: function() {
         let alertBox = <div></div>;
         if (this.state.activeAlert) {
-            alertBox = <AlertBox
-            style={this.state.activeAlert.style}
-            content={this.state.activeAlert.content} />;
+            alertBox = (
+                <AlertBox
+                   style={this.state.activeAlert.style}
+                   content={this.state.activeAlert.content}
+                   handleAlertDismiss={this.handleAlertDismiss} />
+            );
         }
         return (
-            <Form>
-              <TextInput name='Title'
-                         value={this.state.episode.title}
-                         handleChange={this.handleChangeTitle} />
-              <TextInput name='Subtitle'
-                         value={this.state.episode.subtitle}
-                         handleChange={this.handleChangeSubtitle} />
-              <TextArea name='Description'
-                        value={this.state.episode.description}
-                        handleChange={this.handleChangeDescription} />
-              <TextInput name='Alias'
-                         value={this.state.episode.alias}
-                         handleChange={this.handleChangeAlias} />
-              <ExplicitSelector explicit={this.state.episode.explicit}
-                                handleChange={this.handleChangeExplicit} />
-              <DraftStatusSelector draftStatus={this.state.episode.draft_status}
-                                   handleChange={this.handleChangeDraftStatus} />
-              <AudioSelector selectedAudioId={this.state.episode.audio_id}
-                             whitelistedId={this.state.originalEpisodeId}
-                             handleSelect={this.handleSelectAudio} />
-              <ImageSelector selectedImageId={this.state.episode.image_id}
-                             handleSelect={this.handleSelectImage} />
+            <div className="container">
               {alertBox}
               <ButtonToolbar>
-                <Button bsStyle="default"
-                        target="_blank"
-                        href={this.previewUrl()}>
-                  Preview
-                </Button>
-                <Button bsStyle="primary"
-                        onClick={this.saveEpisode}
-                        disabled={!this.savable()}>
-                  Save
-                </Button>
+                  <Button bsStyle="default"
+                          target="_blank"
+                          className="pull-right"
+                          href={this.previewUrl()}>
+                    Preview
+                  </Button>
+                  <Button bsStyle="default"
+                          onClick={this.saveDraft}
+                          disabled={!this.canSaveAsDraft()}>
+                    {this.saveDraftText()}
+                  </Button>
+                  <Button bsStyle="primary"
+                          onClick={this.savePublished}
+                          disabled={!this.canSaveAsPublished()}>
+                    {this.savePublishedText()}
+                  </Button>
               </ButtonToolbar>
-            </Form>
+              <hr />
+
+              <Form>
+                <h3>Required</h3>
+                <TextInput name='Title'
+                           value={this.state.episode.title}
+                           handleChange={this.handleChangeTitle} />
+                <TextArea name='Description'
+                          value={this.state.episode.description}
+                          handleChange={this.handleChangeDescription} />
+                <AudioSelector selectedAudioId={this.state.episode.audio_id}
+                               whitelistedId={this.state.originalEpisodeId}
+                               handleSelect={this.handleSelectAudio} />
+                <hr />
+
+                <h3>Optional</h3>
+                <TextInput name='Subtitle'
+                           value={this.state.episode.subtitle}
+                           handleChange={this.handleChangeSubtitle} />
+                <TextInput name='Alias'
+                           value={this.state.episode.alias}
+                           handleChange={this.handleChangeAlias} />
+                <ExplicitSelector explicit={this.state.episode.explicit}
+                                  handleChange={this.handleChangeExplicit} />
+                <DraftStatusSelector draftStatus={this.state.episode.draft_status}
+                                     handleChange={this.handleChangeDraftStatus} />
+                <ImageSelector selectedImageId={this.state.episode.image_id}
+                               handleSelect={this.handleSelectImage} />
+                <hr />
+              </Form>
+            </div>
         );
     }
 });

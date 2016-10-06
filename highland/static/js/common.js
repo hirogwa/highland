@@ -171,6 +171,7 @@ class AlertBox extends React.Component {
         this.setState({
             alertVisible: false
         });
+        this.props.handleAlertDismiss();
     }
 
     render() {

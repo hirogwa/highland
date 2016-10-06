@@ -23,6 +23,7 @@ var App = React.createClass({
                 <li><NavLink to="/image">Image</NavLink></li>
                 <li><NavLink to="/show">Show Settings</NavLink></li>
               </ul>
+              <hr />
               {this.props.children}
             </div>
         );
