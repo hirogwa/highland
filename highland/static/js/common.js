@@ -161,7 +161,8 @@ class Deleter extends React.Component {
 class AlertBox extends React.Component {
     constructor(props) {
         super(props);
-        this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
+        this.handleAlertDismiss =
+            props.nondismissible ? undefined : this.handleAlertDismiss.bind(this);
         this.state = {
             alertVisible: true
         };
