@@ -72,14 +72,18 @@ class SingleEpisode extends React.Component {
                           onChange={this.handleSelect} />
               </td>
               <td>
-                <NavLink to={episodePath(this.props.episode.id)}>
-                  {this.props.episode.title}
-                </NavLink>
+                {this.props.episode.title}
               </td>
               <td>{this.props.episode.subtitle}</td>
               <td>{this.props.episode.draft_status}</td>
               <td>{this.props.episode.published_datetime}</td>
               <td>{this.props.episode.create_datetime}</td>
+              <td>
+                <NavLink className="btn btn-default btn-sm"
+                         to={episodePath(this.props.episode.id)}>
+                  Edit
+                </NavLink>
+              </td>
             </tr>
         );
     }
@@ -108,6 +112,7 @@ class EpisodeList extends React.Component {
                   <th>Draft status</th>
                   <th>Published</th>
                   <th>Created</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
