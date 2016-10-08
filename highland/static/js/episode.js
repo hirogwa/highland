@@ -1,29 +1,16 @@
 import React from "react";
 import _ from "underscore";
 import { Button, ButtonToolbar, Form } from 'react-bootstrap';
-import { TextArea, TextInput, OptionSelector, ExplicitSelector, AlertBox } from './common.js';
+import { TextArea, TextInput, ExplicitSelector, AlertBox } from './common.js';
 import { ImageSelector } from './image-util.js';
 import { AudioSelector } from './audio-util.js';
 import { episodePath } from './paths';
+import { Texts } from './constants.js';
 
-class DraftStatusSelector extends React.Component {
-    render() {
-        let options = [{
-            value: 'draft',
-            caption: 'Draft'
-        }, {
-            value: 'published',
-            caption: 'Published'
-        }];
-
-        return (
-            <OptionSelector name='Draft Status'
-                            value={this.props.draftStatus}
-                            options={options}
-                            handleChange={this.props.handleChange} />
-        );
-    }
-}
+var DraftStatus = {
+    DRAFT: 'draft',
+    PUBLISHED: 'published'
+};
 
 var Mode = {
     UPDATE: 'update',
@@ -40,7 +27,7 @@ var App = React.createClass({
                 description: '',
                 audio_id: null,
                 image_id: null,
-                draft_status: 'draft',
+                draft_status: this.props.route.mode === Mode.CREATE ? DraftStatus.DRAFT : '',
                 scheduled_datetime: '',
                 explicit: false,
                 alias: ''
@@ -88,13 +75,6 @@ var App = React.createClass({
     handleChangeAudioId: function(audioId) {
         this.setState({
             episode: _.extend(this.state.episode, {audio_id: audioId}),
-            modified: true
-        });
-    },
-
-    handleChangeDraftStatus: function(event) {
-        this.setState({
-            episode: _.extend(this.state.episode, {draft_status: event.target.value}),
             modified: true
         });
     },
@@ -166,14 +146,14 @@ var App = React.createClass({
                     modified: false,
                     activeAlert: {
                         style: 'success',
-                        content: 'Saved! :D'
+                        content: Texts.NOTIFY_SAVED
                     }
                 });
             } else {
                 self.setState({
                     activeAlert: {
                         style: 'danger',
-                        content: 'Oops! Something went wrong. :('
+                        content: Texts.NOTIFY_ERROR
                     }
                 });
             }
@@ -200,14 +180,14 @@ var App = React.createClass({
 
     saveDraft: function() {
         this.setState({
-            episode: _.extend(this.state.episode, {draft_status: 'draft'})
+            episode: _.extend(this.state.episode, {draft_status: DraftStatus.DRAFT})
         });
         this.saveEpisode();
     },
 
     savePublished: function() {
         this.setState({
-            episode: _.extend(this.state.episode, {draft_status: 'published'})
+            episode: _.extend(this.state.episode, {draft_status: DraftStatus.PUBLISHED})
         });
         this.saveEpisode();
     },
@@ -220,19 +200,12 @@ var App = React.createClass({
         let fieldsComplete = this.state.episode.title
                 && this.state.episode.description
                 && this.state.episode.audio_id;
-        if (this.state.episode.draft_status === 'draft') {
+        if (this.state.episode.draft_status === DraftStatus.DRAFT) {
             return fieldsComplete;
-        } else {
+        } else if (this.state.episode.drfat_status === DraftStatus.PUBLISHED) {
             return fieldsComplete && this.canSaveAsDraft();
         }
-    },
-
-    saveDraftText: function() {
-        return 'Save as draft';
-    },
-
-    savePublishedText: function() {
-        return 'Publish!';
+        return false;
     },
 
     render: function() {
@@ -245,8 +218,25 @@ var App = React.createClass({
                    handleAlertDismiss={this.handleAlertDismiss} />
             );
         }
+
+        let alertDraftStatus;
+        if (this.state.episode.draft_status === DraftStatus.DRAFT) {
+            alertDraftStatus = (
+                <AlertBox style="warning"
+                          content={Texts.EPISODE_STATUS_STATEMENT_DRAFT}
+                          nondismissible={true} />
+            );
+        } else if (this.state.episode.draft_status === DraftStatus.PUBLISHED) {
+            alertDraftStatus = (
+                <AlertBox style="info"
+                          content={Texts.EPISODE_STATUS_STATEMENT_PUBLISHED}
+                          nondismissible={true} />
+            );
+        }
+
         return (
             <div className="container">
+              {alertDraftStatus}
               {alertBox}
               <ButtonToolbar>
                   <Button bsStyle="default"
@@ -258,12 +248,12 @@ var App = React.createClass({
                   <Button bsStyle="default"
                           onClick={this.saveDraft}
                           disabled={!this.canSaveAsDraft()}>
-                    {this.saveDraftText()}
+                    {Texts.SAVE_EPISODE_AS_DRAFT}
                   </Button>
                   <Button bsStyle="primary"
                           onClick={this.savePublished}
                           disabled={!this.canSaveAsPublished()}>
-                    {this.savePublishedText()}
+                    {Texts.SAVE_EPISODE_AS_PUBLISHED}
                   </Button>
               </ButtonToolbar>
               <hr />
@@ -290,8 +280,6 @@ var App = React.createClass({
                            handleChange={this.handleChangeAlias} />
                 <ExplicitSelector explicit={this.state.episode.explicit}
                                   handleChange={this.handleChangeExplicit} />
-                <DraftStatusSelector draftStatus={this.state.episode.draft_status}
-                                     handleChange={this.handleChangeDraftStatus} />
                 <ImageSelector selectedImageId={this.state.episode.image_id}
                                handleSelect={this.handleSelectImage} />
                 <hr />
