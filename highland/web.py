@@ -126,7 +126,6 @@ def episode():
 
             assert show_id, 'show id required'
             assert draft_status, 'draft status required'
-            assert alias, 'alias required'
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.create(
@@ -155,7 +154,6 @@ def episode():
             assert show_id, 'show id required'
             assert id, 'id required'
             assert draft_status, 'draft status required'
-            assert alias, 'alias required'
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.update(

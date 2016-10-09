@@ -9,9 +9,10 @@ def create(user, show_id, draft_status, alias, audio_id, image_id,
            explicit=False):
     draft_status = models.Episode.DraftStatus(draft_status).name
     show = show_operation.get_show_or_assert(user, show_id)
-    episode = valid_or_assert(user, models.Episode(
+    episode = set_default_value(user, models.Episode(
         show, title, subtitle, description, audio_id, draft_status,
         scheduled_datetime, explicit, image_id, alias))
+    episode = valid_or_assert(user, episode)
     if episode.draft_status == models.Episode.DraftStatus.published.name:
         episode.published_datetime = \
             datetime.datetime.now(datetime.timezone.utc)
@@ -44,6 +45,7 @@ def update(user, show_id, episode_id, draft_status, alias, audio_id, image_id,
     if episode.draft_status == models.Episode.DraftStatus.draft.name:
         episode.published_datetime = None
 
+    set_default_value(user, episode)
     valid_or_assert(user, episode)
     models.db.session.commit()
 
@@ -104,6 +106,12 @@ def get_episode_or_assert(user, show_id, episode_id):
             format(user.id, show_id, episode_id))
 
 
+def set_default_value(user, episode):
+    if episode.alias is None or len(episode.alias) < 1:
+        episode.alias = get_default_alias(user, episode.show_id)
+    return episode
+
+
 def valid_or_assert(user, episode):
     assert common.is_valid_alias(episode.alias), \
         'bad alias:{}'.format(episode.alias)
@@ -140,6 +148,20 @@ def get_preview_episode(user, show, title, subtitle, description, audio_id,
                              None, False, image_id, '_preview')
     episode.published_datetime = datetime.datetime.now(datetime.timezone.utc)
     return episode
+
+
+def get_default_alias(user, show_id):
+    q = models.db.session. \
+        query(models.Episode.alias). \
+        filter(models.Episode.owner_user_id == user.id and
+               models.Episode.show_id == show_id)
+    existing_aliases = [a for a, in q.all()]
+
+    candidate = len(existing_aliases) + 1
+    while str(candidate) in existing_aliases:
+        candidate += 1
+
+    return str(candidate)
 
 
 def _update_show_build_datetime(user, episode):
