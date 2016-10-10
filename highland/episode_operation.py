@@ -126,7 +126,7 @@ def valid_or_assert(user, episode):
         assert episode.description, 'description required'
         assert episode.audio_id, 'audio required'
 
-    if episode.draft_status == models.Episode.DraftStatus.scheduled:
+    if episode.draft_status == models.Episode.DraftStatus.scheduled.name:
         assert episode.scheduled_datetime, 'scheduled_datetime required'
     else:
         episode.scheduled_datetime = None
