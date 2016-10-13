@@ -1,21 +1,74 @@
 import React from "react";
 import _ from "underscore";
-import { Button, ButtonToolbar, Form } from 'react-bootstrap';
+import { Button, ButtonToolbar, Form, Modal, Radio } from 'react-bootstrap';
 import { TextArea, TextInput, ExplicitSelector, AlertBox } from './common.js';
 import { ImageSelector } from './image-util.js';
 import { AudioSelector } from './audio-util.js';
 import { episodePath } from './paths';
 import { Texts } from './constants.js';
+import Datetime from 'react-datetime';
+import moment from 'moment';
 
-var DraftStatus = {
+const DraftStatus = {
     DRAFT: 'draft',
-    PUBLISHED: 'published'
+    PUBLISHED: 'published',
+    SCHEDULED: 'scheduled'
 };
 
-var Mode = {
+const Mode = {
     UPDATE: 'update',
     CREATE: 'create'
 };
+
+class SaveModal extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleSetScheduledDatetime = this.handleSetScheduledDatetime.bind(this);
+        this.handleExecute = this.handleExecute.bind(this);
+    }
+
+    handleSetScheduledDatetime(e) {
+        this.props.handleSelect(DraftStatus.SCHEDULED, e.toISOString());
+    }
+
+    handleExecute() {
+        this.props.handleSave();
+        this.props.handleHide();
+    }
+
+    render() {
+        return (
+            <Modal show={this.props.showModal} onHide={this.props.handleHide}>
+              <Modal.Body>
+                <Radio checked={this.props.draftStatus === DraftStatus.DRAFT}
+                       onChange={() => this.props.handleSelect(DraftStatus.DRAFT)}>
+                  Draft
+                </Radio>
+                <Radio checked={this.props.draftStatus === DraftStatus.PUBLISHED}
+                       onChange={() => this.props.handleSelect(DraftStatus.PUBLISHED)}>
+                  Publish right away
+                </Radio>
+                <Radio checked={this.props.draftStatus === DraftStatus.SCHEDULED}
+                       onChange={() => this.props.handleSelect(DraftStatus.SCHEDULED)}>
+                  Schedule to publish at
+                  <Datetime value={new Date(this.props.scheduledDatetime)}
+                            onChange={this.handleSetScheduledDatetime} />
+                </Radio>
+              </Modal.Body>
+              <Modal.Footer>
+                  <Button bsStyle="primary"
+                          onClick={this.handleExecute}>
+                    Save
+                  </Button>
+                  <Button bsStyle="default"
+                          onClick={this.props.handleHide}>
+                    Cancel
+                  </Button>
+              </Modal.Footer>
+            </Modal>
+        );
+    }
+}
 
 var App = React.createClass({
     getInitialState: function() {
@@ -32,8 +85,10 @@ var App = React.createClass({
                 explicit: false,
                 alias: ''
             },
+            savedDraftStatus: '',
             modified: false,
-            activeAlert: null
+            activeAlert: null,
+            showPublishModal: false
         };
     },
 
@@ -123,8 +178,16 @@ var App = React.createClass({
         this.setState({
             originalEpisodeId: data.episode.audio_id,
             episode: data.episode,
+            savedDraftStatus: data.episode.draft_status,
             modified: false
         });
+        if (!this.state.episode.scheduled_datetime) {
+            this.setState({
+                episode: _.extend(this.state.episode, {
+                    scheduled_datetime: new Date().toISOString()
+                })
+            });
+        }
     },
 
     contextTypes: {
@@ -158,6 +221,13 @@ var App = React.createClass({
                 });
             }
         };
+
+        if (this.state.episode.draft_status != DraftStatus.SCHEDULED) {
+            this.setState({
+                episode: _.extend(this.state.episode, {scheduled_datetime: ''}),
+                modified: true
+            });
+        }
         xhr.send(
             JSON.stringify(_.extend(this.state.episode, {show_id: this.props.route.showId}))
         );
@@ -176,20 +246,6 @@ var App = React.createClass({
             + p('description')
             + p('audio_id')
             + p('image_id');
-    },
-
-    saveDraft: function() {
-        this.setState({
-            episode: _.extend(this.state.episode, {draft_status: DraftStatus.DRAFT})
-        });
-        this.saveEpisode();
-    },
-
-    savePublished: function() {
-        this.setState({
-            episode: _.extend(this.state.episode, {draft_status: DraftStatus.PUBLISHED})
-        });
-        this.saveEpisode();
     },
 
     canSaveAsDraft: function() {
@@ -220,41 +276,57 @@ var App = React.createClass({
         }
 
         let alertDraftStatus;
-        if (this.state.episode.draft_status === DraftStatus.DRAFT) {
+        if (this.state.savedDraftStatus === DraftStatus.DRAFT) {
             alertDraftStatus = (
                 <AlertBox style="warning"
                           content={Texts.EPISODE_STATUS_STATEMENT_DRAFT}
                           nondismissible={true} />
             );
-        } else if (this.state.episode.draft_status === DraftStatus.PUBLISHED) {
+        } else if (this.state.savedDraftStatus === DraftStatus.PUBLISHED) {
             alertDraftStatus = (
                 <AlertBox style="info"
                           content={Texts.EPISODE_STATUS_STATEMENT_PUBLISHED}
                           nondismissible={true} />
             );
+        } else if (this.state.savedDraftStatus === DraftStatus.SCHEDULED) {
+            const statement = '{0} {1}'
+                      .replace('{0}', Texts.EPISODE_STATUS_STATEMENT_SCHEDULED)
+                      .replace('{1}', moment(this.state.episode.scheduled_datetime)
+                               .format('MMMM Do YYYY, h:mm a'));
+            alertDraftStatus = (
+                <AlertBox style="info"
+                          content={statement}
+                          nondismissible={true} />
+            );
         }
+
+        const self = this;
+        const handleModalSelect = function(status, scheduledDatetime) {
+            self.setState({
+                episode: _.extend(self.state.episode, {
+                    draft_status: status,
+                    scheduled_datetime: scheduledDatetime
+                        || self.state.episode.scheduled_datetime
+                })
+            });
+        };
 
         return (
             <div className="container">
               {alertDraftStatus}
               {alertBox}
               <ButtonToolbar>
-                  <Button bsStyle="default"
-                          target="_blank"
-                          className="pull-right"
-                          href={this.previewUrl()}>
-                    Preview
-                  </Button>
-                  <Button bsStyle="default"
-                          onClick={this.saveDraft}
-                          disabled={!this.canSaveAsDraft()}>
-                    {Texts.SAVE_EPISODE_AS_DRAFT}
-                  </Button>
-                  <Button bsStyle="primary"
-                          onClick={this.savePublished}
-                          disabled={!this.canSaveAsPublished()}>
-                    {Texts.SAVE_EPISODE_AS_PUBLISHED}
-                  </Button>
+                <Button bsStyle="primary"
+                        disabled={!this.canPublish()}
+                        onClick={() => {this.setState({showPublishModal: true});}}>
+                  Update...
+                </Button>
+                <Button bsStyle="default"
+                        target="_blank"
+                        className="pull-right"
+                        href={this.previewUrl()}>
+                  Preview
+                </Button>
               </ButtonToolbar>
               <hr />
 
@@ -284,6 +356,13 @@ var App = React.createClass({
                                handleSelect={this.handleSelectImage} />
                 <hr />
               </Form>
+
+              <SaveModal showModal={this.state.showPublishModal}
+                         draftStatus={this.state.episode.draft_status}
+                         scheduledDatetime={this.state.episode.scheduled_datetime}
+                         handleSave={this.saveEpisode}
+                         handleSelect={handleModalSelect}
+                         handleHide={() => {this.setState({showPublishModal: false});}}/>
             </div>
         );
     }
