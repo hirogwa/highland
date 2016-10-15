@@ -20,6 +20,8 @@ const Mode = {
     CREATE: 'create'
 };
 
+const defaultScheduledDatetime = new Date().toISOString();
+
 class SaveModal extends React.Component {
     constructor(props) {
         super(props);
@@ -36,28 +38,41 @@ class SaveModal extends React.Component {
         this.props.handleHide();
     }
 
+    canExecute() {
+        return this.props.draftStatus === DraftStatus.DRAFT
+            || (this.props.draftStatus === DraftStatus.PUBLISHED && this.props.canPublish)
+            || (this.props.draftStatus === DraftStatus.SCHEDULED && this.props.canSchedule);
+    }
+
     render() {
         return (
             <Modal show={this.props.showModal} onHide={this.props.handleHide}>
+              <Modal.Header>
+                <Modal.Title>Save options</Modal.Title>
+              </Modal.Header>
               <Modal.Body>
                 <Radio checked={this.props.draftStatus === DraftStatus.DRAFT}
                        onChange={() => this.props.handleSelect(DraftStatus.DRAFT)}>
                   Draft
                 </Radio>
                 <Radio checked={this.props.draftStatus === DraftStatus.PUBLISHED}
+                       disabled={!this.props.canPublish}
                        onChange={() => this.props.handleSelect(DraftStatus.PUBLISHED)}>
                   Publish right away
                 </Radio>
                 <Radio checked={this.props.draftStatus === DraftStatus.SCHEDULED}
+                       disabled={!this.props.canSchedule}
                        onChange={() => this.props.handleSelect(DraftStatus.SCHEDULED)}>
                   Schedule to publish at
-                  <Datetime value={new Date(this.props.scheduledDatetime)}
-                            onChange={this.handleSetScheduledDatetime} />
                 </Radio>
+                <Datetime value={new Date(this.props.scheduledDatetime)}
+                          inputProps={{disabled: !this.props.canSchedule}}
+                          onChange={this.handleSetScheduledDatetime} />
               </Modal.Body>
               <Modal.Footer>
                   <Button bsStyle="primary"
-                          onClick={this.handleExecute}>
+                          onClick={this.handleExecute}
+                          disabled={!this.canExecute()}>
                     Save
                   </Button>
                   <Button bsStyle="default"
@@ -81,7 +96,7 @@ var App = React.createClass({
                 audio_id: null,
                 image_id: null,
                 draft_status: this.props.route.mode === Mode.CREATE ? DraftStatus.DRAFT : '',
-                scheduled_datetime: '',
+                scheduled_datetime: defaultScheduledDatetime,
                 explicit: false,
                 alias: ''
             },
@@ -184,7 +199,7 @@ var App = React.createClass({
         if (!this.state.episode.scheduled_datetime) {
             this.setState({
                 episode: _.extend(this.state.episode, {
-                    scheduled_datetime: new Date().toISOString()
+                    scheduled_datetime: defaultScheduledDatetime
                 })
             });
         }
@@ -248,20 +263,14 @@ var App = React.createClass({
             + p('image_id');
     },
 
-    canSaveAsDraft: function() {
-        return this.state.modified || this.props.route.mode == Mode.CREATE;
+    canPublish: function() {
+        return this.state.episode.title
+            && this.state.episode.description
+            && this.state.episode.audio_id;
     },
 
-    canSaveAsPublished: function() {
-        let fieldsComplete = this.state.episode.title
-                && this.state.episode.description
-                && this.state.episode.audio_id;
-        if (this.state.episode.draft_status === DraftStatus.DRAFT) {
-            return fieldsComplete;
-        } else if (this.state.episode.drfat_status === DraftStatus.PUBLISHED) {
-            return fieldsComplete && this.canSaveAsDraft();
-        }
-        return false;
+    canSchedule: function() {
+        return this.canPublish();
     },
 
     render: function() {
@@ -317,9 +326,8 @@ var App = React.createClass({
               {alertBox}
               <ButtonToolbar>
                 <Button bsStyle="primary"
-                        disabled={!this.canPublish()}
                         onClick={() => {this.setState({showPublishModal: true});}}>
-                  Update...
+                  Save...
                 </Button>
                 <Button bsStyle="default"
                         target="_blank"
@@ -360,6 +368,8 @@ var App = React.createClass({
               <SaveModal showModal={this.state.showPublishModal}
                          draftStatus={this.state.episode.draft_status}
                          scheduledDatetime={this.state.episode.scheduled_datetime}
+                         canPublish={this.canPublish()}
+                         canSchedule={this.canSchedule()}
                          handleSave={this.saveEpisode}
                          handleSelect={handleModalSelect}
                          handleHide={() => {this.setState({showPublishModal: false});}}/>
