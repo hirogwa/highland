@@ -415,3 +415,11 @@ def publish_feed():
 @app.route('/dashboard/<show_id>', methods=['GET'])
 def dashboard_page(show_id):
     return render_template('dashboard/dashboard.html', show_id=show_id)
+
+
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template(
+        'dashboard/login.html',
+        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
+        cognito_client_id=settings.COGNITO_CLIENT_ID)
