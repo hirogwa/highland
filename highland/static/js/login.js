@@ -31,10 +31,13 @@ class Login extends React.Component {
             Username : this.state.username,
             Pool : userPool
         });
+        const self = this;
         cognitoUser.authenticateUser(authenticationDetails, {
             onSuccess: function (result) {
                 console.log(result);
-                console.log('access token + ' + result.getAccessToken().getJwtToken());
+                const accessToken = result.getAccessToken().getJwtToken();
+                console.log('access token + ' + accessToken);
+                self.postToken(accessToken);
             },
 
             onFailure: function() {
@@ -45,6 +48,24 @@ class Login extends React.Component {
                 console.info(arguments);
             }
         });
+    }
+
+    postToken(accessToken) {
+        const xhr = new XMLHttpRequest();
+        const url = '/access_token';
+        xhr.open('post', url, true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function() {
+            if (this.status == 200) {
+                const data = JSON.parse(this.response);
+                console.info(data);
+            } else {
+                console.error(this.statusText);
+            }
+        };
+        xhr.send(
+            JSON.stringify({access_token: accessToken})
+        );
     }
 
     validInput() {

@@ -1,9 +1,11 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify, render_template, Response
+from flask import request, jsonify, render_template, session, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings
+
+app.secret_key = settings.APP_SECRET
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
@@ -423,3 +425,10 @@ def login():
         'dashboard/login.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
         cognito_client_id=settings.COGNITO_CLIENT_ID)
+
+
+@app.route('/access_token', methods=['POST'])
+def register_access_token():
+    access_token = request.get_json().get('access_token')
+    session['access_token'] = access_token
+    return jsonify(result='success', access_token=access_token)
