@@ -7,6 +7,9 @@ from highland import app, models,\
     cognito_auth
 
 app.secret_key = settings.APP_SECRET
+auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
+                                settings.COGNITO_REGION,
+                                settings.COGNITO_USER_POOL_ID)
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
@@ -432,7 +435,7 @@ def login():
 def register_access_token():
     access_token = request.get_json().get('access_token')
     try:
-        token_decoded = cognito_auth.decode_access_token(access_token)
+        token_decoded = auth.decode_access_token(access_token)
     except:
         return jsonify(result='error', message='invalid token'), 400
     session['access_token'] = access_token

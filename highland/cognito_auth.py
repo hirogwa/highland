@@ -4,31 +4,37 @@ import datetime
 import jwt
 import pytz
 
-from highland import app, settings
+from highland import app
 
 
-def decode_access_token(token):
-    kid = jwt.get_unverified_header(token).get('kid')
-    jwt_set = [x for x in settings.COGNITO_JWT_SET.get('keys')
-               if x.get('kid') == kid][0]
-    n_str, e_str = jwt_set.get('n'), jwt_set.get('e')
+class CognitoAuth:
+    def __init__(self, cognito_jwt_set, cognito_region, cognito_user_pool_id):
+        self.cognito_jwt_set = cognito_jwt_set
+        self.cognito_region = cognito_region
+        self.cognito_user_pool_id = cognito_user_pool_id
 
-    # signature verification included
-    decoded = jwt.decode(token, key=_public_key(n_str, e_str))
+    def decode_access_token(self, token):
+        kid = jwt.get_unverified_header(token).get('kid')
+        jwt_set = [x for x in self.cognito_jwt_set.get('keys')
+                   if x.get('kid') == kid][0]
+        n_str, e_str = jwt_set.get('n'), jwt_set.get('e')
 
-    if decoded.get('iss') != 'https://cognito-idp.{}.amazonaws.com/{}'.format(
-            settings.COGNITO_REGION, settings.COGNITO_USER_POOL_ID):
-        app.logger.error('token invalid. bad iss.')
-        raise ValueError()
-    if decoded.get('token_use') != 'access':
-        app.logger.error('token invalid. bad token_use.')
-        raise ValueError()
-    if datetime.datetime.fromtimestamp(decoded.get('exp'), pytz.utc) \
-       < datetime.datetime.now(pytz.utc):
-        app.logger.error('token invalid. expired.')
-        raise ValueError()
+        # signature verification included
+        decoded = jwt.decode(token, key=_public_key(n_str, e_str))
 
-    return decoded
+        if decoded.get('iss') != 'https://cognito-idp.{}.amazonaws.com/{}' \
+                  .format(self.cognito_region, self.cognito_user_pool_id):
+            app.logger.error('token invalid. bad iss.')
+            raise ValueError()
+        if decoded.get('token_use') != 'access':
+            app.logger.error('token invalid. bad token_use.')
+            raise ValueError()
+        if datetime.datetime.fromtimestamp(decoded.get('exp'), pytz.utc) \
+           < datetime.datetime.now(pytz.utc):
+            app.logger.error('token invalid. expired.')
+            raise ValueError()
+
+        return decoded
 
 
 def _public_key(n_str, e_str):
