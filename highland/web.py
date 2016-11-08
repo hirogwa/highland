@@ -1,6 +1,7 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify, render_template, session, Response
+from flask import request, jsonify, redirect, render_template, session, \
+    url_for, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings,\
@@ -13,6 +14,7 @@ auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_by_day():
     show_id = request.args.get('show_id')
     date_from = request.args.get('date_from')
@@ -24,6 +26,7 @@ def stat_episode_by_day():
 
 
 @app.route('/stat/episode_past_week', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_past_week():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
@@ -31,6 +34,7 @@ def stat_episode_past_week():
 
 
 @app.route('/stat/episode_cumulative', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_cumulative():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
@@ -38,6 +42,7 @@ def stat_episode_cumulative():
 
 
 @app.route('/show/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_show(show_id):
     try:
         show = show_operation.get_show_or_assert(test_user(), show_id)
@@ -48,6 +53,7 @@ def get_show(show_id):
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
+@auth.require_authenticated(redirect=False)
 def show():
     try:
         if 'POST' == request.method:
@@ -113,6 +119,7 @@ def show():
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def episode():
     try:
         if 'POST' == request.method:
@@ -180,6 +187,7 @@ def episode():
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_episode_list(show_id):
     try:
         public = request.args.get('public')
@@ -194,6 +202,7 @@ def get_episode_list(show_id):
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_episode(show_id, episode_id):
     try:
         episode = episode_operation.get_episode_or_assert(
@@ -205,6 +214,7 @@ def get_episode(show_id, episode_id):
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def audio():
     try:
         if 'POST' == request.method:
@@ -230,6 +240,7 @@ def audio():
 
 
 @app.route('/image/<image_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_image(image_id):
     try:
         user = test_user()
@@ -243,6 +254,7 @@ def get_image(image_id):
 
 
 @app.route('/image', methods=['POST', 'GET', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def image():
     try:
         if 'POST' == request.method:
@@ -419,6 +431,7 @@ def publish_feed():
 
 
 @app.route('/dashboard/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=True)
 def dashboard_page(show_id):
     return render_template('dashboard/dashboard.html', show_id=show_id)
 
@@ -429,6 +442,11 @@ def login():
         'dashboard/login.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
         cognito_client_id=settings.COGNITO_CLIENT_ID)
+
+
+@auth.unauthenticated_redirect
+def login_redirect():
+    return redirect(url_for('login'))
 
 
 @app.route('/access_token', methods=['POST'])

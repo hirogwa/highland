@@ -1,4 +1,6 @@
 from Crypto.PublicKey import RSA
+from functools import wraps
+from flask import session
 import base64
 import datetime
 import jwt
@@ -12,6 +14,8 @@ class CognitoAuth:
         self.cognito_jwt_set = cognito_jwt_set
         self.cognito_region = cognito_region
         self.cognito_user_pool_id = cognito_user_pool_id
+        self.unauthenticated = None
+        self.username = ''
 
     def decode_access_token(self, token):
         kid = jwt.get_unverified_header(token).get('kid')
@@ -35,6 +39,31 @@ class CognitoAuth:
             raise ValueError()
 
         return decoded
+
+    def require_authenticated(self, redirect=False):
+        def decorator(func):
+            @wraps(func)
+            def token_checked(*args, **kwargs):
+                try:
+                    self._consume_token()
+                except:
+                    if redirect and self.unauthenticated:
+                        return self.unauthenticated()
+                    else:
+                        return 'authentication required', 403
+                return func(*args, **kwargs)
+            return token_checked
+        return decorator
+
+    def unauthenticated_redirect(self, func):
+        self.unauthenticated = func
+        return func
+
+    def _consume_token(self):
+        if 'access_token' not in session:
+            raise ValueError()
+        token_decoded = self.decode_access_token(session['access_token'])
+        self.username = token_decoded.get('username')
 
 
 def _public_key(n_str, e_str):
