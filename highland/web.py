@@ -3,7 +3,8 @@ import traceback
 from flask import request, jsonify, render_template, session, Response
 from highland import app, models,\
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view, feed_operation, stat_operation, settings
+    image_operation, public_view, feed_operation, stat_operation, settings,\
+    cognito_auth
 
 app.secret_key = settings.APP_SECRET
 
@@ -430,5 +431,10 @@ def login():
 @app.route('/access_token', methods=['POST'])
 def register_access_token():
     access_token = request.get_json().get('access_token')
+    try:
+        token_decoded = cognito_auth.decode_access_token(access_token)
+    except:
+        return jsonify(result='error', message='invalid token'), 400
     session['access_token'] = access_token
-    return jsonify(result='success', access_token=access_token)
+    return jsonify(result='success',
+                   username=token_decoded.get('username'))
