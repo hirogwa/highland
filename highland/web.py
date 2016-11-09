@@ -459,3 +459,9 @@ def register_access_token():
     session['access_token'] = access_token
     return jsonify(result='success',
                    username=token_decoded.get('username'))
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('access_token', None)
+    return jsonify(result='success')

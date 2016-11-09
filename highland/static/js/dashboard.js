@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import {
     IndexLink, IndexRoute, Router, Route, hashHistory
 } from 'react-router';
+import { Button } from 'react-bootstrap';
 import { NavLink } from './common.js';
 import { Stat } from './stat.js';
 import { Audio } from './audio.js';
@@ -12,6 +13,21 @@ import { Episode } from './episode.js';
 import { Show } from './show.js';
 
 var App = React.createClass({
+    logout: function() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('post', '/logout', true);
+        xhr.onload = function() {
+            if (this.status == 200) {
+                const data = JSON.parse(this.response);
+                console.info(data);
+                window.location = '/login';
+            } else {
+                console.error(this.statusText);
+            }
+        };
+        xhr.send();
+    },
+
     render: function() {
         return (
             <div>
@@ -23,6 +39,9 @@ var App = React.createClass({
                 <li><NavLink to="/image">Image</NavLink></li>
                 <li><NavLink to="/show">Show Settings</NavLink></li>
               </ul>
+              <Button bsStyle="primary" onClick={this.logout}>
+                Logout
+              </Button>
               <hr />
               {this.props.children}
             </div>
