@@ -2,7 +2,7 @@ import dateutil.parser
 import traceback
 from flask import request, jsonify, redirect, render_template, session, \
     url_for, Response
-from highland import app, models,\
+from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings,\
     cognito_auth
@@ -323,29 +323,14 @@ def user():
         raise e
 
 
-@app.route('/user/<user_id>', methods=['GET'])
-def user_get(user_id):
-    try:
-        user = user_operation.get(id=int(user_id))
-        return jsonify(user=dict(user), result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
-
-
 @auth.user_loader
 def get_user(username):
-    return models.User.query.filter_by(username=username).first()
+    return user_operation.get(username)
 
 
 @app.route('/ping', methods=['GET'])
 def ping():
-    app.logger.debug('processing ping request')
-    print(request.form)
-    print(request.args)
-    print(request.get_json())
-    user = models.User('name', 'email', 'somepass')
-    return user.username
+    return 'pong'
 
 
 def datetime_valid_or_none(d):
