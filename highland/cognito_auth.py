@@ -59,6 +59,13 @@ class CognitoAuth:
         self.unauthenticated = func
         return func
 
+    def user_loader(self, func):
+        self.get_authenticated_user = func
+        return func
+
+    def authenticated_user(self):
+        return self.get_authenticated_user(self.username)
+
     def _consume_token(self):
         if 'access_token' not in session:
             raise ValueError()
