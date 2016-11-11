@@ -1,11 +1,34 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Modal } from 'react-bootstrap';
 import { TextInput } from './common.js';
 import {
     AuthenticationDetails, CognitoUser, CognitoUserPool
 } from 'amazon-cognito-identity-js';
 
+
+class NewPasswordRequiredModal extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <Modal show={this.props.showModal} onHide={this.props.handleHide}>
+              <Modal.Header>
+                <Modal.Title>New Password Required</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button bsStyle="success">
+                  Reset Password and Login
+                </Button>
+              </Modal.Footer>
+            </Modal>
+        );
+    }
+}
 
 class Login extends React.Component {
     constructor(props) {
@@ -13,7 +36,9 @@ class Login extends React.Component {
         this.authenticate = this.authenticate.bind(this);
         this.state = {
             username: '',
-            password: ''
+            password: '',
+            cognitoUser: undefined,
+            showRequireNewPasswordModal: false
         };
     }
 
@@ -46,6 +71,10 @@ class Login extends React.Component {
 
             newPasswordRequired: function() {
                 console.info(arguments);
+                self.setState({
+                    cognitoUser: cognitoUser,
+                    showRequireNewPasswordModal : true
+                });
             }
         });
     }
@@ -90,6 +119,11 @@ class Login extends React.Component {
                   Login
                 </Button>
               </Form>
+
+              <NewPasswordRequiredModal
+                 showModal={this.state.showRequireNewPasswordModal}
+                 handleHide={() => {this.setState({showRequireNewPasswordModal: false});}}
+                 />
             </div>
         );
     }
