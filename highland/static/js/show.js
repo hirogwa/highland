@@ -85,9 +85,9 @@ var App = React.createClass({
         }
     },
 
-    handleChangeTitle: function(event) {
+    handleChangeTitle: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {title: event.target.value}),
+            show: _.extend(this.state.show, {title: text}),
             modified: true
         });
     },
@@ -99,9 +99,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeSubtitle: function(event) {
+    handleChangeSubtitle: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {subtitle: event.target.value}),
+            show: _.extend(this.state.show, {subtitle: text}),
             modified: true
         });
     },
@@ -113,9 +113,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeAuthor: function(event) {
+    handleChangeAuthor: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {author: event.target.value}),
+            show: _.extend(this.state.show, {author: text}),
             modified: true
         });
     },
@@ -134,9 +134,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeAlias: function(event) {
+    handleChangeAlias: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {alias: event.target.value}),
+            show: _.extend(this.state.show, {alias: text}),
             modified: true
         });
     },

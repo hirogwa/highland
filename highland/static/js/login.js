@@ -24,12 +24,12 @@ class NewPasswordRequiredModal extends React.Component {
             this.state.password === this.state.passwordRetyped;
     }
 
-    handleChangePassword(e) {
-        this.setState({password: e.target.value});
+    handleChangePassword(text) {
+        this.setState({password: text});
     }
 
-    handleChangePasswordRetyped(e) {
-        this.setState({passwordRetyped: e.target.value});
+    handleChangePasswordRetyped(text) {
+        this.setState({passwordRetyped: text});
     }
 
     handleSubmit() {
@@ -146,11 +146,11 @@ class Login extends React.Component {
               <Form>
                 <TextInput name='username'
                            value={this.state.username}
-                           handleChange={(e) => {this.setState({username: e.target.value});}}/>
+                           handleChange={(t) => {this.setState({username: t});}}/>
                 <TextInput name='password'
                            type='password'
                            value={this.state.password}
-                           handleChange={(e) => {this.setState({password: e.target.value});}}/>
+                           handleChange={(t) => {this.setState({password: t});}}/>
                 <Button bsStyle="primary"
                         target="_blank"
                         onClick={this.authenticate}

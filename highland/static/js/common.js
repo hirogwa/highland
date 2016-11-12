@@ -45,6 +45,15 @@ class ExplicitSelector extends React.Component {
 }
 
 class TextInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(e) {
+        this.props.handleChange(e.target.value);
+    }
+
     render() {
         return (
             <FormGroup>
@@ -52,7 +61,7 @@ class TextInput extends React.Component {
               <FormControl type={this.props.type || "text"}
                            placeholder="Enter text"
                            value={this.props.value}
-                           onChange={this.props.handleChange}
+                           onChange={this.handleChange}
                            />
             </FormGroup>
         );

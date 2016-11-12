@@ -107,16 +107,16 @@ var App = React.createClass({
         };
     },
 
-    handleChangeTitle: function(event) {
+    handleChangeTitle: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {title: event.target.value}),
+            episode: _.extend(this.state.episode, {title: text}),
             modified: true
         });
     },
 
-    handleChangeSubtitle: function(event) {
+    handleChangeSubtitle: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {subtitle: event.target.value}),
+            episode: _.extend(this.state.episode, {subtitle: text}),
             modified: true
         });
     },
@@ -128,9 +128,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeAlias: function(event) {
+    handleChangeAlias: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {alias: event.target.value}),
+            episode: _.extend(this.state.episode, {alias: text}),
             modified: true
         });
     },
