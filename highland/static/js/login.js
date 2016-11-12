@@ -110,6 +110,7 @@ class Login extends React.Component {
                            value={this.state.username}
                            handleChange={(e) => {this.setState({username: e.target.value});}}/>
                 <TextInput name='password'
+                           type='password'
                            value={this.state.password}
                            handleChange={(e) => {this.setState({password: e.target.value});}}/>
                 <Button bsStyle="primary"

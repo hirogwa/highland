@@ -49,7 +49,8 @@ class TextInput extends React.Component {
         return (
             <FormGroup>
               <ControlLabel>{this.props.name}</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
+              <FormControl type={this.props.type || "text"}
+                           placeholder="Enter text"
                            value={this.props.value}
                            onChange={this.props.handleChange}
                            />
