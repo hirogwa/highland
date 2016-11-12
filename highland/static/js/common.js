@@ -189,6 +189,27 @@ class AlertBox extends React.Component {
     }
 }
 
+class PasswordResetInputs extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div>
+              <TextInput name='Type password'
+                         type='password'
+                         value={this.props.password}
+                         handleChange={this.props.handleChangePassword} />
+              <TextInput name='Type password again'
+                         type='password'
+                         value={this.props.passwordRetyped}
+                         handleChange={this.props.handleChangePasswordRetyped} />
+            </div>
+        );
+    }
+}
+
 class NavLink extends React.Component {
     constructor(props) {
         super(props);
@@ -207,5 +228,6 @@ module.exports = {
     Uploader: Uploader,
     Deleter: Deleter,
     AlertBox: AlertBox,
+    PasswordResetInputs: PasswordResetInputs,
     NavLink: NavLink
 };

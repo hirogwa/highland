@@ -1,32 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Button, Form, Modal } from 'react-bootstrap';
-import { TextInput } from './common.js';
+import { PasswordResetInputs, TextInput } from './common.js';
 import {
     AuthenticationDetails, CognitoUser, CognitoUserPool
 } from 'amazon-cognito-identity-js';
 
-
-class PasswordResetInputs extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (
-            <div>
-              <TextInput name='Type password'
-                         type='password'
-                         value={this.props.password}
-                         handleChange={this.props.handleChangePassword} />
-              <TextInput name='Type password again'
-                         type='password'
-                         value={this.props.passwordRetyped}
-                         handleChange={this.props.handleChangePasswordRetyped} />
-            </div>
-        );
-    }
-}
 
 class NewPasswordRequiredModal extends React.Component {
     constructor(props) {
