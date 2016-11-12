@@ -206,11 +206,11 @@ class PasswordResetInputs extends React.Component {
     render() {
         return (
             <div>
-              <TextInput name='Type password'
+              <TextInput name='New password'
                          type='password'
                          value={this.props.password}
                          handleChange={this.props.handleChangePassword} />
-              <TextInput name='Type password again'
+              <TextInput name='New password again'
                          type='password'
                          value={this.props.passwordRetyped}
                          handleChange={this.props.handleChangePasswordRetyped} />

@@ -426,7 +426,11 @@ def publish_feed():
 @app.route('/dashboard/<show_id>', methods=['GET'])
 @auth.require_authenticated(redirect=True)
 def dashboard_page(show_id):
-    return render_template('dashboard/dashboard.html', show_id=show_id)
+    return render_template(
+        'dashboard/dashboard.html',
+        show_id=show_id,
+        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
+        cognito_client_id=settings.COGNITO_CLIENT_ID)
 
 
 @app.route('/login', methods=['GET'])

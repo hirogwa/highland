@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import {
     IndexLink, IndexRoute, Router, Route, hashHistory
 } from 'react-router';
-import { Button } from 'react-bootstrap';
 import { NavLink } from './common.js';
 import { Stat } from './stat.js';
 import { Audio } from './audio.js';
@@ -11,6 +10,7 @@ import { Image } from './image.js';
 import { EpisodeList } from './episode-list.js';
 import { Episode } from './episode.js';
 import { Show } from './show.js';
+import { ResetPassword } from './reset-password.js';
 
 var App = React.createClass({
     logout: function() {
@@ -39,9 +39,11 @@ var App = React.createClass({
                 <li><NavLink to="/image">Image</NavLink></li>
                 <li><NavLink to="/show">Show Settings</NavLink></li>
               </ul>
-              <Button bsStyle="primary" onClick={this.logout}>
-                Logout
-              </Button>
+              <h4>Account</h4>
+              <ul>
+                <li><NavLink to="/resetpassword">Reset Password</NavLink></li>
+                <li><a href="" onClick={this.logout}>Logout</a></li>
+              </ul>
               <hr />
               {this.props.children}
             </div>
@@ -59,6 +61,10 @@ ReactDOM.render(
         <Route path="/audio" component={Audio} />
         <Route path="/image" component={Image} />
         <Route path="/show" showId={showId} mode="update" component={Show} />
+        <Route path="/resetpassword"
+               cognitoUserPoolId={cognitoUserPoolId}
+               cognitoClientId={cognitoClientId}
+               component={ResetPassword} />
       </Route>
     </Router>,
     document.querySelector(".mainContainer"));
