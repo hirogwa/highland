@@ -7,9 +7,63 @@ import {
 } from 'amazon-cognito-identity-js';
 
 
+class PasswordResetInputs extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div>
+              <TextInput name='Type password'
+                         type='password'
+                         value={this.props.password}
+                         handleChange={this.props.handleChangePassword} />
+              <TextInput name='Type password again'
+                         type='password'
+                         value={this.props.passwordRetyped}
+                         handleChange={this.props.handleChangePasswordRetyped} />
+            </div>
+        );
+    }
+}
+
 class NewPasswordRequiredModal extends React.Component {
     constructor(props) {
         super(props);
+        this.handleChangePassword = this.handleChangePassword.bind(this);
+        this.handleChangePasswordRetyped = this.handleChangePasswordRetyped.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.state = {
+            password: '',
+            passwordRetyped: ''
+        };
+    }
+
+    validInput() {
+        return this.state.password &&
+            this.state.password === this.state.passwordRetyped;
+    }
+
+    handleChangePassword(e) {
+        this.setState({password: e.target.value});
+    }
+
+    handleChangePasswordRetyped(e) {
+        this.setState({passwordRetyped: e.target.value});
+    }
+
+    handleSubmit() {
+        this.props.cognitoUser.completeNewPasswordChallenge(
+            this.state.password, {}, {
+                onFailure: function(err) {
+                    console.info(err);
+                },
+
+                onSuccess: function(resp) {
+                    console.info(resp);
+                }
+            });
     }
 
     render() {
@@ -19,9 +73,14 @@ class NewPasswordRequiredModal extends React.Component {
                 <Modal.Title>New Password Required</Modal.Title>
               </Modal.Header>
               <Modal.Body>
+                <PasswordResetInputs
+                   handleChangePassword={this.handleChangePassword}
+                   handleChangePasswordRetyped={this.handleChangePasswordRetyped}/>
               </Modal.Body>
               <Modal.Footer>
-                <Button bsStyle="success">
+                <Button bsStyle="success"
+                        onClick={this.handleSubmit}
+                        disabled={!this.validInput()}>
                   Reset Password and Login
                 </Button>
               </Modal.Footer>
@@ -123,6 +182,7 @@ class Login extends React.Component {
 
               <NewPasswordRequiredModal
                  showModal={this.state.showRequireNewPasswordModal}
+                 cognitoUser={this.state.cognitoUser}
                  handleHide={() => {this.setState({showRequireNewPasswordModal: false});}}
                  />
             </div>
