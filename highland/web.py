@@ -1,6 +1,6 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify, redirect, render_template, session, \
+from flask import request, jsonify, redirect, render_template, \
     url_for, Response
 from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
@@ -447,18 +447,13 @@ def login_redirect():
 
 
 @app.route('/access_token', methods=['POST'])
+@auth.login
 def register_access_token():
-    access_token = request.get_json().get('access_token')
-    try:
-        token_decoded = auth.decode_access_token(access_token)
-    except:
-        return jsonify(result='error', message='invalid token'), 400
-    session['access_token'] = access_token
     return jsonify(result='success',
-                   username=token_decoded.get('username'))
+                   username=auth.username)
 
 
 @app.route('/logout', methods=['POST'])
+@auth.logout
 def logout():
-    session.pop('access_token', None)
     return jsonify(result='success')

@@ -1,6 +1,6 @@
 from Crypto.PublicKey import RSA
 from functools import wraps
-from flask import session
+from flask import request, session
 import base64
 import datetime
 import jwt
@@ -65,6 +65,30 @@ class CognitoAuth:
 
     def authenticated_user(self):
         return self.get_authenticated_user(self.username)
+
+    def login(self, func):
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            if request.method != 'POST':
+                return func(*args, **kwargs)
+
+            access_token = request.get_json().get('access_token')
+            try:
+                token_decoded = self.decode_access_token(access_token)
+                self.username = token_decoded.get('username')
+            except:
+                return 'Invalid token', 400
+            else:
+                session['access_token'] = access_token
+                return func(*args, **kwargs)
+        return decorator
+
+    def logout(self, func):
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            session.pop('access_token', None)
+            return func(*args, **kwargs)
+        return decorator
 
     def _consume_token(self):
         if 'access_token' not in session:
