@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Button, Form, Modal } from 'react-bootstrap';
-import { PasswordResetInputs, TextInput } from './common.js';
 import {
     AuthenticationDetails, CognitoUser, CognitoUserPool
 } from 'amazon-cognito-identity-js';
+import { postAccessToken } from './auth-utils.js';
+import { PasswordResetInputs, TextInput } from './common.js';
 
 
 class NewPasswordRequiredModal extends React.Component {
@@ -100,7 +101,7 @@ class Login extends React.Component {
                 console.log(result);
                 const accessToken = result.getAccessToken().getJwtToken();
                 console.log('access token + ' + accessToken);
-                self.postToken(accessToken);
+                postAccessToken(accessToken);
             },
 
             onFailure: function() {
@@ -115,24 +116,6 @@ class Login extends React.Component {
                 });
             }
         });
-    }
-
-    postToken(accessToken) {
-        const xhr = new XMLHttpRequest();
-        const url = '/access_token';
-        xhr.open('post', url, true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                const data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({access_token: accessToken})
-        );
     }
 
     validInput() {
