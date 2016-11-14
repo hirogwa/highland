@@ -132,7 +132,26 @@ function postAccessToken(accessToken) {
     });
 }
 
+function logout() {
+    const cognitoUser = this.userPool.getCurrentUser();
+    cognitoUser.signOut();
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('post', '/logout', true);
+    return new Promise(function(resolve, reject) {
+        xhr.onload = function() {
+            if (this.status == 200) {
+                resolve(this.response);
+            } else {
+                reject(this.statusText);
+            }
+        };
+        xhr.send();
+    });
+}
+
 module.exports = {
     AuthenticatedRequest: AuthenticatedRequest,
-    postAccessToken: postAccessToken
+    postAccessToken: postAccessToken,
+    logout: logout
 };

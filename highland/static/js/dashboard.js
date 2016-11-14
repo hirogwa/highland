@@ -11,21 +11,11 @@ import { EpisodeList } from './episode-list.js';
 import { Episode } from './episode.js';
 import { Show } from './show.js';
 import { ResetPassword } from './reset-password.js';
+import { logout } from './auth-utils.js';
 
-var App = React.createClass({
+const App = React.createClass({
     logout: function() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('post', '/logout', true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                const data = JSON.parse(this.response);
-                console.info(data);
-                window.location = '/login';
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+        logout().then(() => window.location = '/login');
     },
 
     render: function() {
