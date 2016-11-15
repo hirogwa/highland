@@ -19,6 +19,10 @@ class AuthenticatedRequest {
         return this.promiseRequest(this.makeUpdateRequest('post', url, data));
     }
 
+    postForm(url, form) {
+        return this.promiseRequest(this.makeFormRequest(url, form));
+    }
+
     put(url, data) {
         return this.promiseRequest(this.makeUpdateRequest('put', url, data));
     }
@@ -55,6 +59,21 @@ class AuthenticatedRequest {
                 }
             };
             xhr.send(JSON.stringify(data));
+        };
+    }
+
+    makeFormRequest(url, form) {
+        return (resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('post', url, true);
+            xhr.onload = function() {
+                if (this.status == 201) {
+                    resolve(this.response);
+                } else {
+                    reject(this);
+                }
+            };
+            xhr.send(form);
         };
     }
 
