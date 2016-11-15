@@ -110,22 +110,17 @@ class AudioSelector extends React.Component {
     }
 
     loadAudioData(whitelistedId) {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        let url = '/audio?unused_only=True' +
+        const self = this;
+        const url = '/audio?unused_only=True' +
                 (whitelistedId ? '&whitelisted_id=' + whitelistedId : '');
-        xhr.open('get', url, true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        this.props.authenticatedRequest.get(url)
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setState({
                     audios: data.audios
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     }
 
     componentDidMount() {

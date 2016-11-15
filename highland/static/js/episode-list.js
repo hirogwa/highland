@@ -22,23 +22,13 @@ class Deleter extends React.Component {
     }
 
     handleDelete() {
-        let xhr = new XMLHttpRequest();
-        xhr.open('delete', '/episode', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({
+        this.props.authenticatedRequest.delete(
+            '/episode', {
                 show_id: this.props.showId,
                 episode_ids: this.props.selectedIds
             })
-        );
+            .then()
+            .catch((args) => console.error(args));
     }
 
     render() {
@@ -152,20 +142,16 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        var self = this;
-        var xhr = new XMLHttpRequest();
-        xhr.open('get', '/episodes/' + this.props.route.showId, true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        const self = this;
+        this.props.route.authenticatedRequest.get(
+            `/episodes/${this.props.route.showId}`, true)
+            .then((resp) => {
+                let data = JSON.parse(resp);
                 self.setState({
                     episodes: data.episodes
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     },
 
     render: function() {
@@ -176,6 +162,7 @@ var App = React.createClass({
                            selectedIds={this.state.selectedIds}
                            handleSelect={this.handleSelectEpisode} />
               <Deleter showId={this.props.route.showId}
+                       authenticatedRequest={this.props.route.authenticatedRequest}
                        selectedIds={this.state.selectedIds} />
             </div>
         );

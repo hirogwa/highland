@@ -110,74 +110,41 @@ var App = React.createClass({
     },
 
     loadEpisodes: function() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/episodes/' + this.props.route.showId + '?public=yes', true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        const self = this;
+        const url = `/episodes/${this.props.route.showId}?public=yes`;
+        this.props.route.authenticatedRequest.get(url)
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setState({
                     episodes: data.episodes
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     },
 
     loadStatEpisodeByDay: function() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/stat/episode_by_day?show_id='
-                 + encodeURIComponent(this.props.route.showId));
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                self.setState({
-                    statByDay: data.stat
-                });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+        this.loadStat('/stat/episode_by_day', 'statByDay');
     },
 
     loadStatEpisodeWeek: function() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/stat/episode_past_week?show_id='
-                 + encodeURIComponent(this.props.route.showId));
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                self.setState({
-                    statWeek: data.stat
-                });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+        this.loadStat('/stat/episode_past_week', 'statWeek');
     },
 
     loadStatEpisodeCumulative: function() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', '/stat/episode_cumulative?show_id='
-                 + encodeURIComponent(this.props.route.showId));
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        this.loadStat('/stat/episode_cumulative', 'statCumulative');
+    },
+
+    loadStat: function(endpoint, stateKey) {
+        const self = this;
+        const showId = encodeURIComponent(this.props.route.showId);
+        this.props.route.authenticatedRequest.get(`${endpoint}?show_id=${showId}`)
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setState({
-                    statCumulative: data.stat
+                    [stateKey]: data.stat
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     },
 
     componentDidMount: function() {

@@ -109,20 +109,15 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        var self = this;
-        var xhr = new XMLHttpRequest();
-        xhr.open('get', '/audio', true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        const self = this;
+        this.props.route.authenticatedRequest.get('/audio')
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setState({
                     audios: data.audios
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     },
 
     render: function() {
@@ -134,7 +129,8 @@ var App = React.createClass({
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />
               <Deleter selectedIds={this.state.selectedIds}
-                       url="/audio" />
+                       url="/audio"
+                       authenticatedRequest={this.props.route.authenticatedRequest} />
             </div>
         );
     }

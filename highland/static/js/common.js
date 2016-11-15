@@ -139,20 +139,10 @@ class Deleter extends React.Component {
     }
 
     handleDelete() {
-        let xhr = new XMLHttpRequest();
-        xhr.open('delete', this.props.url, true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({ids: this.props.selectedIds})
-        );
+        this.props.authenticatedRequest.delete(
+            this.props.url, {ids: this.props.selectedIds})
+            .then()
+            .catch((args) => console.error(args));
     }
 
     render() {

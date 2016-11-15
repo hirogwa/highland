@@ -89,20 +89,15 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        var self = this;
-        var xhr = new XMLHttpRequest();
-        xhr.open('get', '/image', true);
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
+        const self = this;
+        this.props.route.authenticatedRequest.get('/image')
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setState({
                     images: data.images
                 });
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send();
+            })
+            .catch((args) => console.error(args));
     },
 
     render: function() {
@@ -114,7 +109,8 @@ var App = React.createClass({
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectImage} />
               <Deleter selectedIds={this.state.selectedIds}
-                       url="/image" />
+                       url="/image"
+                       authenticatedRequest={this.props.route.authenticatedRequest} />
             </div>
         );
     }

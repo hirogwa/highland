@@ -170,22 +170,12 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        var self = this;
+        const self = this;
         if (this.props.route.mode === Mode.UPDATE) {
-            let xhr = new XMLHttpRequest();
-            let url = '/episode/{s}/{e}'
-                    .replace('{s}', this.props.route.showId)
-                    .replace('{e}', this.props.routeParams.episodeId);
-            xhr.open('get', url, true);
-            xhr.onload = function() {
-                if (this.status == 200) {
-                    let data = JSON.parse(this.response);
-                    self.setEpisode(data);
-                } else {
-                    console.error(this.statusText);
-                }
-            };
-            xhr.send();
+            this.props.route.authenticatedRequest.get(
+                `/episode/${this.props.route.showId}/${this.props.routeParams.episodeId}`)
+                .then((resp) => self.setEpisode(JSON.parse(resp)))
+                .catch((args) => console.error(args));
         }
     },
 
@@ -210,14 +200,24 @@ var App = React.createClass({
     },
 
     saveEpisode: function() {
-        let self = this;
-        let xhr = new XMLHttpRequest();
-        xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/episode', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            let data = JSON.parse(this.response);
-            if (this.status == 200 || this.status == 201) {
-                console.info(data);
+        if (this.state.episode.draft_status != DraftStatus.SCHEDULED) {
+            this.setState({
+                episode: _.extend(this.state.episode, {scheduled_datetime: ''}),
+                modified: true
+            });
+        }
+
+        const reqFunc = this.props.route.mode === Mode.UPDATE ?
+                  (url, data) => this.props.route.authenticatedRequest.put(url, data) :
+                  (url, data) => this.props.route.authenticatedRequest.post(url, data);
+        const inData = _.extend(this.state.episode, {
+            show_id: this.props.route.showId
+        });
+
+        const self = this;
+        reqFunc('/episode', inData)
+            .then((resp) => {
+                const data = JSON.parse(resp);
                 self.setEpisode(data);
                 self.context.router.replace(episodePath(data.episode.id));
                 self.setState({
@@ -227,25 +227,13 @@ var App = React.createClass({
                         content: Texts.NOTIFY_SAVED
                     }
                 });
-            } else {
-                self.setState({
-                    activeAlert: {
-                        style: 'danger',
-                        content: Texts.NOTIFY_ERROR
-                    }
-                });
-            }
-        };
-
-        if (this.state.episode.draft_status != DraftStatus.SCHEDULED) {
-            this.setState({
-                episode: _.extend(this.state.episode, {scheduled_datetime: ''}),
-                modified: true
-            });
-        }
-        xhr.send(
-            JSON.stringify(_.extend(this.state.episode, {show_id: this.props.route.showId}))
-        );
+            })
+            .catch(() => self.setState({
+                activeAlert: {
+                    style: 'danger',
+                    content: Texts.NOTIFY_ERROR
+                }
+            }));
     },
 
     previewUrl: function() {
@@ -348,7 +336,8 @@ var App = React.createClass({
                           handleChange={this.handleChangeDescription} />
                 <AudioSelector selectedAudioId={this.state.episode.audio_id}
                                whitelistedId={this.state.originalEpisodeId}
-                               handleSelect={this.handleSelectAudio} />
+                               handleSelect={this.handleSelectAudio}
+                               authenticatedRequest={this.props.route.authenticatedRequest} />
                 <hr />
 
                 <h3>Optional</h3>
@@ -361,7 +350,8 @@ var App = React.createClass({
                 <ExplicitSelector explicit={this.state.episode.explicit}
                                   handleChange={this.handleChangeExplicit} />
                 <ImageSelector selectedImageId={this.state.episode.image_id}
-                               handleSelect={this.handleSelectImage} />
+                               handleSelect={this.handleSelectImage}
+                               authenticatedRequest={this.props.route.authenticatedRequest} />
                 <hr />
               </Form>
 

@@ -11,7 +11,7 @@ import { EpisodeList } from './episode-list.js';
 import { Episode } from './episode.js';
 import { Show } from './show.js';
 import { ResetPassword } from './reset-password.js';
-import { logout } from './auth-utils.js';
+import { AuthenticatedRequest, logout } from './auth-utils.js';
 
 const App = React.createClass({
     logout: function() {
@@ -41,16 +41,41 @@ const App = React.createClass({
     }
 });
 
+const authenticatedRequest = new AuthenticatedRequest(
+    cognitoUserPoolId, cognitoClientId
+);
+
 ReactDOM.render(
     <Router history={hashHistory}>
       <Route path="/" component={App}>
-        <IndexRoute showId={showId} component={Stat} />
-        <Route path="/episode" showId={showId} component={EpisodeList} />
-        <Route path="/episode/new" showId={showId} mode="create" component={Episode} />
-        <Route path="/episode/:episodeId" showId={showId} mode="update" component={Episode} />
-        <Route path="/audio" component={Audio} />
-        <Route path="/image" component={Image} />
-        <Route path="/show" showId={showId} mode="update" component={Show} />
+        <IndexRoute showId={showId}
+                    authenticatedRequest={authenticatedRequest}
+                    component={Stat} />
+        <Route path="/episode"
+               showId={showId}
+               authenticatedRequest={authenticatedRequest}
+               component={EpisodeList} />
+        <Route path="/episode/new"
+               showId={showId}
+               authenticatedRequest={authenticatedRequest}
+               mode="create"
+               component={Episode} />
+        <Route path="/episode/:episodeId"
+               showId={showId}
+               authenticatedRequest={authenticatedRequest}
+               mode="update"
+               component={Episode} />
+        <Route path="/audio"
+               authenticatedRequest={authenticatedRequest}
+               component={Audio} />
+        <Route path="/image"
+               authenticatedRequest={authenticatedRequest}
+               component={Image} />
+        <Route path="/show"
+               showId={showId}
+               authenticatedRequest={authenticatedRequest}
+               mode="update"
+               component={Show} />
         <Route path="/resetpassword"
                cognitoUserPoolId={cognitoUserPoolId}
                cognitoClientId={cognitoClientId}
