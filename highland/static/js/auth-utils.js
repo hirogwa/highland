@@ -23,6 +23,10 @@ class AuthenticatedRequest {
         return this.promiseRequest(this.makeUpdateRequest('put', url, data));
     }
 
+    delete(url, data) {
+        return this.promiseRequest(this.makeDeleteRequest(url, data));
+    }
+
     makeGetRequest(url) {
         return (resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -45,6 +49,22 @@ class AuthenticatedRequest {
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function() {
                 if (this.status === 200 || this.status === 201) {
+                    resolve(this.response);
+                } else {
+                    reject(this);
+                }
+            };
+            xhr.send(JSON.stringify(data));
+        };
+    }
+
+    makeDeleteRequest(url, data) {
+        return (resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('delete', url, true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onload = function() {
+                if (this.status === 200) {
                     resolve(this.response);
                 } else {
                     reject(this);
