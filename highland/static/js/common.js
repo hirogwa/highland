@@ -45,13 +45,23 @@ class ExplicitSelector extends React.Component {
 }
 
 class TextInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(e) {
+        this.props.handleChange(e.target.value);
+    }
+
     render() {
         return (
             <FormGroup>
               <ControlLabel>{this.props.name}</ControlLabel>
-              <FormControl type="text" placeholder="Enter text"
+              <FormControl type={this.props.type || "text"}
+                           placeholder="Enter text"
                            value={this.props.value}
-                           onChange={this.props.handleChange}
+                           onChange={this.handleChange}
                            />
             </FormGroup>
         );
@@ -89,21 +99,9 @@ class Uploader extends React.Component {
     }
 
     handleSubmit(){
-        return new Promise((resolve, reject) => {
-            let formData = new FormData();
-            formData.append('file', this.state.file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('post', this.props.url, true);
-            xhr.onload = function() {
-                if (this.status == 201) {
-                    resolve(this.response);
-                } else {
-                    reject(this.statusText);
-                }
-            };
-            xhr.send(formData);
-        });
+        const formData = new FormData();
+        formData.append('file', this.state.file);
+        return this.props.authenticatedRequest.postForm(this.props.url, formData);
     }
 
     render() {
@@ -129,20 +127,10 @@ class Deleter extends React.Component {
     }
 
     handleDelete() {
-        let xhr = new XMLHttpRequest();
-        xhr.open('delete', this.props.url, true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            if (this.status == 200) {
-                let data = JSON.parse(this.response);
-                console.info(data);
-            } else {
-                console.error(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({ids: this.props.selectedIds})
-        );
+        this.props.authenticatedRequest.delete(
+            this.props.url, {ids: this.props.selectedIds})
+            .then()
+            .catch((args) => console.error(args));
     }
 
     render() {
@@ -188,6 +176,27 @@ class AlertBox extends React.Component {
     }
 }
 
+class PasswordResetInputs extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div>
+              <TextInput name='New password'
+                         type='password'
+                         value={this.props.password}
+                         handleChange={this.props.handleChangePassword} />
+              <TextInput name='New password again'
+                         type='password'
+                         value={this.props.passwordRetyped}
+                         handleChange={this.props.handleChangePasswordRetyped} />
+            </div>
+        );
+    }
+}
+
 class NavLink extends React.Component {
     constructor(props) {
         super(props);
@@ -206,5 +215,6 @@ module.exports = {
     Uploader: Uploader,
     Deleter: Deleter,
     AlertBox: AlertBox,
+    PasswordResetInputs: PasswordResetInputs,
     NavLink: NavLink
 };

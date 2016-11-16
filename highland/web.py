@@ -1,12 +1,20 @@
 import dateutil.parser
 import traceback
-from flask import request, jsonify, render_template, Response
-from highland import app, models,\
+from flask import request, jsonify, redirect, render_template, \
+    url_for, Response
+from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view, feed_operation, stat_operation, settings
+    image_operation, public_view, feed_operation, stat_operation, settings,\
+    cognito_auth
+
+app.secret_key = settings.APP_SECRET
+auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
+                                settings.COGNITO_REGION,
+                                settings.COGNITO_USER_POOL_ID)
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_by_day():
     show_id = request.args.get('show_id')
     date_from = request.args.get('date_from')
@@ -14,27 +22,33 @@ def stat_episode_by_day():
     assert show_id, 'show_id required'
     return jsonify(
         stat_operation.get_episode_by_day(
-            test_user(), show_id, date_from, date_to))
+            auth.authenticated_user(), show_id, date_from, date_to))
 
 
 @app.route('/stat/episode_past_week', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_past_week():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
-    return jsonify(stat_operation.get_episode_one_week(test_user(), show_id))
+    return jsonify(stat_operation.get_episode_one_week(
+        auth.authenticated_user(), show_id))
 
 
 @app.route('/stat/episode_cumulative', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def stat_episode_cumulative():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
-    return jsonify(stat_operation.get_episode_cumulative(test_user(), show_id))
+    return jsonify(stat_operation.get_episode_cumulative(
+        auth.authenticated_user(), show_id))
 
 
 @app.route('/show/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_show(show_id):
     try:
-        show = show_operation.get_show_or_assert(test_user(), show_id)
+        show = show_operation.get_show_or_assert(
+            auth.authenticated_user(), show_id)
         return jsonify(show=dict(show), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -42,6 +56,7 @@ def get_show(show_id):
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
+@auth.require_authenticated(redirect=False)
 def show():
     try:
         if 'POST' == request.method:
@@ -67,8 +82,8 @@ def show():
             assert alias, 'alias required'
 
             show = show_operation.create(
-                test_user(), title, description, subtitle, language, author,
-                category, explicit, image_id, alias)
+                auth.authenticated_user(), title, description, subtitle,
+                language, author, category, explicit, image_id, alias)
             return jsonify(show=dict(show), result='success'), 201
 
         if 'PUT' == request.method:
@@ -94,12 +109,12 @@ def show():
             assert explicit is not None, 'explicit required'
 
             show = show_operation.update(
-                test_user(), id, title, description, subtitle, language,
-                author, category, explicit, image_id)
+                auth.authenticated_user(), id, title, description, subtitle,
+                language, author, category, explicit, image_id)
             return jsonify(show=dict(show), result='success')
 
         if 'GET' == request.method:
-            shows = show_operation.load(test_user())
+            shows = show_operation.load(auth.authenticated_user())
             return jsonify(shows=list(map(dict, shows)), result='success')
     except Exception:
         app.logger.error(traceback.format_exc())
@@ -107,6 +122,7 @@ def show():
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def episode():
     try:
         if 'POST' == request.method:
@@ -129,9 +145,9 @@ def episode():
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.create(
-                test_user(), show_id, draft_status, alias, audio_id, image_id,
-                datetime_valid_or_none(scheduled_datetime), title,
-                subtitle, description, explicit)
+                auth.authenticated_user(), show_id, draft_status, alias,
+                audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+                title, subtitle, description, explicit)
 
             return jsonify(episode=dict(episode), result='success'), 201
 
@@ -157,14 +173,14 @@ def episode():
             assert explicit is not None, 'explicit required'
 
             episode = episode_operation.update(
-                test_user(), show_id, id, draft_status, alias, audio_id,
-                image_id, datetime_valid_or_none(scheduled_datetime), title,
-                subtitle, description, explicit)
+                auth.authenticated_user(), show_id, id, draft_status, alias,
+                audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+                title, subtitle, description, explicit)
             return jsonify(episode=dict(episode), result='success')
 
         if 'DELETE' == request.method:
             args = request.get_json()
-            episode_operation.delete(test_user(),
+            episode_operation.delete(auth.authenticated_user(),
                                      args.get('show_id'),
                                      args.get('episode_ids'))
             return jsonify(result='success')
@@ -174,13 +190,16 @@ def episode():
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_episode_list(show_id):
     try:
         public = request.args.get('public')
         if public:
-            episodes = episode_operation.load_public(test_user(), show_id)
+            episodes = episode_operation.load_public(
+                auth.authenticated_user(), show_id)
         else:
-            episodes = episode_operation.load(test_user(), show_id)
+            episodes = episode_operation.load(
+                auth.authenticated_user(), show_id)
         return jsonify(episodes=[dict(x) for x in episodes], result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -188,10 +207,11 @@ def get_episode_list(show_id):
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_episode(show_id, episode_id):
     try:
         episode = episode_operation.get_episode_or_assert(
-            test_user(), show_id, episode_id)
+            auth.authenticated_user(), show_id, episode_id)
         return jsonify(episode=dict(episode), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -199,16 +219,18 @@ def get_episode(show_id, episode_id):
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def audio():
     try:
         if 'POST' == request.method:
-            audio = audio_operation.create(test_user(), request.files['file'])
+            audio = audio_operation.create(
+                auth.authenticated_user(), request.files['file'])
             return jsonify(audio=dict(audio), result='success'), 201
         if 'GET' == request.method:
             args = request.args
             unused_only = args.get('unused_only') == 'True'
             whitelisted_id = args.get('whitelisted_id')
-            user = test_user()
+            user = auth.authenticated_user()
             audios = audio_operation.load(
                 user, unused_only,
                 int(whitelisted_id) if whitelisted_id else None)
@@ -216,7 +238,7 @@ def audio():
             return jsonify(audios=audios, result='success')
         if 'DELETE' == request.method:
             args = request.get_json()
-            audio_operation.delete(test_user(), args.get('ids'))
+            audio_operation.delete(auth.authenticated_user(), args.get('ids'))
             return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -224,9 +246,10 @@ def audio():
 
 
 @app.route('/image/<image_id>', methods=['GET'])
+@auth.require_authenticated(redirect=False)
 def get_image(image_id):
     try:
-        user = test_user()
+        user = auth.authenticated_user()
         image = image_operation.get_image_or_assert(user, image_id)
         image_d = dict(image)
         image_d['url'] = image_operation.get_image_url(user, image)
@@ -237,13 +260,15 @@ def get_image(image_id):
 
 
 @app.route('/image', methods=['POST', 'GET', 'DELETE'])
+@auth.require_authenticated(redirect=False)
 def image():
     try:
         if 'POST' == request.method:
-            image = image_operation.create(test_user(), request.files['file'])
+            image = image_operation.create(
+                auth.authenticated_user(), request.files['file'])
             return jsonify(image=dict(image), result='success'), 201
         if 'GET' == request.method:
-            user = test_user()
+            user = auth.authenticated_user()
             images = image_operation.load(user)
 
             def _dict(x):
@@ -253,7 +278,7 @@ def image():
             return jsonify(images=[_dict(x) for x in images], result='success')
         if 'DELETE' == request.method:
             args = request.get_json()
-            image_operation.delete(test_user(), args.get('ids'))
+            image_operation.delete(auth.authenticated_user(), args.get('ids'))
             return jsonify(result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -298,28 +323,14 @@ def user():
         raise e
 
 
-@app.route('/user/<user_id>', methods=['GET'])
-def user_get(user_id):
-    try:
-        user = user_operation.get(id=int(user_id))
-        return jsonify(user=dict(user), result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
-
-
-def test_user():
-    return models.User.query.filter_by(id=settings.TEST_USER_ID).first()
+@auth.user_loader
+def get_user(username):
+    return user_operation.get(username)
 
 
 @app.route('/ping', methods=['GET'])
 def ping():
-    app.logger.debug('processing ping request')
-    print(request.form)
-    print(request.args)
-    print(request.get_json())
-    user = models.User('name', 'email', 'somepass')
-    return user.username
+    return 'pong'
 
 
 def datetime_valid_or_none(d):
@@ -335,7 +346,7 @@ def publish_site():
     test only
     '''
     args = request.get_json()
-    public_view.update_full(test_user(), args.get('show_id'))
+    public_view.update_full(auth.authenticated_user(), args.get('show_id'))
     return 'done'
 
 
@@ -344,7 +355,7 @@ def preview_site(show_id):
     '''
     test only
     '''
-    user = test_user()
+    user = auth.authenticated_user()
     show = show_operation.get_show_or_assert(user, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
@@ -361,7 +372,7 @@ def preview_site_episode_test(show_id, episode_id):
     '''
     test only
     '''
-    user = test_user()
+    user = auth.authenticated_user()
     show = show_operation.get_show_or_assert(user, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
@@ -375,7 +386,7 @@ def preview_site_episode_test(show_id, episode_id):
 
 @app.route('/preview/site/', methods=['GET'])
 def preview_site_episode():
-    user = test_user()
+    user = auth.authenticated_user()
     args = request.args
     show_id, title, subtitle, description, audio_id, image_id = \
         args.get('show_id'), \
@@ -395,7 +406,7 @@ def preview_feed(show_id):
     '''
     test only
     '''
-    user = test_user()
+    user = auth.authenticated_user()
     return Response(
         feed_operation.generate(
             user, show_operation.get_show_or_assert(user, show_id)),
@@ -408,10 +419,41 @@ def publish_feed():
     test only
     '''
     args = request.get_json()
-    feed_operation.update(test_user(), args.get('show_id'))
+    feed_operation.update(auth.authenticated_user(), args.get('show_id'))
     return 'feed published'
 
 
 @app.route('/dashboard/<show_id>', methods=['GET'])
+@auth.require_authenticated(redirect=True)
 def dashboard_page(show_id):
-    return render_template('dashboard/dashboard.html', show_id=show_id)
+    return render_template(
+        'dashboard/dashboard.html',
+        show_id=show_id,
+        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
+        cognito_client_id=settings.COGNITO_CLIENT_ID)
+
+
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template(
+        'dashboard/login.html',
+        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
+        cognito_client_id=settings.COGNITO_CLIENT_ID)
+
+
+@auth.unauthenticated_redirect
+def login_redirect():
+    return redirect(url_for('login'))
+
+
+@app.route('/access_token', methods=['POST'])
+@auth.login
+def register_access_token():
+    return jsonify(result='success',
+                   username=auth.username)
+
+
+@app.route('/logout', methods=['POST'])
+@auth.logout
+def logout():
+    return jsonify(result='success')

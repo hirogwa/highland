@@ -1,15 +1,14 @@
 {% extends "dashboard/base.html" %}
 
 {% block header %}
-<title>Dashboard</title>
+<title>Login</title>
 {% endblock %}
 
 {% block body %}
 <div class="mainContainer"></div>
 <script>
-  const showId = '{{ show_id }}';
   const cognitoUserPoolId = '{{ cognito_user_pool_id }}';
   const cognitoClientId = '{{ cognito_client_id }}';
 </script>
-<script src="/static/js/bundled-dashboard.js" type="text/javascript"></script>
+<script src="/static/js/bundled-login.js" type="text/javascript"></script>
 {% endblock %}

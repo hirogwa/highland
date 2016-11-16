@@ -200,7 +200,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     email = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(120))
     name = db.Column(db.String(100))
     update_datetime = db.Column(
         db.DateTime(timezone=True),
@@ -209,10 +208,9 @@ class User(db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, username, email, password, name):
+    def __init__(self, username, email, name):
         self.username = username
         self.email = email
-        self.password = password
         self.name = name
 
     def __iter__(self):

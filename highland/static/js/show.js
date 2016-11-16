@@ -1,7 +1,9 @@
 import React from "react";
 import _ from "underscore";
 import { Button, Form } from 'react-bootstrap';
-import { TextArea, TextInput, OptionSelector, ExplicitSelector, AlertBox } from './common.js';
+import {
+    TextArea, TextInput, OptionSelector, ExplicitSelector, AlertBox
+} from './common.js';
 import { ImageSelector } from './image-util.js';
 
 class CategorySelector extends React.Component {
@@ -68,26 +70,22 @@ var App = React.createClass({
 
     componentDidMount: function() {
         if (this.props.route.mode == Mode.UPDATE) {
-            let self = this;
-            let xhr = new XMLHttpRequest();
-            xhr.open('get', '/show/' + this.props.route.showId, true);
-            xhr.onload = function() {
-                if (this.status == 200) {
-                    let data = JSON.parse(this.response);
+            const self = this;
+            this.props.route.authenticatedRequest
+                .get(`/show/${this.props.route.showId}`)
+                .then((resp) => {
+                    const data = JSON.parse(resp);
                     self.setState({
                         show: data.show
                     });
-                } else {
-                    console.error(this.statusText);
-                }
-            };
-            xhr.send();
+                })
+                .catch((args) => console.error(args));
         }
     },
 
-    handleChangeTitle: function(event) {
+    handleChangeTitle: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {title: event.target.value}),
+            show: _.extend(this.state.show, {title: text}),
             modified: true
         });
     },
@@ -99,9 +97,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeSubtitle: function(event) {
+    handleChangeSubtitle: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {subtitle: event.target.value}),
+            show: _.extend(this.state.show, {subtitle: text}),
             modified: true
         });
     },
@@ -113,9 +111,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeAuthor: function(event) {
+    handleChangeAuthor: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {author: event.target.value}),
+            show: _.extend(this.state.show, {author: text}),
             modified: true
         });
     },
@@ -134,9 +132,9 @@ var App = React.createClass({
         });
     },
 
-    handleChangeAlias: function(event) {
+    handleChangeAlias: function(text) {
         this.setState({
-            show: _.extend(this.state.show, {alias: event.target.value}),
+            show: _.extend(this.state.show, {alias: text}),
             modified: true
         });
     },
@@ -149,14 +147,14 @@ var App = React.createClass({
     },
 
     saveShow: function() {
-        let xhr = new XMLHttpRequest();
-        let self = this;
-        xhr.open(this.props.route.mode == Mode.UPDATE ? 'put' : 'post', '/show', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function() {
-            let data = JSON.parse(this.response);
-            if (this.status == 200 || this.status == 201) {
-                console.info(data);
+        const req = this.props.route.authenticatedRequest;
+        const func = this.props.route.mode === Mode.UPDATE ?
+                  (url, data) => req.put(url, data) :
+                  (url, data) => req.post(url, data);
+
+        const self = this;
+        func('/show', this.state.show)
+            .then(() => {
                 self.setState({
                     modified: false,
                     activeAlert: {
@@ -164,17 +162,13 @@ var App = React.createClass({
                         content: 'Saved! :D'
                     }
                 });
-            } else {
-                console.error(this.statusText);
-                self.setState({
-                    activeAlert: {
-                        style: 'danger',
-                        content: 'Oops! Something went wrong. :('
-                    }
-                });
-            }
-        };
-        xhr.send(JSON.stringify(this.state.show));
+            })
+            .catch(() => self.setState({
+                activeAlert: {
+                    style: 'danger',
+                    content: 'Oops! Something went wrong. :('
+                }
+            }));
     },
 
     savable: function() {
@@ -215,7 +209,8 @@ var App = React.createClass({
                                 handleChange={this.handleChangeExplicit}
                                 />
               <ImageSelector selectedImageId={this.state.show.image_id}
-                             handleSelect={this.handleSelectImage} />
+                             handleSelect={this.handleSelectImage}
+                             authenticatedRequest={this.props.route.authenticatedRequest} />
               {alertBox}
               <Button bsStyle="primary"
                       onClick={this.saveShow}
