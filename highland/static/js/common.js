@@ -99,21 +99,9 @@ class Uploader extends React.Component {
     }
 
     handleSubmit(){
-        return new Promise((resolve, reject) => {
-            let formData = new FormData();
-            formData.append('file', this.state.file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('post', this.props.url, true);
-            xhr.onload = function() {
-                if (this.status == 201) {
-                    resolve(this.response);
-                } else {
-                    reject(this.statusText);
-                }
-            };
-            xhr.send(formData);
-        });
+        const formData = new FormData();
+        formData.append('file', this.state.file);
+        return this.props.authenticatedRequest.postForm(this.props.url, formData);
     }
 
     render() {

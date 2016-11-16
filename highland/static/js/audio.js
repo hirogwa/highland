@@ -124,7 +124,8 @@ var App = React.createClass({
         return (
             <div>
               <Uploader label="New Audio"
-                        url="/audio" />
+                        url="/audio"
+                        authenticatedRequest={this.props.route.authenticatedRequest} />
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />

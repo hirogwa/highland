@@ -104,7 +104,8 @@ var App = React.createClass({
         return (
             <div>
               <Uploader label="New Image"
-                        url="/image" />
+                        url="/image"
+                        authenticatedRequest={this.props.route.authenticatedRequest} />
               <ImageList images={this.state.images}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectImage} />
