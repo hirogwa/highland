@@ -11,11 +11,12 @@ import { EpisodeList } from './episode-list.js';
 import { Episode } from './episode.js';
 import { Show } from './show.js';
 import { ResetPassword } from './reset-password.js';
-import { AuthenticatedRequest, logout } from './auth-utils.js';
+import { AuthenticatedRequest } from './auth-utils.js';
 
 const App = React.createClass({
     logout: function() {
-        logout().then(() => window.location = '/login');
+        this.props.route.authenticatedRequest.logout()
+            .then(() => window.location = '/login');
     },
 
     render: function() {
@@ -47,7 +48,9 @@ const authenticatedRequest = new AuthenticatedRequest(
 
 ReactDOM.render(
     <Router history={hashHistory}>
-      <Route path="/" component={App}>
+      <Route path="/"
+             authenticatedRequest={authenticatedRequest}
+             component={App}>
         <IndexRoute showId={showId}
                     authenticatedRequest={authenticatedRequest}
                     component={Stat} />
