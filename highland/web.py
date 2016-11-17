@@ -453,6 +453,14 @@ def register_access_token():
                    username=auth.username)
 
 
+@app.route('/refresh_token', methods=['GET'])
+def refresh_token():
+    return render_template(
+        'dashboard/refresh-token.html',
+        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
+        cognito_client_id=settings.COGNITO_CLIENT_ID)
+
+
 @app.route('/logout', methods=['POST'])
 @auth.logout
 def logout():
