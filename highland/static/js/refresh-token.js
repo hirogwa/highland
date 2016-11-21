@@ -7,20 +7,19 @@ const userPool = new CognitoUserPool({
 });
 const cognitoUser = userPool.getCurrentUser();
 
+const redirect = () => window.location = redirectUrl;
+const fallback = () => window.location = fallbackUrl;
+
 if (cognitoUser) {
     cognitoUser.getSession(function(err, session) {
         if (err) {
-            // give up. redirect to login
+            fallback();
         } else {
             postAccessToken(session.getAccessToken().getJwtToken())
-                .then(() => {
-                    // redirect to the requested page
-                })
-                .catch(() => {
-                    // give up. redirect to login
-                });
+                .then(redirect)
+                .catch(fallback);
         }
     });
 } else {
-    // give up. redirect to login
+    fallback();
 }

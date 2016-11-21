@@ -453,12 +453,20 @@ def register_access_token():
                    username=auth.username)
 
 
-@app.route('/refresh_token', methods=['GET'])
-def refresh_token():
+@app.route('/refresh_token/<path>/<id>', methods=['GET'])
+def refresh_token(path, id):
+    redirect_url = {
+        'dashboard': '/dashboard/{}'.format(id)
+    }.get(path)
+
+    if not redirect_url:
+        return 'unknown redirect option:{}'.format(path), 400
+
     return render_template(
         'dashboard/refresh-token.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
-        cognito_client_id=settings.COGNITO_CLIENT_ID)
+        cognito_client_id=settings.COGNITO_CLIENT_ID,
+        redirect_url=redirect_url, fallback_url='/login')
 
 
 @app.route('/logout', methods=['POST'])
