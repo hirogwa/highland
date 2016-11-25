@@ -1,7 +1,9 @@
 import dateutil.parser
 import traceback
+
 from flask import request, jsonify, redirect, render_template, \
     url_for, Response
+
 from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings,\
@@ -11,6 +13,16 @@ app.secret_key = settings.APP_SECRET
 auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
                                 settings.COGNITO_REGION,
                                 settings.COGNITO_USER_POOL_ID)
+
+
+page_loaders = []
+
+
+def page_loader(func):
+    if func.__name__ not in []:
+        page_loaders.append(func.__name__)
+    print(page_loaders)
+    return func
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
@@ -425,6 +437,7 @@ def publish_feed():
 
 @app.route('/dashboard/<show_id>', methods=['GET'])
 @auth.require_authenticated(redirect=True)
+@page_loader
 def dashboard_page(show_id):
     return render_template(
         'dashboard/dashboard.html',
@@ -453,14 +466,16 @@ def register_access_token():
                    username=auth.username)
 
 
-@app.route('/refresh_token/<path>/<id>', methods=['GET'])
-def refresh_token(path, id):
-    redirect_url = {
-        'dashboard': '/dashboard/{}'.format(id)
-    }.get(path)
+@app.route('/refresh_token', methods=['GET'])
+def refresh_token():
+    redirect_url = request.args.get('redirect')
 
     if not redirect_url:
-        return 'unknown redirect option:{}'.format(path), 400
+        # TODO some default path
+        pass
+
+    if not _valid_redirect(redirect_url):
+        return 'invalid redirect url', 400
 
     return render_template(
         'dashboard/refresh-token.html',
@@ -473,3 +488,26 @@ def refresh_token(path, id):
 @auth.logout
 def logout():
     return jsonify(result='success')
+
+
+def _valid_redirect(url):
+    def _matches(a, b):
+        a_split = a.split('/')[1:]
+        b_split = b.split('/')[1:]
+        if len(a_split) != len(b_split):
+            return False
+
+        for a_part, b_part in zip(a_split, b_split):
+            if a_part == b_part:
+                continue
+            if len(a_part) > 1 and a_part[0] == '<' and a_part[-1] == '>':
+                continue
+            return False
+        return True
+
+    if not url or url[0] != '/' or url[-1] == '/':
+        return False
+
+    rules = app.url_map.iter_rules()
+    url_patterns = [x.rule for x in rules if x.endpoint in page_loaders]
+    return [x for x in url_patterns if _matches(x, url)]
