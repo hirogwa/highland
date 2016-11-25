@@ -26,7 +26,7 @@ def page_loader(func):
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def stat_episode_by_day():
     show_id = request.args.get('show_id')
     date_from = request.args.get('date_from')
@@ -38,7 +38,7 @@ def stat_episode_by_day():
 
 
 @app.route('/stat/episode_past_week', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def stat_episode_past_week():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
@@ -47,7 +47,7 @@ def stat_episode_past_week():
 
 
 @app.route('/stat/episode_cumulative', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def stat_episode_cumulative():
     show_id = request.args.get('show_id')
     assert show_id, 'show_id required'
@@ -56,7 +56,7 @@ def stat_episode_cumulative():
 
 
 @app.route('/show/<show_id>', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def get_show(show_id):
     try:
         show = show_operation.get_show_or_assert(
@@ -68,7 +68,7 @@ def get_show(show_id):
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def show():
     try:
         if 'POST' == request.method:
@@ -134,7 +134,7 @@ def show():
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def episode():
     try:
         if 'POST' == request.method:
@@ -202,7 +202,7 @@ def episode():
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def get_episode_list(show_id):
     try:
         public = request.args.get('public')
@@ -219,7 +219,7 @@ def get_episode_list(show_id):
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def get_episode(show_id, episode_id):
     try:
         episode = episode_operation.get_episode_or_assert(
@@ -231,7 +231,7 @@ def get_episode(show_id, episode_id):
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def audio():
     try:
         if 'POST' == request.method:
@@ -258,7 +258,7 @@ def audio():
 
 
 @app.route('/image/<image_id>', methods=['GET'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def get_image(image_id):
     try:
         user = auth.authenticated_user()
@@ -272,7 +272,7 @@ def get_image(image_id):
 
 
 @app.route('/image', methods=['POST', 'GET', 'DELETE'])
-@auth.require_authenticated(redirect=False)
+@auth.require_authenticated()
 def image():
     try:
         if 'POST' == request.method:
@@ -436,7 +436,7 @@ def publish_feed():
 
 
 @app.route('/dashboard/<show_id>', methods=['GET'])
-@auth.require_authenticated(redirect=True)
+@auth.require_authenticated(fallback=True, page=True)
 @page_loader
 def dashboard_page(show_id):
     return render_template(
@@ -464,6 +464,11 @@ def login_redirect():
 def register_access_token():
     return jsonify(result='success',
                    username=auth.username)
+
+
+@auth.refresh_token_attempt
+def refresh_token_attempt(url):
+    return redirect(url_for('refresh_token', redirect=url))
 
 
 @app.route('/refresh_token', methods=['GET'])

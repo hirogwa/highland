@@ -40,20 +40,25 @@ class CognitoAuth:
 
         return decoded
 
-    def require_authenticated(self, redirect=False):
+    def require_authenticated(self, fallback=False, page=False):
         def decorator(func):
             @wraps(func)
             def token_checked(*args, **kwargs):
                 try:
                     self._consume_token()
                 except:
-                    if redirect and self.unauthenticated:
+                    if page and self.refresh_token_attempt:
+                        return self.load_refresh_token(request.path)
+                    if fallback and self.unauthenticated:
                         return self.unauthenticated()
-                    else:
-                        return 'authentication required', 403
+                    return 'authentication required', 403
                 return func(*args, **kwargs)
             return token_checked
         return decorator
+
+    def refresh_token_attempt(self, func):
+        self.load_refresh_token = func
+        return func
 
     def unauthenticated_redirect(self, func):
         self.unauthenticated = func
