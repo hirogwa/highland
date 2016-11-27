@@ -48,7 +48,7 @@ class CognitoAuth:
                     self._consume_token()
                 except:
                     if page and self.refresh_token_attempt:
-                        return self.load_refresh_token(request.path)
+                        return self.load_refresh_token()
                     if fallback and self.unauthenticated:
                         return self.unauthenticated()
                     return 'authentication required', 403

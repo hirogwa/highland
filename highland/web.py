@@ -435,13 +435,21 @@ def publish_feed():
     return 'feed published'
 
 
-@app.route('/dashboard/<show_id>', methods=['GET'])
+@app.route('/', methods=['GET'])
 @auth.require_authenticated(fallback=True, page=True)
 @page_loader
-def dashboard_page(show_id):
+def dashboard_page():
+    shows = show_operation.load(auth.authenticated_user())
+    if not shows:
+        # TODO redirect: some way to create one
+        return '', 401
+
+    # assume one show per user for now
+    show = shows[0]
+
     return render_template(
         'dashboard/dashboard.html',
-        show_id=show_id,
+        show_id=show.id,
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
         cognito_client_id=settings.COGNITO_CLIENT_ID)
 
@@ -467,52 +475,20 @@ def register_access_token():
 
 
 @auth.refresh_token_attempt
-def refresh_token_attempt(url):
-    return redirect(url_for('refresh_token', redirect=url))
+def refresh_token_attempt():
+    return redirect(url_for('refresh_token'))
 
 
 @app.route('/refresh_token', methods=['GET'])
 def refresh_token():
-    redirect_url = request.args.get('redirect')
-
-    if not redirect_url:
-        # TODO some default path
-        pass
-
-    if not _valid_redirect(redirect_url):
-        return 'invalid redirect url', 400
-
     return render_template(
         'dashboard/refresh-token.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
         cognito_client_id=settings.COGNITO_CLIENT_ID,
-        redirect_url=redirect_url, fallback_url='/login')
+        redirect_url='/', fallback_url='/login')
 
 
 @app.route('/logout', methods=['POST'])
 @auth.logout
 def logout():
     return jsonify(result='success')
-
-
-def _valid_redirect(url):
-    def _matches(a, b):
-        a_split = a.split('/')[1:]
-        b_split = b.split('/')[1:]
-        if len(a_split) != len(b_split):
-            return False
-
-        for a_part, b_part in zip(a_split, b_split):
-            if a_part == b_part:
-                continue
-            if len(a_part) > 1 and a_part[0] == '<' and a_part[-1] == '>':
-                continue
-            return False
-        return True
-
-    if not url or url[0] != '/' or url[-1] == '/':
-        return False
-
-    rules = app.url_map.iter_rules()
-    url_patterns = [x.rule for x in rules if x.endpoint in page_loaders]
-    return [x for x in url_patterns if _matches(x, url)]
