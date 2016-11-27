@@ -41,7 +41,7 @@ class NewPasswordRequiredModal extends React.Component {
                 },
 
                 onSuccess: function(resp) {
-                    console.info(resp);
+                    window.location = '/';
                 }
             });
     }
@@ -112,7 +112,6 @@ class Login extends React.Component {
             },
 
             newPasswordRequired: function() {
-                console.info(arguments);
                 self.setState({
                     cognitoUser: cognitoUser,
                     showRequireNewPasswordModal : true
