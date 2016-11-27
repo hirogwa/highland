@@ -135,7 +135,7 @@ class Login extends React.Component {
                            value={this.state.password}
                            handleChange={(t) => {this.setState({password: t});}}/>
                 <Button bsStyle="primary"
-                        target="_blank"
+                        type="submit"
                         onClick={this.authenticate}
                         disabled={!this.validInput()}>
                   Login
