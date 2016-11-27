@@ -176,7 +176,6 @@ function postAccessToken(accessToken) {
         xhr.onload = function() {
             if (this.status == 200) {
                 const data = JSON.parse(this.response);
-                console.info(data);
                 resolve(data);
             } else {
                 console.error(this.statusText);

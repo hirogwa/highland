@@ -101,7 +101,9 @@ class Login extends React.Component {
                 console.log(result);
                 const accessToken = result.getAccessToken().getJwtToken();
                 console.log('access token + ' + accessToken);
-                postAccessToken(accessToken);
+                postAccessToken(accessToken)
+                    .then(() => window.location='/')
+                    .catch();
             },
 
             onFailure: function() {
