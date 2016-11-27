@@ -72,6 +72,15 @@ class CognitoAuth:
     def authenticated_user(self):
         return self.get_authenticated_user(self.username)
 
+    @property
+    def authenticated(self):
+        try:
+            self._consume_token()
+        except:
+            return False
+        else:
+            return True
+
     def login(self, func):
         @wraps(func)
         def decorator(*args, **kwargs):

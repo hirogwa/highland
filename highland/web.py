@@ -456,6 +456,9 @@ def dashboard_page():
 
 @app.route('/login', methods=['GET'])
 def login():
+    if auth.authenticated:
+        return redirect(url_for('dashboard_page'))
+
     return render_template(
         'dashboard/login.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
