@@ -54,6 +54,7 @@ class NewPasswordRequiredModal extends React.Component {
               </Modal.Header>
               <Modal.Body>
                 <PasswordResetInputs
+                   autoFocus
                    handleChangePassword={this.handleChangePassword}
                    handleChangePasswordRetyped={this.handleChangePasswordRetyped}/>
               </Modal.Body>
@@ -130,6 +131,7 @@ class Login extends React.Component {
               <h3>Login</h3>
               <Form>
                 <TextInput name='username'
+                           autoFocus
                            value={this.state.username}
                            handleChange={(t) => {this.setState({username: t});}}/>
                 <TextInput name='password'

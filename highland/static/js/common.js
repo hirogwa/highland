@@ -60,6 +60,7 @@ class TextInput extends React.Component {
               <ControlLabel>{this.props.name}</ControlLabel>
               <FormControl type={this.props.type || "text"}
                            placeholder="Enter text"
+                           autoFocus={this.props.autoFocus}
                            value={this.props.value}
                            onChange={this.handleChange}
                            />
@@ -186,6 +187,7 @@ class PasswordResetInputs extends React.Component {
             <div>
               <TextInput name='New password'
                          type='password'
+                         autoFocus={this.props.autoFocus}
                          value={this.props.password}
                          handleChange={this.props.handleChangePassword} />
               <TextInput name='New password again'

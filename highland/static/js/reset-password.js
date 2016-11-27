@@ -66,6 +66,7 @@ class ResetPassword extends React.Component {
             <div className="container">
               <TextInput name='Current password'
                          type='password'
+                         autoFocus
                          value={this.state.passwordCurrent}
                          handleChange={this.handleChangePasswordCurrent} />
               <PasswordResetInputs
