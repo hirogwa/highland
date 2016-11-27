@@ -68,6 +68,7 @@ class CognitoAuth:
         self.get_authenticated_user = func
         return func
 
+    @property
     def authenticated_user(self):
         return self.get_authenticated_user(self.username)
 
