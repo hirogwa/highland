@@ -24,5 +24,5 @@ def update(id, username, email, name):
 
 def get(username):
     user = models.User.query.filter_by(username=username).first()
-    assert user, 'no user exists with the passed credentials'
+    assert user, 'no such user. {}'.format(username)
     return user
