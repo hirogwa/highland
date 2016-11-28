@@ -5,7 +5,7 @@ import {
     AuthenticationDetails, CognitoUser, CognitoUserPool
 } from 'amazon-cognito-identity-js';
 import { postAccessToken } from './auth-utils.js';
-import { PasswordResetInputs, TextInput } from './common.js';
+import { AlertBox, PasswordResetInputs, TextInput } from './common.js';
 
 
 class NewPasswordRequiredModal extends React.Component {
@@ -70,6 +70,12 @@ class NewPasswordRequiredModal extends React.Component {
     }
 }
 
+const AuthStatus = {
+    NOT_STARTED: 'NOT_STARTED',
+    AUTHENTICATING: 'AUTHENTICATING',
+    AUTHENTICATED: 'AUTHENTICATED'
+};
+
 class Login extends React.Component {
     constructor(props) {
         super(props);
@@ -78,11 +84,15 @@ class Login extends React.Component {
             username: '',
             password: '',
             cognitoUser: undefined,
-            showRequireNewPasswordModal: false
+            showRequireNewPasswordModal: false,
+            activeAlert: null,
+            authStatus: AuthStatus.NOT_STARTED
         };
     }
 
     authenticate() {
+        this.setState({ authStatus: AuthStatus.AUTHENTICATING });
+
         const authenticationDetails = new AuthenticationDetails({
             Username : this.state.username,
             Password : this.state.password
@@ -105,10 +115,28 @@ class Login extends React.Component {
                 postAccessToken(accessToken)
                     .then(() => window.location='/')
                     .catch();
+                self.setState({
+                    authStatus: AuthStatus.AUTHENTICATED
+                });
             },
 
-            onFailure: function() {
-                console.error(arguments);
+            onFailure: function(e) {
+                let content = '';
+
+                if (e && e.code === 'UserNotFoundException') {
+                    content = 'User does not exist in our record. Please double check and try again.';
+                } else if (e && e.code === 'NotAuthorizedException') {
+                    content = 'Incorrect username or password. Please double check and try again.';
+                } else {
+                    content = 'Login failed. Please try again.';
+                }
+                self.setState({
+                    authStatus: AuthStatus.NOT_STARTED,
+                    activeAlert: {
+                        style: 'danger',
+                        content: content
+                    }
+                });
             },
 
             newPasswordRequired: function() {
@@ -124,10 +152,41 @@ class Login extends React.Component {
         return this.state.username && this.state.password;
     }
 
+    buttonDisabled() {
+        if (!this.validInput()) {
+            return true;
+        }
+        if (this.state.authStatus !== AuthStatus.NOT_STARTED) {
+            return true;
+        }
+        return false;
+    }
+
+    buttonText() {
+        if (this.state.authStatus === AuthStatus.AUTHENTICATING) {
+            return 'Logging in...';
+        }
+        if (this.state.authStatus === AuthStatus.AUTHENTICATED) {
+            return 'Success :)';
+        }
+        return 'Log in';
+    }
+
     render() {
+        let alertBox = <div></div>;
+        if (this.state.activeAlert) {
+            alertBox = (
+                <AlertBox style={this.state.activeAlert.style}
+                          content={this.state.activeAlert.content}
+                          nondismissible>
+                </AlertBox>
+            );
+        }
+
         return (
             <div className="container">
               <h3>Login</h3>
+              {alertBox}
               <Form>
                 <TextInput name='username'
                            autoFocus
@@ -139,8 +198,8 @@ class Login extends React.Component {
                            handleChange={(t) => {this.setState({password: t});}}/>
                 <Button bsStyle="primary"
                         onClick={this.authenticate}
-                        disabled={!this.validInput()}>
-                  Login
+                        disabled={this.buttonDisabled()}>
+                  {this.buttonText()}
                 </Button>
               </Form>
 
