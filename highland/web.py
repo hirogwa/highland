@@ -491,7 +491,10 @@ def refresh_token():
         redirect_url='/', fallback_url='/login')
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['POST', 'GET'])
 @auth.logout
 def logout():
-    return jsonify(result='success')
+    if request.method == 'POST':
+        return jsonify(result='success')
+    if request.method == 'GET':
+        return login_redirect()

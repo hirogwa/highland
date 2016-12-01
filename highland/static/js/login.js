@@ -8,6 +8,12 @@ import { postAccessToken } from './auth-utils.js';
 import { AlertBox, PasswordResetInputs, TextInput } from './common.js';
 
 
+const AuthStatus = {
+    NOT_STARTED: 'NOT_STARTED',
+    AUTHENTICATING: 'AUTHENTICATING',
+    AUTHENTICATED: 'AUTHENTICATED'
+};
+
 class NewPasswordRequiredModal extends React.Component {
     constructor(props) {
         super(props);
@@ -16,7 +22,9 @@ class NewPasswordRequiredModal extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = {
             password: '',
-            passwordRetyped: ''
+            passwordRetyped: '',
+            activeAlert: null,
+            authStatus: AuthStatus.NOT_STARTED
         };
     }
 
@@ -34,25 +42,65 @@ class NewPasswordRequiredModal extends React.Component {
     }
 
     handleSubmit() {
+        this.setState({ authStatus: AuthStatus.AUTHENTICATING });
+
+        const self = this;
         this.props.cognitoUser.completeNewPasswordChallenge(
             this.state.password, {}, {
                 onFailure: function(err) {
-                    console.info(err);
+                    self.setState({
+                        authStatus: AuthStatus.NOT_STARTED,
+                        activeAlert: {
+                            style: 'danger',
+                            content: 'Password reset failed. Please try again.'
+                        }
+                    });
                 },
 
                 onSuccess: function(resp) {
+                    self.setState({
+                        authStatus: AuthStatus.AUTHENTICATED
+                    });
                     window.location = '/';
                 }
             });
     }
 
+    buttonDisabled() {
+        if (!this.validInput()) {
+            return true;
+        }
+        return this.state.authStatus !== AuthStatus.NOT_STARTED;
+    }
+
+    buttonText() {
+        if (this.state.authStatus === AuthStatus.AUTHENTICATING) {
+            return 'Processing request...';
+        }
+        if (this.state.authStatus === AuthStatus.AUTHENTICATED) {
+            return 'Success :)';
+        }
+        return 'Reset Password and Login';
+    }
+
     render() {
+        let alertBox = <div></div>;
+        if (this.state.activeAlert) {
+            alertBox = (
+                <AlertBox style={this.state.activeAlert.style}
+                          content={this.state.activeAlert.content}
+                          nondismissible>
+                </AlertBox>
+            );
+        }
+
         return (
             <Modal show={this.props.showModal} onHide={this.props.handleHide}>
               <Modal.Header>
                 <Modal.Title>New Password Required</Modal.Title>
               </Modal.Header>
               <Modal.Body>
+                {alertBox}
                 <PasswordResetInputs
                    autoFocus
                    handleChangePassword={this.handleChangePassword}
@@ -61,20 +109,14 @@ class NewPasswordRequiredModal extends React.Component {
               <Modal.Footer>
                 <Button bsStyle="success"
                         onClick={this.handleSubmit}
-                        disabled={!this.validInput()}>
-                  Reset Password and Login
+                        disabled={this.buttonDisabled()}>
+                  {this.buttonText()}
                 </Button>
               </Modal.Footer>
             </Modal>
         );
     }
 }
-
-const AuthStatus = {
-    NOT_STARTED: 'NOT_STARTED',
-    AUTHENTICATING: 'AUTHENTICATING',
-    AUTHENTICATED: 'AUTHENTICATED'
-};
 
 class Login extends React.Component {
     constructor(props) {
@@ -156,10 +198,7 @@ class Login extends React.Component {
         if (!this.validInput()) {
             return true;
         }
-        if (this.state.authStatus !== AuthStatus.NOT_STARTED) {
-            return true;
-        }
-        return false;
+        return this.state.authStatus !== AuthStatus.NOT_STARTED;
     }
 
     buttonText() {
