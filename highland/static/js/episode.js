@@ -101,7 +101,6 @@ var App = React.createClass({
                 alias: ''
             },
             savedDraftStatus: '',
-            modified: false,
             activeAlert: null,
             showPublishModal: false
         };
@@ -109,57 +108,49 @@ var App = React.createClass({
 
     handleChangeTitle: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {title: text}),
-            modified: true
+            episode: _.extend(this.state.episode, {title: text})
         });
     },
 
     handleChangeSubtitle: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {subtitle: text}),
-            modified: true
+            episode: _.extend(this.state.episode, {subtitle: text})
         });
     },
 
     handleChangeDescription: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {description: event.target.value}),
-            modified: true
+            episode: _.extend(this.state.episode, {description: event.target.value})
         });
     },
 
     handleChangeAlias: function(text) {
         this.setState({
-            episode: _.extend(this.state.episode, {alias: text}),
-            modified: true
+            episode: _.extend(this.state.episode, {alias: text})
         });
     },
 
     handleChangeExplicit: function(event) {
         this.setState({
-            episode: _.extend(this.state.episode, {explicit: event.target.value === 'yes'}),
-            modified: true
+            episode: _.extend(this.state.episode, {explicit: event.target.value === 'yes'})
         });
     },
 
     handleChangeAudioId: function(audioId) {
         this.setState({
-            episode: _.extend(this.state.episode, {audio_id: audioId}),
-            modified: true
+            episode: _.extend(this.state.episode, {audio_id: audioId})
         });
     },
 
     handleSelectAudio: function(id) {
         this.setState({
-            episode: _.extend(this.state.episode, {audio_id: id}),
-            modified: true
+            episode: _.extend(this.state.episode, {audio_id: id})
         });
     },
 
     handleSelectImage: function(id) {
         this.setState({
-            episode: _.extend(this.state.episode, {image_id: id}),
-            modified: true
+            episode: _.extend(this.state.episode, {image_id: id})
         });
     },
 
@@ -183,8 +174,7 @@ var App = React.createClass({
         this.setState({
             originalEpisodeId: data.episode.audio_id,
             episode: data.episode,
-            savedDraftStatus: data.episode.draft_status,
-            modified: false
+            savedDraftStatus: data.episode.draft_status
         });
         if (!this.state.episode.scheduled_datetime) {
             this.setState({
@@ -202,8 +192,7 @@ var App = React.createClass({
     saveEpisode: function() {
         if (this.state.episode.draft_status != DraftStatus.SCHEDULED) {
             this.setState({
-                episode: _.extend(this.state.episode, {scheduled_datetime: ''}),
-                modified: true
+                episode: _.extend(this.state.episode, {scheduled_datetime: ''})
             });
         }
 
@@ -221,7 +210,6 @@ var App = React.createClass({
                 self.setEpisode(data);
                 self.context.router.replace(episodePath(data.episode.id));
                 self.setState({
-                    modified: false,
                     activeAlert: {
                         style: 'success',
                         content: Texts.NOTIFY_SAVED
