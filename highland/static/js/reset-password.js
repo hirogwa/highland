@@ -1,5 +1,4 @@
 import React from "react";
-import { Button } from "react-bootstrap";
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import { AlertBox, PasswordResetInputs, TextInput } from "./common.js";
 
@@ -18,12 +17,12 @@ class ResetPassword extends React.Component {
             passwordNew: '',
             passwordNewRetyped: '',
             activeAlert: null,
-            requestSent: false
+            requestProcessing: false
         };
     }
 
     execute() {
-        this.setState({ requestSent: true });
+        this.setState({ requestProcessing: true });
 
         const userPool = new CognitoUserPool({
             UserPoolId: this.props.route.cognitoUserPoolId,
@@ -60,16 +59,9 @@ class ResetPassword extends React.Component {
                     passwordNew: '',
                     passwordNewRetyped: '',
                     activeAlert: { style: style, content: content },
-                    requestSent: false
+                    requestProcessing: false
                 });
             });
-    }
-
-    validInput() {
-        return this.state.passwordCurrent
-            && this.state.passwordNew
-            && this.state.passwordNewRetyped
-            && this.state.passwordNew === this.state.passwordNewRetyped;
     }
 
     handleChangePasswordCurrent(text) {
@@ -84,15 +76,17 @@ class ResetPassword extends React.Component {
         this.setState({ passwordNewRetyped: text });
     }
 
-    buttonDisabled() {
-        if (!this.validInput()) {
-            return true;
-        }
-        return this.state.requestSent;
+    buttonText() {
+        return this.state.requestProcessing ? 'Reseting Password...' : 'Reset Password';
     }
 
-    buttonText() {
-        return this.state.requestSent ? 'Reseting Password...' : 'Reset Password';
+    customRequirements() {
+        return [{
+            statement: 'New password must be different from current password',
+            passed: () => this.state.passwordNew
+                && this.state.passwordCurrent
+                && this.state.passwordCurrent !== this.state.passwordNew
+        }];
     }
 
     render() {
@@ -114,16 +108,14 @@ class ResetPassword extends React.Component {
                          value={this.state.passwordCurrent}
                          handleChange={this.handleChangePasswordCurrent} />
               <PasswordResetInputs
+                 buttonText={this.buttonText()}
+                 customRequirements={this.customRequirements()}
                  password={this.state.passwordNew}
                  passwordRetyped={this.state.passwordNewRetyped}
+                 processing={this.state.requestProcessing}
                  handleChangePassword={this.handleChangePasswordNew}
-                 handleChangePasswordRetyped={this.handleChangePasswordNewRetyped} />
-              <Button bsStyle="success"
-                      className="pull-right"
-                      onClick={this.execute}
-                      disabled={this.buttonDisabled()}>
-                {this.buttonText()}
-              </Button>
+                 handleChangePasswordRetyped={this.handleChangePasswordNewRetyped}
+                 handleSubmit={this.execute} />
             </div>
         );
     }

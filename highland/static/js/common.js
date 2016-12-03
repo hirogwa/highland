@@ -177,12 +177,57 @@ class AlertBox extends React.Component {
     }
 }
 
-class PasswordResetInputs extends React.Component {
+class PasswordResetRequirement extends React.Component {
     constructor(props) {
         super(props);
     }
 
     render() {
+        const className = this.props.passed ? 'text-success' : 'text-danger';
+        const text = `${this.props.text}${this.props.passed ? ' - ok!' : ''}`;
+        return (
+            <div>
+              <i className={className}>{text}</i>
+            </div>
+        );
+    }
+}
+
+class PasswordResetInputs extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    buttonEnabled() {
+        if (this.props.processing) {
+            return false;
+        }
+        return this.requirements().concat(
+            this.props.customRequirements || [])
+            .every(x => x.passed());
+    }
+
+    requirements() {
+        return [{
+            statement: 'New password must be at least 6 characters long',
+            passed: () => this.props.password.length >= 6
+        }, {
+            statement: 'New passwords need to match',
+            passed: () => this.props.password &&
+                this.props.password === this.props.passwordRetyped
+        }];
+    }
+
+    render() {
+        const requirementTrackers = this.requirements().concat(
+            this.props.customRequirements || [])
+                  .map((x, i) => (
+                      <li key={i}>
+                        <PasswordResetRequirement text={x.statement}
+                                                  passed={x.passed()} />
+                      </li>
+                  ));
+
         return (
             <div>
               <TextInput name='New password'
@@ -194,6 +239,14 @@ class PasswordResetInputs extends React.Component {
                          type='password'
                          value={this.props.passwordRetyped}
                          handleChange={this.props.handleChangePasswordRetyped} />
+              <ul>
+                {requirementTrackers}
+              </ul>
+              <Button bsStyle="success"
+                      onClick={this.props.handleSubmit}
+                      disabled={!this.buttonEnabled()}>
+                {this.props.buttonText}
+              </Button>
             </div>
         );
     }

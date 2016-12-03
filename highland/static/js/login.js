@@ -17,8 +17,6 @@ const AuthStatus = {
 class NewPasswordRequiredModal extends React.Component {
     constructor(props) {
         super(props);
-        this.handleChangePassword = this.handleChangePassword.bind(this);
-        this.handleChangePasswordRetyped = this.handleChangePasswordRetyped.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = {
             password: '',
@@ -26,19 +24,6 @@ class NewPasswordRequiredModal extends React.Component {
             activeAlert: null,
             authStatus: AuthStatus.NOT_STARTED
         };
-    }
-
-    validInput() {
-        return this.state.password &&
-            this.state.password === this.state.passwordRetyped;
-    }
-
-    handleChangePassword(text) {
-        this.setState({password: text});
-    }
-
-    handleChangePasswordRetyped(text) {
-        this.setState({passwordRetyped: text});
     }
 
     handleSubmit() {
@@ -64,13 +49,6 @@ class NewPasswordRequiredModal extends React.Component {
                     window.location = '/';
                 }
             });
-    }
-
-    buttonDisabled() {
-        if (!this.validInput()) {
-            return true;
-        }
-        return this.state.authStatus !== AuthStatus.NOT_STARTED;
     }
 
     buttonText() {
@@ -103,16 +81,14 @@ class NewPasswordRequiredModal extends React.Component {
                 {alertBox}
                 <PasswordResetInputs
                    autoFocus
-                   handleChangePassword={this.handleChangePassword}
-                   handleChangePasswordRetyped={this.handleChangePasswordRetyped}/>
+                   buttonText={this.buttonText()}
+                   password={this.state.password}
+                   passwordRetyped={this.state.passwordRetyped}
+                   processing={this.state.authStatus === AuthStatus.AUTHENTICATING}
+                   handleChangePassword={x => this.setState({ password: x })}
+                   handleChangePasswordRetyped={x => this.setState({ passwordRetyped: x })}
+                   handleSubmit={this.handleSubmit} />
               </Modal.Body>
-              <Modal.Footer>
-                <Button bsStyle="success"
-                        onClick={this.handleSubmit}
-                        disabled={this.buttonDisabled()}>
-                  {this.buttonText()}
-                </Button>
-              </Modal.Footer>
             </Modal>
         );
     }
