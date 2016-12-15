@@ -7,7 +7,7 @@ from flask import request, jsonify, redirect, render_template, \
 from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings,\
-    cognito_auth
+    cognito_auth, publish
 
 app.secret_key = settings.APP_SECRET
 auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
@@ -350,6 +350,12 @@ def datetime_valid_or_none(d):
         return dateutil.parser.parse(d)
     except:
         return None
+
+
+@app.route('/publish_scheduled', methods=['POST'])
+def publish_scheduled():
+    result = publish.publish_scheduled()
+    return jsonify(result=result)
 
 
 @app.route('/publish_site', methods=['POST'])

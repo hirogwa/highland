@@ -26,3 +26,9 @@ def get(username):
     user = models.User.query.filter_by(username=username).first()
     assert user, 'no such user. {}'.format(username)
     return user
+
+
+def get_or_assert(id):
+    user = models.User.query.filter_by(id=id).first()
+    assert user, 'no such user. {}'.format(id)
+    return user

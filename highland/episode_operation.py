@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 from highland import models, show_operation, settings, audio_operation,\
-    image_operation, common
+    image_operation, common, app
 
 
 def create(user, show_id, draft_status, alias, audio_id, image_id,
@@ -91,6 +91,30 @@ def load_public(user, show_id):
                   draft_status=models.Episode.DraftStatus.published.name).\
         order_by(models.Episode.published_datetime.desc()).\
         all()
+
+
+def load_publish_target():
+    return models.Episode.query. \
+        filter_by(
+            draft_status=models.Episode.DraftStatus.scheduled.name). \
+        order_by(
+            models.Episode.owner_user_id,
+            models.Episode.show_id,
+            models.Episode.id). \
+        all()
+
+
+def publish(episode):
+    if episode.draft_status == models.Episode.DraftStatus.published:
+        app.logger.warning(
+            'Episode already published:(show:{},id:{})'.format(
+                episode.show_id, episode.id))
+        return episode
+
+    episode.draft_status = models.Episode.DraftStatus.published.name
+    episode.published_datetime = datetime.datetime.now(datetime.timezone.utc)
+    models.db.session.commit()
+    return episode
 
 
 def get_episode_or_assert(user, show_id, episode_id):
