@@ -11,12 +11,11 @@ def create(username, email, name):
     return user
 
 
-def update(id, username, email, name):
+def update(id, username, name):
     user = models.User.query.filter_by(id=id).first()
     assert user, 'no such user ({})'.format(id)
 
     user.username = username
-    user.email = email
     user.name = name
     models.db.session.commit()
     return user

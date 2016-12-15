@@ -302,33 +302,24 @@ def user():
     try:
         if 'POST' == request.method:
             args = request.get_json()
-            (username, email, password, name) = (
+            (username, name) = (
                 args.get('username'),
-                args.get('email'),
-                args.get('password'),
                 args.get('name'))
             assert username, 'username required'
-            assert email, 'email required'
-            assert password, 'password required'
             assert name, 'name required'
-            user = user_operation.create(username, email, password, name)
+            user = user_operation.create(username, name)
             return jsonify(user=dict(user), result='success')
 
         if 'PUT' == request.method:
             args = request.get_json()
-            (id, username, email, password, name) = (
+            (id, username, name) = (
                 args.get('id'),
                 args.get('username'),
-                args.get('email'),
-                args.get('password'),
                 args.get('name'))
             assert id, 'id required'
             assert username, 'username required'
-            assert email, 'email required'
-            assert password, 'password required'
             assert name, 'name required'
-            user = user_operation.update(int(id), username, email, password,
-                                         name)
+            user = user_operation.update(int(id), username, name)
             return jsonify(user=dict(user), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
