@@ -12,8 +12,6 @@ class Show(db.Model):
     last_build_datetime: when the last public change under the show was made
     update_datetime: when the last change to the show entity was made
     '''
-    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-                              primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
@@ -22,8 +20,9 @@ class Show(db.Model):
     author = db.Column(db.String(100))
     category = db.Column(db.String(50))
     explicit = db.Column(db.Boolean())
-    image_id = db.Column(db.Integer)
+    image_id = db.Column(db.Integer, db.ForeignKey('image.id'))
     alias = db.Column(db.String(100), unique=True)
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     last_build_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -33,13 +32,6 @@ class Show(db.Model):
     create_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
-
-    __table_args__ = (
-        db.ForeignKeyConstraint(
-            ['owner_user_id', 'image_id'],
-            ['image.owner_user_id', 'image.id']
-        ),
-    )
 
     def __init__(self, user, title, description, subtitle, language, author,
                  category, explicit, image_id, alias):
@@ -70,14 +62,12 @@ class Episode(db.Model):
         scheduled = 'scheduled'
         published = 'published'
 
-    owner_user_id = db.Column(db.Integer, primary_key=True)
-    show_id = db.Column(db.Integer, primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     subtitle = db.Column(db.String(200))
     description = db.Column(db.Text())
-    audio_id = db.Column(db.Integer)
-    image_id = db.Column(db.Integer)
+    audio_id = db.Column(db.Integer, db.ForeignKey('audio.id'))
+    image_id = db.Column(db.Integer, db.ForeignKey('image.id'))
     draft_status = db.Column(db.Enum(DraftStatus.draft.name,
                                      DraftStatus.scheduled.name,
                                      DraftStatus.published.name,
@@ -88,6 +78,8 @@ class Episode(db.Model):
     guid = db.Column(db.String(32),
                      default=lambda x: uuid.uuid4().hex)
     alias = db.Column(db.String(100))
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+    show_id = db.Column(db.Integer, db.ForeignKey('show.id'), index=True)
     update_datetime = db.Column(
         db.DateTime(timezone=True),
         onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -96,19 +88,7 @@ class Episode(db.Model):
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
     __table_args__ = (
-        db.ForeignKeyConstraint(
-            ['owner_user_id', 'show_id'],
-            ['show.owner_user_id', 'show.id'],
-        ),
-        db.ForeignKeyConstraint(
-            ['owner_user_id', 'audio_id'],
-            ['audio.owner_user_id', 'audio.id']
-        ),
-        db.ForeignKeyConstraint(
-            ['owner_user_id', 'image_id'],
-            ['image.owner_user_id', 'image.id']
-        ),
-        db.UniqueConstraint('owner_user_id', 'show_id', 'alias')
+        db.UniqueConstraint('show_id', 'alias'),
     )
 
     def __init__(self, show, title, subtitle, description, audio_id,
@@ -146,14 +126,13 @@ class Audio(db.Model):
     duration: in seconds
     length: in bytes
     '''
-    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-                              primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     duration = db.Column(db.Integer())
     length = db.Column(db.Integer())
     type = db.Column(db.String(30))
     guid = db.Column(db.String(32))
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     create_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -174,12 +153,11 @@ class Audio(db.Model):
 
 
 class Image(db.Model):
-    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-                              primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     guid = db.Column(db.String(32))
     type = db.Column(db.String(10))
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     create_datetime = db.Column(
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -199,7 +177,6 @@ class Image(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
-    email = db.Column(db.String(120), unique=True)
     name = db.Column(db.String(100))
     update_datetime = db.Column(
         db.DateTime(timezone=True),
@@ -208,13 +185,12 @@ class User(db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, username, email, name):
+    def __init__(self, username, name):
         self.username = username
-        self.email = email
         self.name = name
 
     def __iter__(self):
-        for key in ['id', 'username', 'email', 'name']:
+        for key in ['id', 'username', 'name']:
             yield(key, getattr(self, key))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))
