@@ -2,7 +2,7 @@ import imghdr
 import os
 import urllib.parse
 import uuid
-from highland import models, media_storage, settings, app
+from highland import models, media_storage, settings, app, exception
 
 
 def create(user, image_file):
@@ -35,15 +35,15 @@ def load(user):
 def get_image_or_assert(user, image_id):
     image = models.Image.query.\
         filter_by(owner_user_id=user.id, id=image_id).first()
-    if image:
-        return image
-    else:
+    if not image:
         raise AssertionError(
             'No such image. (user,image)={}{}'.format(user.id, image_id))
+    access_allowed_or_raise(user.id, image)
+    return image
 
 
 def get_image_url(user, image):
-    assert user.id == image.owner_user_id
+    access_allowed_or_raise(user.id, image)
     return urllib.parse.urljoin(settings.HOST_IMAGE,
                                 '{}/{}'.format(user.username, image.guid))
 
@@ -67,3 +67,10 @@ def store_image_data(user, image_file):
 
     os.remove(temp_path)
     return guid, type
+
+
+def access_allowed_or_raise(user_id, image):
+    if image.owner_user_id != user_id:
+        raise exception.AccessNotAllowedException(
+            'user:{}, audio: {}'.format(user_id, image.id))
+    return image

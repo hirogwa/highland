@@ -2,7 +2,7 @@ import os
 import uuid
 import urllib.parse
 from mutagen.mp3 import MP3
-from highland import models, media_storage, settings, app
+from highland import models, media_storage, settings, app, exception
 
 
 def create(user, audio_file):
@@ -60,15 +60,15 @@ def load(user, unused_only=False, whitelisted_id=None):
 def get_audio_or_assert(user, audio_id):
     audio = models.Audio.query.\
         filter_by(owner_user_id=user.id, id=audio_id).first()
-    if audio:
-        return audio
-    else:
+    if not audio:
         raise AssertionError(
             'No such audio. (user,audio)=({0},{1})'.format(user.id, audio_id))
+    access_allowed_or_raise(user.id, audio)
+    return audio
 
 
 def get_audio_url(user, audio):
-    assert user.id == audio.owner_user_id
+    access_allowed_or_raise(user.id, audio)
     return urllib.parse.urljoin(settings.HOST_AUDIO,
                                 '{}/{}'.format(user.username, audio.guid))
 
@@ -90,3 +90,10 @@ def store_audio_data(user, audio_file):
 
     os.remove(temp_path)
     return guid, d, l, type
+
+
+def access_allowed_or_raise(user_id, audio):
+    if audio.owner_user_id != user_id:
+        raise exception.AccessNotAllowedException(
+            'user:{}, audio: {}'.format(user_id, audio.id))
+    return audio

@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 from highland import models, show_operation, settings, audio_operation,\
-    image_operation, common, app
+    image_operation, common, app, exception
 
 
 def create(user, show_id, draft_status, alias, audio_id, image_id,
@@ -9,7 +9,7 @@ def create(user, show_id, draft_status, alias, audio_id, image_id,
            explicit=False):
     draft_status = models.Episode.DraftStatus(draft_status).name
     show = show_operation.get_show_or_assert(user, show_id)
-    episode = set_default_value(user, models.Episode(
+    episode = _set_default_value(user, models.Episode(
         show, title, subtitle, description, audio_id, draft_status,
         scheduled_datetime, explicit, image_id, alias))
     episode = valid_or_assert(user, episode)
@@ -45,7 +45,7 @@ def update(user, show_id, episode_id, draft_status, alias, audio_id, image_id,
     if episode.draft_status == models.Episode.DraftStatus.draft.name:
         episode.published_datetime = None
 
-    set_default_value(user, episode)
+    _set_default_value(user, episode)
     valid_or_assert(user, episode)
     models.db.session.commit()
 
@@ -122,23 +122,23 @@ def get_episode_or_assert(user, show_id, episode_id):
         filter_by(owner_user_id=user.id,
                   show_id=show_id,
                   id=episode_id).first()
-    if episode:
-        return episode
-    else:
-        raise AssertionError(
-            'No such episode. (user,show,episode)=({0},{1},{2})'.
-            format(user.id, show_id, episode_id))
+    if not episode:
+        raise exception.NoSuchEntityException(
+            'episode does not exist. id:{}'.format(episode_id))
+    access_allowed_or_raise(user.id, episode)
+    return episode
 
 
-def set_default_value(user, episode):
+def _set_default_value(user, episode):
     if episode.alias is None or len(episode.alias) < 1:
         episode.alias = get_default_alias(user, episode.show_id)
     return episode
 
 
 def valid_or_assert(user, episode):
-    assert common.is_valid_alias(episode.alias), \
-        'bad alias:{}'.format(episode.alias)
+    if not common.is_valid_alias(episode.alias):
+        raise exception.InvalidValueException(
+            'episode alias not accepted. {}'.format(episode.alias))
 
     if episode.audio_id is not None:
         audio_operation.get_audio_or_assert(user, episode.audio_id)
@@ -159,7 +159,10 @@ def valid_or_assert(user, episode):
 
 
 def get_episode_url(user, episode, show=None):
-    if not show:
+    access_allowed_or_raise(user.id, episode)
+    if show:
+        show_operation.access_allowed_or_raise(user.id, show)
+    else:
         show = show_operation.get_show_or_assert(user, episode.show_id)
     return urllib.parse.urljoin(
         settings.HOST_SITE, '{}/{}'.format(show.alias, episode.alias))
@@ -196,3 +199,10 @@ def _update_show_build_datetime(user, episode):
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show
+
+
+def access_allowed_or_raise(user_id, episode):
+    if episode.owner_user_id != user_id:
+        raise exception.AccessNotAllowedException(
+            'user:{}, episode:{}'.format(user_id, episode.id))
+    return episode

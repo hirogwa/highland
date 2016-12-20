@@ -1,12 +1,13 @@
 import datetime
 import urllib.parse
-from highland import models, settings, common
+from highland import models, settings, common, exception
 
 
 def create(user, title, description, subtitle, language, author, category,
            explicit, image_id, alias):
     if not common.is_valid_alias(alias):
-        raise ValueError('alias not accepted. {}'.format(alias))
+        raise exception.InvalidValueException(
+            'show alias not accepted. {}'.format(alias))
 
     show = models.Show(user, title, description, subtitle, language, author,
                        category, explicit, image_id, alias)
@@ -17,11 +18,7 @@ def create(user, title, description, subtitle, language, author, category,
 
 def update(user, show_id, title, description, subtitle, language, author,
            category, explicit, image_id):
-    show = models.Show.query \
-                      .filter_by(owner_user_id=user.id, id=show_id) \
-                      .first()
-    assert show, 'specified show does not exist'
-
+    show = get_show_or_assert(user, show_id)
     show.title = title
     show.description = description
     show.subtitle = subtitle
@@ -48,12 +45,19 @@ def load(user):
 def get_show_or_assert(user, show_id):
     show = models.Show.query.\
         filter_by(owner_user_id=user.id, id=show_id).first()
-    if show:
-        return show
-    else:
-        raise AssertionError(
-            'No such show. (user,show):({0},{1})'.format(user.id, show_id))
+    if not show:
+        raise exception.NoSuchEntityException(
+            'show does not exist. id:{}'.format(show_id))
+    access_allowed_or_raise(user.id, show)
+    return show
 
 
 def get_show_url(show):
     return urllib.parse.urljoin(settings.HOST_SITE, show.alias)
+
+
+def access_allowed_or_raise(user_id, show):
+    if show.owner_user_id != user_id:
+        raise exception.AccessNotAllowedException(
+            'user:{}, show: {}'.format(user_id, show.id))
+    return show
