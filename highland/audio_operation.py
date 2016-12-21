@@ -61,8 +61,8 @@ def get_audio_or_assert(user, audio_id):
     audio = models.Audio.query.\
         filter_by(owner_user_id=user.id, id=audio_id).first()
     if not audio:
-        raise AssertionError(
-            'No such audio. (user,audio)=({0},{1})'.format(user.id, audio_id))
+        raise exception.NoSuchEntityError(
+            'user:{}, audio:{}'.format(user.id, audio_id))
     access_allowed_or_raise(user.id, audio)
     return audio
 
@@ -94,6 +94,6 @@ def store_audio_data(user, audio_file):
 
 def access_allowed_or_raise(user_id, audio):
     if audio.owner_user_id != user_id:
-        raise exception.AccessNotAllowedException(
+        raise exception.AccessNotAllowedError(
             'user:{}, audio: {}'.format(user_id, audio.id))
     return audio

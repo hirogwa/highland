@@ -6,7 +6,7 @@ import datetime
 import jwt
 import pytz
 
-from highland import app
+from highland import app, exception
 
 
 class CognitoAuth:
@@ -28,15 +28,12 @@ class CognitoAuth:
 
         if decoded.get('iss') != 'https://cognito-idp.{}.amazonaws.com/{}' \
                   .format(self.cognito_region, self.cognito_user_pool_id):
-            app.logger.error('token invalid. bad iss.')
-            raise ValueError()
+            raise exception.AuthError('token invalid. bad iss.')
         if decoded.get('token_use') != 'access':
-            app.logger.error('token invalid. bad token_use.')
-            raise ValueError()
+            raise exception.AuthError('token invalid. bad token_use.')
         if datetime.datetime.fromtimestamp(decoded.get('exp'), pytz.utc) \
            < datetime.datetime.now(pytz.utc):
-            app.logger.error('token invalid. expired.')
-            raise ValueError()
+            raise exception.AuthError('token invalid. expired.')
 
         return decoded
 
@@ -107,7 +104,7 @@ class CognitoAuth:
 
     def _consume_token(self):
         if 'access_token' not in session:
-            raise ValueError()
+            raise exception.AuthError('access token not in session')
         token_decoded = self.decode_access_token(session['access_token'])
         self.username = token_decoded.get('username')
 

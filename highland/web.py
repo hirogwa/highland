@@ -7,7 +7,7 @@ from flask import request, jsonify, redirect, render_template, \
 from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, settings,\
-    cognito_auth, publish
+    cognito_auth, publish, common
 
 app.secret_key = settings.APP_SECRET
 auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
@@ -31,7 +31,7 @@ def stat_episode_by_day():
     show_id = request.args.get('show_id')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
-    assert show_id, 'show_id required'
+    common.require_true(show_id, 'show_id required')
     return jsonify(
         stat_operation.get_episode_by_day(
             auth.authenticated_user, show_id, date_from, date_to))
@@ -41,7 +41,7 @@ def stat_episode_by_day():
 @auth.require_authenticated()
 def stat_episode_past_week():
     show_id = request.args.get('show_id')
-    assert show_id, 'show_id required'
+    common.require_true(show_id, 'show_id required')
     return jsonify(stat_operation.get_episode_one_week(
         auth.authenticated_user, show_id))
 
@@ -50,7 +50,7 @@ def stat_episode_past_week():
 @auth.require_authenticated()
 def stat_episode_cumulative():
     show_id = request.args.get('show_id')
-    assert show_id, 'show_id required'
+    common.require_true(show_id, 'show_id required')
     return jsonify(stat_operation.get_episode_cumulative(
         auth.authenticated_user, show_id))
 
@@ -84,14 +84,14 @@ def show():
                  args.get('explicit'),
                  args.get('image_id'),
                  args.get('alias'))
-            assert title, 'title required'
-            assert description, 'description required'
-            assert subtitle, 'subtitle required'
-            assert language, 'language required'
-            assert author, 'author required'
-            assert category, 'category required'
-            assert explicit is not None, 'explicit required'
-            assert alias, 'alias required'
+            common.require_true(title, 'title required')
+            common.require_true(description, 'description required')
+            common.require_true(subtitle, 'subtitle required')
+            common.require_true(language, 'language required')
+            common.require_true(author, 'author required')
+            common.require_true(category, 'category required')
+            common.require_true(explicit is not None, 'explicit required')
+            common.require_true(alias, 'alias required')
 
             show = show_operation.create(
                 auth.authenticated_user, title, description, subtitle,
@@ -111,14 +111,14 @@ def show():
                  args.get('category'),
                  args.get('explicit'),
                  args.get('image_id'))
-            assert id, 'id required'
-            assert title, 'title required'
-            assert description, 'description required'
-            assert subtitle, 'subtitle required'
-            assert language, 'language required'
-            assert author, 'author required'
-            assert category, 'category required'
-            assert explicit is not None, 'explicit required'
+            common.require_true(id, 'id required')
+            common.require_true(title, 'title required')
+            common.require_true(description, 'description required')
+            common.require_true(subtitle, 'subtitle required')
+            common.require_true(language, 'language required')
+            common.require_true(author, 'author required')
+            common.require_true(category, 'category required')
+            common.require_true(explicit is not None, 'explicit required')
 
             show = show_operation.update(
                 auth.authenticated_user, id, title, description, subtitle,
@@ -152,9 +152,9 @@ def episode():
                  args.get('explicit'),
                  args.get('image_id'))
 
-            assert show_id, 'show id required'
-            assert draft_status, 'draft status required'
-            assert explicit is not None, 'explicit required'
+            common.require_true(show_id, 'show id required')
+            common.require_true(draft_status, 'draft status required')
+            common.require_true(explicit is not None, 'explicit required')
 
             episode = episode_operation.create(
                 auth.authenticated_user, show_id, draft_status, alias,
@@ -179,10 +179,10 @@ def episode():
                  args.get('explicit'),
                  args.get('image_id'))
 
-            assert show_id, 'show id required'
-            assert id, 'id required'
-            assert draft_status, 'draft status required'
-            assert explicit is not None, 'explicit required'
+            common.require_true(show_id, 'show id required')
+            common.require_true(id, 'id required')
+            common.require_true(draft_status, 'draft status required')
+            common.require_true(explicit is not None, 'explicit required')
 
             episode = episode_operation.update(
                 auth.authenticated_user, show_id, id, draft_status, alias,
@@ -305,8 +305,8 @@ def user():
             (username, name) = (
                 args.get('username'),
                 args.get('name'))
-            assert username, 'username required'
-            assert name, 'name required'
+            common.require_true(username, 'username required')
+            common.require_true(name, 'name required')
             user = user_operation.create(username, name)
             return jsonify(user=dict(user), result='success')
 
@@ -316,9 +316,9 @@ def user():
                 args.get('id'),
                 args.get('username'),
                 args.get('name'))
-            assert id, 'id required'
-            assert username, 'username required'
-            assert name, 'name required'
+            common.require_true(id, 'id required')
+            common.require_true(username, 'username required')
+            common.require_true(name, 'name required')
             user = user_operation.update(int(id), username, name)
             return jsonify(user=dict(user), result='success')
     except Exception as e:

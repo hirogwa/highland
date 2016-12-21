@@ -123,7 +123,7 @@ def get_episode_or_assert(user, show_id, episode_id):
                   show_id=show_id,
                   id=episode_id).first()
     if not episode:
-        raise exception.NoSuchEntityException(
+        raise exception.NoSuchEntityError(
             'episode does not exist. id:{}'.format(episode_id))
     access_allowed_or_raise(user.id, episode)
     return episode
@@ -137,7 +137,7 @@ def _set_default_value(user, episode):
 
 def valid_or_assert(user, episode):
     if not common.is_valid_alias(episode.alias):
-        raise exception.InvalidValueException(
+        raise exception.InvalidValueError(
             'episode alias not accepted. {}'.format(episode.alias))
 
     if episode.audio_id is not None:
@@ -146,12 +146,13 @@ def valid_or_assert(user, episode):
         image_operation.get_image_or_assert(user, episode.image_id)
 
     if episode.draft_status != models.Episode.DraftStatus.draft.name:
-        assert episode.title, 'title required'
-        assert episode.description, 'description required'
-        assert episode.audio_id, 'audio required'
+        common.require_true(episode.title, 'title required')
+        common.require_true(episode.description, 'description required')
+        common.require_true(episode.audio_id, 'audio required')
 
     if episode.draft_status == models.Episode.DraftStatus.scheduled.name:
-        assert episode.scheduled_datetime, 'scheduled_datetime required'
+        common.require_true(
+            episode.scheduled_datetime, 'scheduled_datetime required')
     else:
         episode.scheduled_datetime = None
 
@@ -203,6 +204,6 @@ def _update_show_build_datetime(user, episode):
 
 def access_allowed_or_raise(user_id, episode):
     if episode.owner_user_id != user_id:
-        raise exception.AccessNotAllowedException(
+        raise exception.AccessNotAllowedError(
             'user:{}, episode:{}'.format(user_id, episode.id))
     return episode

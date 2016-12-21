@@ -1,9 +1,10 @@
-from highland import models
+from highland import models, exception
 
 
 def create(username, email, name):
     if models.User.query.filter_by(username=username).first():
-        raise AssertionError('User exists: {}'.format(username))
+        raise exception.OperationNotAllowedError(
+            'User already exists: {}'.format(username))
 
     user = models.User(username, email, name)
     models.db.session.add(user)
@@ -13,7 +14,8 @@ def create(username, email, name):
 
 def update(id, username, name):
     user = models.User.query.filter_by(id=id).first()
-    assert user, 'no such user ({})'.format(id)
+    if not user:
+        raise exception.NoSuchEntityError('user:{}'.format(id))
 
     user.username = username
     user.name = name
@@ -23,11 +25,13 @@ def update(id, username, name):
 
 def get(username):
     user = models.User.query.filter_by(username=username).first()
-    assert user, 'no such user. {}'.format(username)
+    if not user:
+        raise exception.NoSuchEntityError('user:{}'.format(id))
     return user
 
 
 def get_or_assert(id):
     user = models.User.query.filter_by(id=id).first()
-    assert user, 'no such user. {}'.format(id)
+    if not user:
+        raise exception.NoSuchEntityError('user:{}'.format(id))
     return user
