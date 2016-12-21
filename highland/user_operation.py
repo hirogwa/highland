@@ -1,12 +1,12 @@
 from highland import models, exception
 
 
-def create(username, email, name):
+def create(username, name):
     if models.User.query.filter_by(username=username).first():
         raise exception.OperationNotAllowedError(
             'User already exists: {}'.format(username))
 
-    user = models.User(username, email, name)
+    user = models.User(username, name)
     models.db.session.add(user)
     models.db.session.commit()
     return user

@@ -21,7 +21,6 @@ page_loaders = []
 def page_loader(func):
     if func.__name__ not in []:
         page_loaders.append(func.__name__)
-    print(page_loaders)
     return func
 
 

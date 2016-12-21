@@ -43,8 +43,7 @@ def load(user):
 
 
 def get_show_or_assert(user, show_id):
-    show = models.Show.query.\
-        filter_by(owner_user_id=user.id, id=show_id).first()
+    show = models.Show.query.filter_by(id=show_id).first()
     if not show:
         raise exception.NoSuchEntityError(
             'show does not exist. id:{}'.format(show_id))
