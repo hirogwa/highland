@@ -49,10 +49,12 @@ class TestEpisode(unittest.TestCase):
         episode.guid = uuid.uuid4().hex
         episode.update_datetime = datetime.datetime.now(datetime.timezone.utc)
         episode.create_datetime = datetime.datetime.now(datetime.timezone.utc)
+        episode.published_datetime = \
+            datetime.datetime.now(datetime.timezone.utc)
 
         episode_d = dict(episode)
 
-        self.assertEqual(15, len(episode_d))
+        self.assertEqual(16, len(episode_d))
         self.assertEqual(episode.owner_user_id, episode_d.get('owner_user_id'))
         self.assertEqual(episode.show_id, episode_d.get('show_id'))
         self.assertEqual(episode.id, episode_d.get('id'))
@@ -60,18 +62,20 @@ class TestEpisode(unittest.TestCase):
         self.assertEqual(episode.subtitle, episode_d.get('subtitle'))
         self.assertEqual(episode.description, episode_d.get('description'))
         self.assertEqual(episode.audio_id, episode_d.get('audio_id'))
-        self.assertEqual(episode.draft_status,
-                         episode_d.get('draft_status'))
         self.assertEqual(episode.explicit, episode_d.get('explicit'))
         self.assertEqual(episode.guid, episode_d.get('guid'))
         self.assertEqual(episode.image_id, episode_d.get('image_id'))
         self.assertEqual(episode.alias, episode_d.get('alias'))
+        self.assertEqual(episode.draft_status,
+                         episode_d.get('draft_status'))
+        self.assertEqual(str(episode.scheduled_datetime),
+                         episode_d.get('scheduled_datetime'))
         self.assertEqual(str(episode.update_datetime),
                          episode_d.get('update_datetime'))
         self.assertEqual(str(episode.create_datetime),
                          episode_d.get('create_datetime'))
-        self.assertEqual(str(episode.scheduled_datetime),
-                         episode_d.get('scheduled_datetime'))
+        self.assertEqual(str(episode.published_datetime),
+                         episode_d.get('published_datetime'))
 
 
 class TestAudio(unittest.TestCase):
@@ -119,14 +123,12 @@ class TestImage(unittest.TestCase):
 
 class TestUser(unittest.TestCase):
     def test_iter(self):
-        user = models.User('name', 'mail@example.com', 'strong password',
-                           'Ultraman Taro')
+        user = models.User('name', 'Ultraman Taro')
         user_d = dict(user)
 
-        self.assertEqual(6, len(user_d))
+        self.assertEqual(5, len(user_d))
         self.assertEqual(user.id, user_d.get('id'))
         self.assertEqual(user.username, user_d.get('username'))
-        self.assertEqual(user.email, user_d.get('email'))
         self.assertEqual(user.name, user_d.get('name'))
         self.assertIsNotNone(user_d.get('update_datetime'))
         self.assertIsNotNone(user_d.get('create_datetime'))
