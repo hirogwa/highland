@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from highland import show_operation, models, common
+from highland import show_operation, models, common, exception, settings
 
 
 class TestShowOperation(unittest.TestCase):
@@ -37,6 +37,14 @@ class TestShowOperation(unittest.TestCase):
         mocked_commit.assert_called_with()
         self.assertEqual(mocked_show, result)
 
+    @unittest.mock.patch.object(common, 'is_valid_alias')
+    def test_create_bad_alias(self, mocked_valid_alias):
+        mocked_alias = MagicMock()
+        mocked_valid_alias.return_value = False
+        with self.assertRaises(exception.InvalidValueError):
+            show_operation.create(
+                *([MagicMock() for x in range(9)] + [mocked_alias]))
+
     @unittest.mock.patch('highland.models.Show.query')
     @unittest.mock.patch.object(models.db.session, 'commit')
     def test_update(self, mocked_commit, mocked_query):
@@ -67,8 +75,7 @@ class TestShowOperation(unittest.TestCase):
             mocked_user, show_id, title, description, subtitle, language,
             author, category, explicit, image_id)
 
-        mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
-                                                  id=show_id)
+        mocked_query.filter_by.assert_called_with(id=show_id)
         mocked_filter.first.assert_called_with()
         mocked_commit.assert_called_with()
         self.assertEqual(title, mocked_show.title)
@@ -93,13 +100,12 @@ class TestShowOperation(unittest.TestCase):
         mocked_filter.first.return_value = None
         mocked_query.filter_by.return_value = mocked_filter
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(exception.NoSuchEntityError):
             show_operation.update(
                 mocked_user, show_id, 'title', 'desc', 'subtitle', 'lang',
                 'author', 'category', False, 2)
 
-        mocked_query.filter_by.assert_called_with(owner_user_id=owner_user_id,
-                                                  id=show_id)
+        mocked_query.filter_by.assert_called_with(id=show_id)
         mocked_filter.first.assert_called_with()
         mocked_commit.assert_not_called()
 
@@ -148,8 +154,7 @@ class TestShowOperation(unittest.TestCase):
         result = show_operation.get_show_or_assert(
             mocked_user, mocked_show.id)
 
-        mocked_query.filter_by.assert_called_with(owner_user_id=mocked_user.id,
-                                                  id=mocked_show.id)
+        mocked_query.filter_by.assert_called_with(id=mocked_show.id)
         mocked_filter.first.assert_called_with()
         self.assertEqual(result, mocked_show)
 
@@ -163,6 +168,20 @@ class TestShowOperation(unittest.TestCase):
         mocked_filter.first.return_value = None
         mocked_query.filter_by.return_value = mocked_filter
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(exception.NoSuchEntityError):
             show_operation.get_show_or_assert(
                 mocked_user, show_id)
+
+    def test_get_show_url(self):
+        mocked_show = MagicMock()
+        mocked_show.alias = 'some_alias'
+        result = show_operation.get_show_url(mocked_show)
+        self.assertEqual('{}/some_alias'.format(settings.HOST_SITE), result)
+
+    def test_access_allowed_or_raise(self):
+        user_id = 1
+        mocked_show = MagicMock()
+        mocked_show.owner_user_id = 2
+
+        with self.assertRaises(exception.AccessNotAllowedError):
+            show_operation.access_allowed_or_raise(user_id, mocked_show)
