@@ -164,9 +164,8 @@ def episode():
 
         if 'PUT' == request.method:
             args = request.get_json()
-            (show_id, id, draft_status, alias, scheduled_datetime, title,
+            (id, draft_status, alias, scheduled_datetime, title,
              subtitle, description, audio_id, explicit, image_id) = (
-                 args.get('show_id'),
                  args.get('id'),
                  args.get('draft_status'),
                  args.get('alias'),
@@ -178,13 +177,12 @@ def episode():
                  args.get('explicit'),
                  args.get('image_id'))
 
-            common.require_true(show_id, 'show id required')
             common.require_true(id, 'id required')
             common.require_true(draft_status, 'draft status required')
             common.require_true(explicit is not None, 'explicit required')
 
             episode = episode_operation.update(
-                auth.authenticated_user, show_id, id, draft_status, alias,
+                auth.authenticated_user, id, draft_status, alias,
                 audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
                 title, subtitle, description, explicit)
             return jsonify(episode=dict(episode), result='success')
@@ -192,7 +190,6 @@ def episode():
         if 'DELETE' == request.method:
             args = request.get_json()
             episode_operation.delete(auth.authenticated_user,
-                                     args.get('show_id'),
                                      args.get('episode_ids'))
             return jsonify(result='success')
     except Exception:
@@ -222,7 +219,7 @@ def get_episode_list(show_id):
 def get_episode(show_id, episode_id):
     try:
         episode = episode_operation.get_episode_or_assert(
-            auth.authenticated_user, show_id, episode_id)
+            auth.authenticated_user, episode_id)
         return jsonify(episode=dict(episode), result='success')
     except Exception as e:
         app.logger.error(traceback.format_exc())
@@ -388,7 +385,7 @@ def preview_site_episode_test(show_id, episode_id):
         user,
         show,
         show_image,
-        episode_operation.get_episode_or_assert(user, show_id, episode_id),
+        episode_operation.get_episode_or_assert(user, episode_id),
         False)
 
 
