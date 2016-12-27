@@ -23,7 +23,8 @@ def delete(user, image_ids):
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
                     user.id, image.id), exc_info=1)
-        models.db.session.delete(image)
+        else:
+            models.db.session.delete(image)
     models.db.session.commit()
     return True
 
