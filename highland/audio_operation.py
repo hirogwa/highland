@@ -7,8 +7,8 @@ from highland import models, media_storage, settings, app, exception
 
 def create(user, audio_file):
     guid, duration, length, type = store_audio_data(user, audio_file)
-    audio = models.Audio(user, audio_file.filename, duration, length, type,
-                         guid)
+    audio = models.Audio(
+        user, audio_file.filename, duration, length, type, guid)
     models.db.session.add(audio)
     models.db.session.commit()
     return audio
@@ -24,7 +24,8 @@ def delete(user, audio_ids):
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
                     user.id, audio.id), exc_info=1)
-        models.db.session.delete(audio)
+        else:
+            models.db.session.delete(audio)
     models.db.session.commit()
     return True
 
@@ -40,21 +41,20 @@ def load(user, unused_only=False, whitelisted_id=None):
 
     if unused_only:
         black_list = \
-            [x.audio_id for x in episodes if x.audio_id is not whitelisted_id]
+            [x.audio_id for x in episodes if x.audio_id != whitelisted_id]
         audios = [x for x in audios if x.id not in black_list]
 
     a_to_e = {e.audio_id: e for e in episodes}
 
-    def _dict(audio):
+    def _dict_with_episode(user, audio, episode):
         d = dict(audio)
         d['url'] = get_audio_url(user, audio)
-        e = a_to_e.get(audio.id)
-        d['show_id'] = e.show_id if e else None
-        d['episode_id'] = e.id if e else None
-        d['episode_title'] = e.title if e else None
+        d['show_id'] = episode.show_id if episode else None
+        d['episode_id'] = episode.id if episode else None
+        d['episode_title'] = episode.title if episode else None
         return d
 
-    return [_dict(x) for x in audios]
+    return [_dict_with_episode(user, x, a_to_e.get(x.id)) for x in audios]
 
 
 def get_audio_or_assert(user, audio_id):
