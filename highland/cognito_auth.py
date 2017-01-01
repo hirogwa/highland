@@ -6,7 +6,7 @@ import datetime
 import jwt
 import pytz
 
-from highland import app, exception
+from highland import exception
 
 
 class CognitoAuth:

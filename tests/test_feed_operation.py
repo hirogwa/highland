@@ -1,36 +1,36 @@
 import unittest
 from feedgen.feed import FeedGenerator
 from feedgen.ext.podcast import PodcastExtension
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 from highland import feed_operation, show_operation, episode_operation,\
-    media_storage, audio_operation, image_operation, settings
+    media_storage, audio_operation, image_operation, settings, common
 
 
 class TestFeedOperation(unittest.TestCase):
-    @unittest.mock.patch.object(image_operation, 'get_image_url')
-    @unittest.mock.patch.object(image_operation, 'get_image_or_assert')
-    @unittest.mock.patch.object(feed_operation, '_format_seconds')
-    @unittest.mock.patch.object(audio_operation, 'get_audio_url')
-    @unittest.mock.patch.object(audio_operation, 'get_audio_or_assert')
-    @unittest.mock.patch.object(FeedGenerator, 'add_entry')
-    @unittest.mock.patch.object(FeedGenerator, 'rss_str')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_image')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_summary')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_subtitle')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_owner')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_explicit')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_category')
-    @unittest.mock.patch.object(PodcastExtension, 'itunes_author')
-    @unittest.mock.patch.object(FeedGenerator, 'lastBuildDate')
-    @unittest.mock.patch.object(FeedGenerator, 'language')
-    @unittest.mock.patch.object(FeedGenerator, 'link')
-    @unittest.mock.patch.object(FeedGenerator, 'description')
-    @unittest.mock.patch.object(FeedGenerator, 'title')
-    @unittest.mock.patch.object(media_storage, 'upload')
-    @unittest.mock.patch.object(episode_operation, 'get_episode_url')
-    @unittest.mock.patch.object(episode_operation, 'load_public')
-    @unittest.mock.patch.object(show_operation, 'get_show_url')
-    @unittest.mock.patch.object(show_operation, 'get_show_or_assert')
+    @patch.object(image_operation, 'get_image_url')
+    @patch.object(image_operation, 'get_image_or_assert')
+    @patch.object(feed_operation, '_format_seconds')
+    @patch.object(audio_operation, 'get_audio_url')
+    @patch.object(audio_operation, 'get_audio_or_assert')
+    @patch.object(FeedGenerator, 'add_entry')
+    @patch.object(FeedGenerator, 'rss_str')
+    @patch.object(PodcastExtension, 'itunes_image')
+    @patch.object(PodcastExtension, 'itunes_summary')
+    @patch.object(PodcastExtension, 'itunes_subtitle')
+    @patch.object(PodcastExtension, 'itunes_owner')
+    @patch.object(PodcastExtension, 'itunes_explicit')
+    @patch.object(PodcastExtension, 'itunes_category')
+    @patch.object(PodcastExtension, 'itunes_author')
+    @patch.object(FeedGenerator, 'lastBuildDate')
+    @patch.object(FeedGenerator, 'language')
+    @patch.object(FeedGenerator, 'link')
+    @patch.object(FeedGenerator, 'description')
+    @patch.object(FeedGenerator, 'title')
+    @patch.object(media_storage, 'upload')
+    @patch.object(episode_operation, 'get_episode_url')
+    @patch.object(episode_operation, 'load_public')
+    @patch.object(show_operation, 'get_show_url')
+    @patch.object(show_operation, 'get_show_or_assert')
     def test_update(
             self,
             mocked_get_show, mocked_get_show_url,
@@ -51,6 +51,7 @@ class TestFeedOperation(unittest.TestCase):
         mocked_show_url = MagicMock()
         mocked_episode = MagicMock()
         mocked_episode.image_id = 2
+        mocked_episode.description = 'some description'
         image_url_episode = 'some_url_episode_image'
         mocked_episode_url = MagicMock()
         mocked_content = MagicMock()
@@ -135,6 +136,18 @@ class TestFeedOperation(unittest.TestCase):
             mocked_content, settings.S3_BUCKET_FEED, mocked_show.alias,
             feed_operation.FEED_FOLDER_RSS,
             ContentType=feed_operation.FEED_CONTENT_TYPE)
+
+    @patch.object(common, 'require_true')
+    def test_get_feed_url(self, mocked_require_true):
+        mocked_user, mocked_show = MagicMock(), MagicMock()
+        mocked_show.alias = 'somealias'
+
+        result = feed_operation.get_feed_url(mocked_user, mocked_show)
+
+        self.assertEqual(1, mocked_require_true.call_count)
+        self.assertEqual(
+            '{}/{}/somealias'.format(
+                settings.HOST_FEED, feed_operation.FEED_FOLDER_RSS), result)
 
     def test_format_seconds(self):
         self.assertEqual('0:00:09', feed_operation._format_seconds(9))

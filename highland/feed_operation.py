@@ -59,8 +59,8 @@ def generate(user, show):
 
 def get_feed_url(user, show):
     common.require_true(user.id == show.owner_user_id)
-    return urllib.parse.urljoin(settings.HOST_FEED,
-                                '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
+    return urllib.parse.urljoin(
+        settings.HOST_FEED, '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
 
 
 def _format_seconds(sec):

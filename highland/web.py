@@ -73,16 +73,9 @@ def show():
         if 'POST' == request.method:
             args = request.get_json()
             (title, description, subtitle, language, author, category,
-             explicit, image_id, alias) = (
-                 args.get('title'),
-                 args.get('description'),
-                 args.get('subtitle'),
-                 args.get('language'),
-                 args.get('author'),
-                 args.get('category'),
-                 args.get('explicit'),
-                 args.get('image_id'),
-                 args.get('alias'))
+             explicit, image_id, alias) = _get_args(
+                 args, 'title', 'description', 'subtitle', 'language',
+                 'author', 'category', 'explicit', 'image_id', 'alias')
             common.require_true(title, 'title required')
             common.require_true(description, 'description required')
             common.require_true(subtitle, 'subtitle required')
@@ -100,16 +93,9 @@ def show():
         if 'PUT' == request.method:
             args = request.get_json()
             (id, title, description, subtitle, language, author, category,
-             explicit, image_id) = (
-                 args.get('id'),
-                 args.get('title'),
-                 args.get('description'),
-                 args.get('subtitle'),
-                 args.get('language'),
-                 args.get('author'),
-                 args.get('category'),
-                 args.get('explicit'),
-                 args.get('image_id'))
+             explicit, image_id) = _get_args(
+                 args, 'id', 'title', 'description', 'subtitle', 'language',
+                 'author', 'category', 'explicit', 'image_id')
             common.require_true(id, 'id required')
             common.require_true(title, 'title required')
             common.require_true(description, 'description required')
@@ -139,17 +125,10 @@ def episode():
         if 'POST' == request.method:
             args = request.get_json()
             (show_id, draft_status, alias, scheduled_datetime, title, subtitle,
-             description, audio_id, explicit, image_id) = (
-                 args.get('show_id'),
-                 args.get('draft_status'),
-                 args.get('alias'),
-                 args.get('scheduled_datetime'),
-                 args.get('title'),
-                 args.get('subtitle'),
-                 args.get('description'),
-                 args.get('audio_id'),
-                 args.get('explicit'),
-                 args.get('image_id'))
+             description, audio_id, explicit, image_id) = _get_args(
+                 args, 'show_id', 'draft_status', 'alias',
+                 'scheduled_datetime', 'title', 'subtitle', 'description',
+                 'audio_id', 'explicit', 'image_id')
 
             common.require_true(show_id, 'show id required')
             common.require_true(draft_status, 'draft status required')
@@ -165,17 +144,10 @@ def episode():
         if 'PUT' == request.method:
             args = request.get_json()
             (id, draft_status, alias, scheduled_datetime, title,
-             subtitle, description, audio_id, explicit, image_id) = (
-                 args.get('id'),
-                 args.get('draft_status'),
-                 args.get('alias'),
-                 args.get('scheduled_datetime'),
-                 args.get('title'),
-                 args.get('subtitle'),
-                 args.get('description'),
-                 args.get('audio_id'),
-                 args.get('explicit'),
-                 args.get('image_id'))
+             subtitle, description, audio_id, explicit, image_id) = _get_args(
+                 args, 'id', 'draft_status', 'alias', 'scheduled_datetime',
+                 'title', 'subtitle', 'description', 'audio_id', 'explicit',
+                 'image_id')
 
             common.require_true(id, 'id required')
             common.require_true(draft_status, 'draft status required')
@@ -491,3 +463,7 @@ def logout():
         return jsonify(result='success')
     if request.method == 'GET':
         return login_redirect()
+
+
+def _get_args(param, *names):
+    return [param.get(name) for name in names]
