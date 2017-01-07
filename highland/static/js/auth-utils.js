@@ -1,14 +1,24 @@
-import {
-    CognitoAccessToken, CognitoIdToken, CognitoRefreshToken,
-    CognitoUserPool, CognitoUserSession
-} from 'amazon-cognito-identity-js';
+import AWS from 'aws-sdk';
 
 class AuthenticatedRequest {
-    constructor(cognitoUserPoolId, cognitoClientId) {
-        this.userPool = new CognitoUserPool({
-            UserPoolId: cognitoUserPoolId,
-            ClientId: cognitoClientId
-        });
+    constructor(identity, mediaBucket) {
+        this.identity = identity;
+        this.identity.init()
+            .then(() => {
+                AWS.config.update({
+                    credentials: this.identity.getIdentityCredentials()
+                });
+                this.s3 = new AWS.S3({
+                    params: {
+                        Bucket: mediaBucket
+                    }
+                });
+            })
+            .catch(e => console.error(e));
+    }
+
+    postMedia(data) {
+        return this.promiseRequest(this.makePostMediaRequest(data));
     }
 
     get(url) {
@@ -29,6 +39,24 @@ class AuthenticatedRequest {
 
     delete(url, data) {
         return this.promiseRequest(this.makeDeleteRequest(url, data));
+    }
+
+    makePostMediaRequest(data) {
+        return (resolve, reject) => {
+            this.s3.upload({
+                // TODO name will be UUID (from server)
+                Key: `${this.identity.identityId}/${data.name}`,
+                Body: data,
+                ACL: 'public-read'
+            }, function(err, data) {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.info(data);
+                    resolve(data);
+                }
+            });
+        };
     }
 
     makeGetRequest(url) {
@@ -96,35 +124,14 @@ class AuthenticatedRequest {
     promiseRequest(makeRequest) {
         const self = this;
         return new Promise(function(resolve, reject) {
-            self.establishSession()
+            self.identity.establishSession()
                 .then(() => makeRequest(resolve, reject))
                 .catch(() => reject());
         });
     }
 
-    establishSession() {
-        const cognitoUser = this.userPool.getCurrentUser();
-        const currentSession = this._cachedSession(cognitoUser);
-        if (currentSession && currentSession.isValid()) {
-            return Promise.resolve(currentSession);
-        } else {
-            return new Promise(function(resolve, reject) {
-                cognitoUser.getSession(function(err, session) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        postAccessToken(session.getAccessToken().getJwtToken())
-                            .then((p) => resolve(p))
-                            .catch((p) => reject(p));
-                    }
-                });
-            });
-        }
-    }
-
     logout() {
-        const cognitoUser = this.userPool.getCurrentUser();
-        cognitoUser.signOut();
+        this.identity.logout();
 
         const xhr = new XMLHttpRequest();
         xhr.open('post', '/logout', true);
@@ -139,57 +146,8 @@ class AuthenticatedRequest {
             xhr.send();
         });
     }
-
-    _cachedSession(cognitoUser) {
-        const keyPrefix = "CognitoIdentityServiceProvider."
-                  + `${this.userPool.getClientId()}.${cognitoUser.getUsername()}`;
-        const idTokenKey = `${keyPrefix}.idToken`;
-        const accessTokenKey = `${keyPrefix}.accessToken`;
-        const refreshTokenKey = `${keyPrefix}.refreshToken`;
-
-        const storage = window.localStorage;
-        if (storage.getItem(idTokenKey)) {
-            return new CognitoUserSession({
-                IdToken: new CognitoIdToken({
-                    IdToken: storage.getItem(idTokenKey)
-                }),
-                AccessToken: new CognitoAccessToken({
-                    AccessToken: storage.getItem(accessTokenKey)
-                }),
-                RefreshToken: new CognitoRefreshToken({
-                    RefreshToken: storage.getItem(refreshTokenKey)
-                })
-            });
-        } else {
-            return undefined;
-        }
-
-    }
 }
-
-function postAccessToken(accessToken) {
-    const xhr = new XMLHttpRequest();
-    const url = '/access_token';
-    xhr.open('post', url, true);
-    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    return new Promise(function(resolve, reject) {
-        xhr.onload = function() {
-            if (this.status == 200) {
-                const data = JSON.parse(this.response);
-                resolve(data);
-            } else {
-                console.error(this.statusText);
-                reject(this.statusText);
-            }
-        };
-        xhr.send(
-            JSON.stringify({access_token: accessToken})
-        );
-    });
-}
-
 
 module.exports = {
-    AuthenticatedRequest: AuthenticatedRequest,
-    postAccessToken: postAccessToken
+    AuthenticatedRequest: AuthenticatedRequest
 };

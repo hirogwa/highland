@@ -8,8 +8,11 @@
 <div class="mainContainer container"></div>
 <script>
   const showId = '{{ show_id }}';
+  const mediaBucket = '{{ s3_media_bucket }}';
   const cognitoUserPoolId = '{{ cognito_user_pool_id }}';
   const cognitoClientId = '{{ cognito_client_id }}';
+  const cognitoIdentityPoolId = '{{ cognito_identity_pool_id }}';
+  const cognitoIdentityProvider = '{{ cognito_identity_provider }}';
 </script>
 <script src="/static/js/bundled-dashboard.js" type="text/javascript"></script>
 {% endblock %}

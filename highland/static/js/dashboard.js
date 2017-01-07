@@ -12,6 +12,7 @@ import { Episode } from './episode.js';
 import { Show } from './show.js';
 import { ResetPassword } from './reset-password.js';
 import { AuthenticatedRequest } from './auth-utils.js';
+import { Identity } from './identity';
 
 const App = React.createClass({
     logout: function() {
@@ -43,8 +44,9 @@ const App = React.createClass({
 });
 
 const authenticatedRequest = new AuthenticatedRequest(
-    cognitoUserPoolId, cognitoClientId
-);
+    new Identity(cognitoUserPoolId, cognitoClientId,
+                 cognitoIdentityPoolId, cognitoIdentityProvider),
+    mediaBucket);
 
 ReactDOM.render(
     <Router history={hashHistory}>

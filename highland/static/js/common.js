@@ -100,9 +100,7 @@ class Uploader extends React.Component {
     }
 
     handleSubmit(){
-        const formData = new FormData();
-        formData.append('file', this.state.file);
-        return this.props.authenticatedRequest.postForm(this.props.url, formData);
+        return this.props.authenticatedRequest.postMedia(this.state.file);
     }
 
     render() {
@@ -111,7 +109,7 @@ class Uploader extends React.Component {
               <FormGroup controlId="formControlsFile">
                 <ControlLabel>{this.props.label}</ControlLabel>
                 <FormControl type="file" onChange={this.handleFileChange} />
-                <Button type="submit" onClick={this.handleSubmit}
+                <Button onClick={this.handleSubmit}
                         disabled={!this.state.file}>
                   Upload
                 </Button>
