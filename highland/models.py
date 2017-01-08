@@ -178,6 +178,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     name = db.Column(db.String(100))
+    identity_id = db.Column(db.String(60))
     update_datetime = db.Column(
         db.DateTime(timezone=True),
         onupdate=lambda x: datetime.datetime.now(datetime.timezone.utc))
@@ -190,7 +191,7 @@ class User(db.Model):
         self.name = name
 
     def __iter__(self):
-        for key in ['id', 'username', 'name']:
+        for key in ['id', 'username', 'name', 'identity_id']:
             yield(key, getattr(self, key))
         yield('update_datetime', str(self.update_datetime))
         yield('create_datetime', str(self.create_datetime))

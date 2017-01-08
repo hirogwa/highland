@@ -417,7 +417,7 @@ def dashboard_page():
     return render_template(
         'dashboard/dashboard.html',
         show_id=show.id,
-        s3_media_bucket=settings.S3_MEDIA_BUCKET,
+        s3_media_bucket=settings.S3_BUCKET_MEDIA,
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
         cognito_client_id=settings.COGNITO_CLIENT_ID,
         cognito_identity_pool_id=settings.COGNITO_IDENTITY_POOL_ID,

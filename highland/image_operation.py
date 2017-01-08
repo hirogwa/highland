@@ -43,8 +43,9 @@ def get_image_or_assert(user, image_id):
 
 def get_image_url(user, image):
     access_allowed_or_raise(user.id, image)
-    return urllib.parse.urljoin(settings.HOST_IMAGE,
-                                '{}/{}'.format(user.username, image.guid))
+    return urllib.parse.urljoin(
+        settings.HOST_MEDIA,
+        '{}/image/{}'.format(urllib.parse.quote(user.identity_id), image.guid))
 
 
 def access_allowed_or_raise(user_id, image):
