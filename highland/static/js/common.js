@@ -94,13 +94,19 @@ class Uploader extends React.Component {
     }
 
     handleFileChange(event) {
-        this.setState({
-            file: event.target.files[0]
-        });
+        let file = event.target.files[0];
+        getMimeType(file)
+            .then(t => {
+                this.setState({
+                    file: file,
+                    type: t
+                });
+            })
+            .catch(e => console.error(e));
     }
 
     handleSubmit(){
-        return this.props.authenticatedRequest.postMedia(this.state.file);
+        return this.props.handleSubmit(this.state.file, this.state.type);
     }
 
     render() {
@@ -117,6 +123,31 @@ class Uploader extends React.Component {
             </Form>
         );
     }
+}
+
+const HEADER_TO_MIME = {
+    '89504e': 'image/png',
+    'ffd8ff': 'image/jpeg',
+    '494433': 'audio/mpeg'
+};
+
+function getMimeType(file) {
+    return new Promise((resolve, reject) => {
+        let reader = new window.FileReader();
+        reader.onloadend = function(e) {
+            const arr = new Uint8Array(e.target.result).subarray(0, 3);
+            let header = '';
+            arr.forEach(x => header += x.toString(16));
+
+            let result = HEADER_TO_MIME[header];
+            if (!result) {
+                console.warn('MIME not identified. Naively falling back to type info from file object');
+                result = file.type;
+            }
+            resolve(result);
+        };
+        reader.readAsArrayBuffer(file);
+    });
 }
 
 class Deleter extends React.Component {

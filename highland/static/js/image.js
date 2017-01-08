@@ -100,12 +100,28 @@ var App = React.createClass({
             .catch((args) => console.error(args));
     },
 
+    handleUpload(file, type) {
+        const authReq = this.props.route.authenticatedRequest;
+        const p = new Promise((resolve, reject) => {
+            authReq.post('/image', {
+                filename: file.name,
+                filetype: type
+            }).then((response) => {
+                let image = response.image;
+                authReq.postMedia(file, `image/${image.guid}`, type)
+                    .then(x => resolve(x))
+                    .catch(e => reject(e));
+            }).catch(e => reject(e));
+        });
+
+        p.catch(e => console.error(e));
+    },
+
     render: function() {
         return (
             <div>
               <Uploader label="New Image"
-                        url="/image"
-                        authenticatedRequest={this.props.route.authenticatedRequest} />
+                        handleSubmit={this.handleUpload} />
               <ImageList images={this.state.images}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectImage} />

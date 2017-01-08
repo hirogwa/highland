@@ -244,8 +244,10 @@ def get_image(image_id):
 def image():
     try:
         if 'POST' == request.method:
+            file_name, file_type = _get_args(
+                request.get_json(), 'filename', 'filetype')
             image = image_operation.create(
-                auth.authenticated_user, request.files['file'])
+                auth.authenticated_user, file_name, file_type)
             return jsonify(image=dict(image), result='success'), 201
         if 'GET' == request.method:
             user = auth.authenticated_user

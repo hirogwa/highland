@@ -1,13 +1,11 @@
-import imghdr
-import os
 import urllib.parse
 import uuid
-from highland import models, media_storage, settings, app, exception, common
+from highland import models, media_storage, settings, app, exception
 
 
-def create(user, image_file):
-    guid, type = store_image_data(user, image_file)
-    image = models.Image(user, image_file.filename, guid, type)
+def create(user, file_name, file_type):
+    guid = uuid.uuid4().hex
+    image = models.Image(user, file_name, guid, file_type)
     models.db.session.add(image)
     models.db.session.commit()
     return image
@@ -47,28 +45,6 @@ def get_image_url(user, image):
     access_allowed_or_raise(user.id, image)
     return urllib.parse.urljoin(settings.HOST_IMAGE,
                                 '{}/{}'.format(user.username, image.guid))
-
-
-def store_image_data(user, image_file):
-    temp_path_dir = user.username
-    if not os.path.exists(temp_path_dir):
-        os.mkdir(temp_path_dir)
-
-    guid = uuid.uuid4().hex
-    temp_path = os.path.join(temp_path_dir, guid)
-    image_file.save(temp_path)
-
-    type = imghdr.what(temp_path)
-    common.require_true(
-        type in ['jpeg', 'png'], 'image type not supported:{}'.format(type))
-
-    image_data = open(temp_path, 'rb')
-    media_storage.upload(
-        image_data, settings.S3_BUCKET_IMAGE, guid,
-        user.username, ContentType='image/{}'.format(type))
-
-    os.remove(temp_path)
-    return guid, type
 
 
 def access_allowed_or_raise(user_id, image):
