@@ -16,7 +16,7 @@ def delete(user, audio_ids):
         audio = get_audio_or_assert(user, id)
         try:
             media_storage.delete(
-                _get_audio_key(user, audio), settings.S3_BUCKET_MEDIA)
+                _get_audio_key(user, audio), settings.S3_BUCKET_AUDIO)
         except:
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
@@ -67,7 +67,7 @@ def get_audio_or_assert(user, audio_id):
 def get_audio_url(user, audio):
     access_allowed_or_raise(user.id, audio)
     return urllib.parse.urljoin(
-        settings.HOST_MEDIA, urllib.parse.quote(_get_audio_key(user, audio)))
+        settings.HOST_AUDIO, urllib.parse.quote(_get_audio_key(user, audio)))
 
 
 def access_allowed_or_raise(user_id, audio):
@@ -78,4 +78,4 @@ def access_allowed_or_raise(user_id, audio):
 
 
 def _get_audio_key(user, audio):
-    return '{}/audio/{}'.format(user.identity_id, audio.guid)
+    return '{}/{}'.format(user.identity_id, audio.guid)

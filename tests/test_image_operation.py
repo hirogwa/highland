@@ -1,26 +1,29 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from highland import media_storage, image_operation, models, settings, \
-    exception, common
+    exception
 
 
 class TestImageOperation(unittest.TestCase):
     @patch.object(models.db.session, 'commit')
     @patch.object(models.db.session, 'add')
     @patch('highland.models.Image')
-    @patch.object(image_operation, 'store_image_data')
-    def test_create(self, mocked_store, mocked_image_class, mocked_add,
-                    mocked_commit):
-        mocked_user, mocked_image_file = MagicMock(), MagicMock()
-        mocked_store.return_value = 'some guid', 'jpeg'
+    @patch('uuid.uuid4')
+    def test_create(
+            self, mocked_uuid4, mocked_image_class, mocked_add, mocked_commit):
+        mocked_user = MagicMock()
         mocked_image = MagicMock()
         mocked_image_class.return_value = mocked_image
 
-        result = image_operation.create(mocked_user, mocked_image_file)
+        mocked_uuid = MagicMock()
+        mocked_uuid4.return_value = mocked_uuid
 
-        mocked_store.assert_called_with(mocked_user, mocked_image_file)
+        result = image_operation.create(mocked_user, 'file.jpg', 'image/jpeg')
+
         mocked_add.assert_called_with(mocked_image)
         mocked_commit.assert_called_with()
+        mocked_image_class.assert_called_with(
+            mocked_user, 'file.jpg', mocked_uuid.hex, 'image/jpeg')
         self.assertEqual(mocked_image, result)
 
     @patch.object(models.db.session, 'commit')
@@ -31,12 +34,13 @@ class TestImageOperation(unittest.TestCase):
                     mocked_db_commit):
         mocked_user, mocked_image_01, mocked_image_02 = \
             MagicMock(), MagicMock(), MagicMock()
+        mocked_user.identity_id = 'identity_id'
         mocked_image_02.guid = 'non-existing'
         mocked_get.side_effect = \
             lambda u, i: mocked_image_01 if i == 1 else mocked_image_02
 
-        def f(guid, bucket, username):
-            if guid == 'non-existing':
+        def f(key, bucket, folder=''):
+            if key == 'identity_id/non-existing':
                 raise ValueError()
             else:
                 return mocked_image_01
@@ -96,46 +100,14 @@ class TestImageOperation(unittest.TestCase):
     @patch.object(image_operation, 'access_allowed_or_raise')
     def test_get_image_url(self, mocked_access):
         mocked_user, mocked_image = MagicMock(), MagicMock()
-        mocked_user.username = 'username'
+        mocked_user.identity_id = 'identity_id'
         mocked_image.guid = 'someguid'
 
         result = image_operation.get_image_url(mocked_user, mocked_image)
 
         mocked_access.assert_called_with(mocked_user.id, mocked_image)
         self.assertEqual('{}/{}'.format(
-            settings.HOST_IMAGE, 'username/someguid'), result)
-
-    @patch('os.remove')
-    @patch.object(media_storage, 'upload')
-    @patch('builtins.open')
-    @patch.object(common, 'require_true')
-    @patch.object(image_operation, 'imghdr')
-    @patch('uuid.uuid4')
-    @patch('os.mkdir')
-    @patch('os.path.exists')
-    def test_store_image_data(
-            self, mocked_exists, mocked_mkdir, mocked_uuid4, mocked_imghdr,
-            mocked_require_true, mocked_open, mocked_upload, mocked_remove):
-        mocked_user, mocked_file = MagicMock(), MagicMock()
-        mocked_user.username = 'username'
-        mocked_exists.return_value = False
-        mocked_uuid = MagicMock()
-        mocked_uuid.hex = 'someguid'
-        mocked_uuid4.return_value = mocked_uuid
-        mocked_imghdr.what.return_value = 'sometype'
-
-        result = image_operation.store_image_data(mocked_user, mocked_file)
-
-        mocked_exists.assert_called_with(mocked_user.username)
-        mocked_mkdir.assert_called_with(mocked_user.username)
-        mocked_uuid4.assert_called_with()
-        mocked_file.save.assert_called_with('username/someguid')
-        mocked_imghdr.what.assert_called_with('username/someguid')
-        self.assertTrue(mocked_require_true.called)
-        self.assertEqual(1, mocked_open.call_count)
-        self.assertEqual(1, mocked_upload.call_count)
-        mocked_remove.assert_called_with('username/someguid')
-        self.assertEqual(('someguid', 'sometype'), result)
+            settings.HOST_IMAGE, 'identity_id/someguid'), result)
 
     def test_access_allowed_or_raise(self):
         mocked_image = MagicMock()

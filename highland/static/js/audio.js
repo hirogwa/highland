@@ -130,9 +130,9 @@ var App = React.createClass({
                 duration: second,
                 length: file.size
             }))
-            .then(response => authReq.postMedia(
-                file, `audio/${response.audio.guid}`, type))
-            .catch();
+            .then(response => authReq.postAudio(
+                file, response.audio.guid, type))
+            .catch(e => console.error(e));
     },
 
     render: function() {

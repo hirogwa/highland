@@ -1,16 +1,21 @@
 import AWS from 'aws-sdk';
 
 class AuthenticatedRequest {
-    constructor(identity, mediaBucket) {
+    constructor(identity, imageBucket, audioBucket) {
         this.identity = identity;
         this.identity.init()
             .then(() => {
                 AWS.config.update({
                     credentials: this.identity.getIdentityCredentials()
                 });
-                this.s3 = new AWS.S3({
+                this.s3Image = new AWS.S3({
                     params: {
-                        Bucket: mediaBucket
+                        Bucket: imageBucket
+                    }
+                });
+                this.s3Audio = new AWS.S3({
+                    params: {
+                        Bucket: audioBucket
                     }
                 });
             })
@@ -19,10 +24,20 @@ class AuthenticatedRequest {
 
     /**
      * @param name : key under the dedicated "directory".
-     * 'image/{guid}' or 'audio/{guid}'.
      */
-    postMedia(data, name, type) {
-        return this.promiseRequest(this.makePostMediaRequest(data, name, type));
+    postImage(data, name, type) {
+        return this.postMedia(this.s3Image, data, name, type);
+    }
+
+    /**
+     * @param name : key under the dedicated "directory".
+     */
+    postAudio(data, name, type) {
+        return this.postMedia(this.s3Audio, data, name, type);
+    }
+
+    postMedia(s3, data, name, type) {
+        return this.promiseRequest(this.makePostMediaRequest(s3, data, name, type));
     }
 
     get(url) {
@@ -41,9 +56,9 @@ class AuthenticatedRequest {
         return this.promiseRequest(this.makeDeleteRequest(url, data));
     }
 
-    makePostMediaRequest(data, name, type) {
+    makePostMediaRequest(s3, data, name, type) {
         return (resolve, reject) => {
-            this.s3.upload({
+            s3.upload({
                 Key: `${this.identity.identityId}/${name}`,
                 Body: data,
                 ACL: 'public-read',

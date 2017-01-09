@@ -123,12 +123,13 @@ class TestImage(unittest.TestCase):
 
 class TestUser(unittest.TestCase):
     def test_iter(self):
-        user = models.User('name', 'Ultraman Taro')
+        user = models.User('name', 'Ultraman Taro', 'some_identity_id')
         user_d = dict(user)
 
-        self.assertEqual(5, len(user_d))
+        self.assertEqual(6, len(user_d))
         self.assertEqual(user.id, user_d.get('id'))
         self.assertEqual(user.username, user_d.get('username'))
         self.assertEqual(user.name, user_d.get('name'))
+        self.assertEqual(user.identity_id, user_d.get('identity_id'))
         self.assertIsNotNone(user_d.get('update_datetime'))
         self.assertIsNotNone(user_d.get('create_datetime'))

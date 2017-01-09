@@ -46,7 +46,7 @@ const App = React.createClass({
 const authenticatedRequest = new AuthenticatedRequest(
     new Identity(cognitoUserPoolId, cognitoClientId,
                  cognitoIdentityPoolId, cognitoIdentityProvider),
-    mediaBucket);
+    imageBucket, audioBucket);
 
 ReactDOM.render(
     <Router history={hashHistory}>

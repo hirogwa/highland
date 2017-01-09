@@ -186,9 +186,10 @@ class User(db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, username, name):
+    def __init__(self, username, name, identity_id):
         self.username = username
         self.name = name
+        self.identity_id = identity_id
 
     def __iter__(self):
         for key in ['id', 'username', 'name', 'identity_id']:

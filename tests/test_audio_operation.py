@@ -1,4 +1,3 @@
-import uuid
 import unittest
 from unittest.mock import patch, MagicMock
 from highland import audio_operation, models, media_storage, settings, \
@@ -8,26 +7,23 @@ from highland import audio_operation, models, media_storage, settings, \
 class TestAudioOperation(unittest.TestCase):
     @patch.object(models.db.session, 'commit')
     @patch.object(models.db.session, 'add')
-    @patch.object(audio_operation, 'store_audio_data')
-    def test_create(self, mocked_store, mocked_add, mocked_commit):
-        mocked_user, mocked_audio_file = MagicMock(), MagicMock()
-        guid = uuid.uuid4().hex
-        duration = 1200
-        length = 19000000
-        type = 'audio/mpeg'
-        mocked_store.return_value = guid, duration, length, type
+    @patch('highland.models.Audio')
+    @patch('uuid.uuid4')
+    def test_create(
+            self, mocked_uuid4, mocked_audio_class, mocked_add, mocked_commit):
+        mocked_user, mocked_audio, mocked_uuid = \
+            MagicMock(), MagicMock(), MagicMock()
+        mocked_uuid4.return_value = mocked_uuid
+        mocked_audio_class.return_value = mocked_audio
 
-        result = audio_operation.create(mocked_user, mocked_audio_file)
+        result = audio_operation.create(
+            mocked_user, 'some.mp3', 120, 6400, 'audio/mpeg')
 
-        mocked_store.assert_called_with(mocked_user, mocked_audio_file)
         self.assertEqual(1, mocked_add.call_count)
         mocked_commit.assert_called_with()
-        self.assertEqual(mocked_user.id, result.owner_user_id)
-        self.assertEqual(mocked_audio_file.filename, result.filename)
-        self.assertEqual(duration, result.duration)
-        self.assertEqual(length, result.length)
-        self.assertEqual(type, result.type)
-        self.assertEqual(guid, result.guid)
+        mocked_audio_class.assert_called_with(
+            mocked_user, 'some.mp3', 120, 6400, 'audio/mpeg', mocked_uuid.hex)
+        self.assertEqual(mocked_audio, result)
 
     @patch.object(models.db.session, 'commit')
     @patch.object(models.db.session, 'delete')
@@ -36,6 +32,8 @@ class TestAudioOperation(unittest.TestCase):
     def test_delete(self, mocked_get_audio, mocked_media_delete,
                     mocked_delete, mocked_commit):
         mocked_audio, mocked_user = MagicMock(), MagicMock()
+        mocked_user.identity_id = 'identity_id'
+        mocked_audio.guid = 'someguid'
         audio_ids = [2]
         mocked_get_audio.return_value = mocked_audio
 
@@ -43,7 +41,7 @@ class TestAudioOperation(unittest.TestCase):
 
         mocked_get_audio.assert_called_with(mocked_user, audio_ids[0])
         mocked_media_delete.assert_called_with(
-            mocked_audio.guid, settings.S3_BUCKET_AUDIO, mocked_user.username)
+            'identity_id/someguid', settings.S3_BUCKET_AUDIO)
         mocked_delete.assert_called_with(mocked_audio)
         mocked_commit.assert_called_with()
         self.assertTrue(result)
@@ -139,46 +137,14 @@ class TestAudioOperation(unittest.TestCase):
     @patch.object(audio_operation, 'access_allowed_or_raise')
     def test_get_audio_url(self, mocked_access):
         mocked_user, mocked_audio = MagicMock(), MagicMock()
-        mocked_user.username = 'somename'
+        mocked_user.identity_id = 'identity_id'
         mocked_audio.guid = 'someguid'
 
         result = audio_operation.get_audio_url(mocked_user, mocked_audio)
 
         mocked_access.assert_called_with(mocked_user.id, mocked_audio)
         self.assertEqual(
-            '{}/somename/someguid'.format(settings.HOST_AUDIO), result)
-
-    @patch('os.remove')
-    @patch('os.stat')
-    @patch('highland.audio_operation.MP3')
-    @patch.object(media_storage, 'upload')
-    @patch.object(uuid, 'uuid4')
-    @patch('os.mkdir')
-    @patch('os.path.exists')
-    @patch('builtins.open')
-    def test_store_audio_data(
-            self, mocked_open, mocked_exists, mocked_mkdir, mocked_uuid4,
-            mocked_upload, mocked_mp3, mocked_stat, mocked_remove):
-        mocked_user, mocked_file = MagicMock(), MagicMock()
-        mocked_user.username = 'username'
-        mocked_exists.return_value = False
-        mocked_uuid = MagicMock()
-        mocked_uuid.hex = 'someguid'
-        mocked_uuid4.return_value = mocked_uuid
-
-        result = audio_operation.store_audio_data(mocked_user, mocked_file)
-
-        mocked_exists.assert_called_with('username')
-        mocked_mkdir.assert_called_with('username')
-        mocked_uuid4.assert_called_with()
-        mocked_file.save.assert_called_with('username/someguid')
-        self.assertEqual(1, mocked_open.call_count)
-        self.assertEqual(1, mocked_upload.call_count)
-        mocked_mp3.assert_called_with('username/someguid')
-        mocked_stat.assert_called_with('username/someguid')
-        mocked_remove.assert_called_with('username/someguid')
-        self.assertEqual('someguid', result[0])
-        self.assertEqual('audio/mpeg', result[3])
+            '{}/identity_id/someguid'.format(settings.HOST_AUDIO), result)
 
     def test_access_allowed_or_raise(self):
         mocked_audio = MagicMock()

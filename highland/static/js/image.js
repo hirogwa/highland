@@ -105,11 +105,10 @@ var App = React.createClass({
         return authReq.post('/image', {
             filename: file.name,
             filetype: type
-        }).then((response) => {
-            let image = response.image;
-            authReq.postMedia(file, `image/${image.guid}`, type)
-                .then(result => result);
-        }).catch(e => console.error(e));
+        })
+            .then(response => authReq.postImage(
+                file, response.image.guid, type))
+            .catch(e => console.error(e));
     },
 
     render: function() {

@@ -16,7 +16,7 @@ def delete(user, image_ids):
         image = get_image_or_assert(user, id)
         try:
             media_storage.delete(
-                _get_image_key(user, image), settings.S3_BUCKET_MEDIA)
+                _get_image_key(user, image), settings.S3_BUCKET_IMAGE)
         except:
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
@@ -44,7 +44,7 @@ def get_image_or_assert(user, image_id):
 def get_image_url(user, image):
     access_allowed_or_raise(user.id, image)
     return urllib.parse.urljoin(
-        settings.HOST_MEDIA, urllib.parse.quote(_get_image_key(user, image)))
+        settings.HOST_IMAGE, urllib.parse.quote(_get_image_key(user, image)))
 
 
 def access_allowed_or_raise(user_id, image):
@@ -55,4 +55,4 @@ def access_allowed_or_raise(user_id, image):
 
 
 def _get_image_key(user, image):
-    return '{}/image/{}'.format(user.identity_id, image.guid)
+    return '{}/{}'.format(user.identity_id, image.guid)
