@@ -1,14 +1,11 @@
-import os
 import uuid
 import urllib.parse
-from mutagen.mp3 import MP3
 from highland import models, media_storage, settings, app, exception
 
 
-def create(user, audio_file):
-    guid, duration, length, type = store_audio_data(user, audio_file)
-    audio = models.Audio(
-        user, audio_file.filename, duration, length, type, guid)
+def create(user, file_name, duration, length, file_type):
+    guid = uuid.uuid4().hex
+    audio = models.Audio(user, file_name, duration, length, file_type, guid)
     models.db.session.add(audio)
     models.db.session.commit()
     return audio
@@ -19,7 +16,7 @@ def delete(user, audio_ids):
         audio = get_audio_or_assert(user, id)
         try:
             media_storage.delete(
-                audio.guid, settings.S3_BUCKET_AUDIO, user.username)
+                _get_audio_key(user, audio), settings.S3_BUCKET_MEDIA)
         except:
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
@@ -69,27 +66,8 @@ def get_audio_or_assert(user, audio_id):
 
 def get_audio_url(user, audio):
     access_allowed_or_raise(user.id, audio)
-    return urllib.parse.urljoin(settings.HOST_AUDIO,
-                                '{}/{}'.format(user.username, audio.guid))
-
-
-def store_audio_data(user, audio_file):
-    temp_path_dir = user.username
-    if not os.path.exists(temp_path_dir):
-        os.mkdir(temp_path_dir)
-
-    guid = uuid.uuid4().hex
-    temp_path = os.path.join(temp_path_dir, guid)
-    audio_file.save(temp_path)
-
-    type = 'audio/mpeg'
-    audio_data = open(temp_path, 'rb')
-    media_storage.upload(audio_data, settings.S3_BUCKET_AUDIO, guid,
-                         user.username, ContentType=type)
-    d, l = MP3(temp_path).info.length, os.stat(temp_path).st_size
-
-    os.remove(temp_path)
-    return guid, d, l, type
+    return urllib.parse.urljoin(
+        settings.HOST_MEDIA, urllib.parse.quote(_get_audio_key(user, audio)))
 
 
 def access_allowed_or_raise(user_id, audio):
@@ -97,3 +75,7 @@ def access_allowed_or_raise(user_id, audio):
         raise exception.AccessNotAllowedError(
             'user:{}, audio: {}'.format(user_id, audio.id))
     return audio
+
+
+def _get_audio_key(user, audio):
+    return '{}/audio/{}'.format(user.identity_id, audio.guid)

@@ -203,8 +203,12 @@ def get_episode(show_id, episode_id):
 def audio():
     try:
         if 'POST' == request.method:
+            file_name, duration, length, file_type = _get_args(
+                request.get_json(), 'filename', 'duration', 'length',
+                'filetype')
             audio = audio_operation.create(
-                auth.authenticated_user, request.files['file'])
+                auth.authenticated_user, file_name, duration, length,
+                file_type)
             return jsonify(audio=dict(audio), result='success'), 201
         if 'GET' == request.method:
             args = request.args

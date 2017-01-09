@@ -143,6 +143,22 @@ class AudioSelector extends React.Component {
     }
 }
 
+function getAudioSeconds(file) {
+    return new Promise((resolve, reject) => {
+        let audio = new window.Audio();
+        audio.src = window.URL.createObjectURL(file);
+        audio.addEventListener(
+            'loadedmetadata', () => {
+                console.info(audio);
+                console.info(audio.mediaType);
+                resolve(Math.round(audio.duration));
+            });
+        audio.addEventListener(
+            'error', (d) => reject(d));
+    });
+}
+
 module.exports = {
-    AudioSelector: AudioSelector
+    AudioSelector: AudioSelector,
+    getAudioSeconds: getAudioSeconds
 };

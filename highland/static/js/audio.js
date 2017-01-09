@@ -1,6 +1,7 @@
 import React from "react";
 import { Checkbox, Table } from 'react-bootstrap';
 import { Deleter, NavLink, Uploader } from './common.js';
+import { getAudioSeconds } from './audio-util.js';
 
 class SingleAudio extends React.Component {
     constructor(props) {
@@ -120,12 +121,25 @@ var App = React.createClass({
             .catch((args) => console.error(args));
     },
 
+    handleUpload(file, type) {
+        const authReq = this.props.route.authenticatedRequest;
+        return getAudioSeconds(file)
+            .then(second => authReq.post('/audio', {
+                filename: file.name,
+                filetype: type,
+                duration: second,
+                length: file.size
+            }))
+            .then(response => authReq.postMedia(
+                file, `audio/${response.audio.guid}`, type))
+            .catch();
+    },
+
     render: function() {
         return (
             <div>
               <Uploader label="New Audio"
-                        url="/audio"
-                        authenticatedRequest={this.props.route.authenticatedRequest} />
+                        handleSubmit={this.handleUpload} />
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />

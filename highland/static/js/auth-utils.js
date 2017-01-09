@@ -17,8 +17,12 @@ class AuthenticatedRequest {
             .catch(e => console.error(e));
     }
 
-    postMedia(data) {
-        return this.promiseRequest(this.makePostMediaRequest(data));
+    /**
+     * @param name : key under the dedicated "directory".
+     * 'image/{guid}' or 'audio/{guid}'.
+     */
+    postMedia(data, name, type) {
+        return this.promiseRequest(this.makePostMediaRequest(data, name, type));
     }
 
     get(url) {
@@ -29,10 +33,6 @@ class AuthenticatedRequest {
         return this.promiseRequest(this.makeUpdateRequest('post', url, data));
     }
 
-    postForm(url, form) {
-        return this.promiseRequest(this.makeFormRequest(url, form));
-    }
-
     put(url, data) {
         return this.promiseRequest(this.makeUpdateRequest('put', url, data));
     }
@@ -41,18 +41,17 @@ class AuthenticatedRequest {
         return this.promiseRequest(this.makeDeleteRequest(url, data));
     }
 
-    makePostMediaRequest(data) {
+    makePostMediaRequest(data, name, type) {
         return (resolve, reject) => {
             this.s3.upload({
-                // TODO name will be UUID (from server)
-                Key: `${this.identity.identityId}/${data.name}`,
+                Key: `${this.identity.identityId}/${name}`,
                 Body: data,
-                ACL: 'public-read'
+                ACL: 'public-read',
+                ContentType: type
             }, function(err, data) {
                 if (err) {
                     reject(err);
                 } else {
-                    console.info(data);
                     resolve(data);
                 }
             });
@@ -79,29 +78,14 @@ class AuthenticatedRequest {
             const xhr = new XMLHttpRequest();
             xhr.open(method, url, true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-            xhr.onload = function() {
-                if (this.status === 200 || this.status === 201) {
-                    resolve(this.response);
+            xhr.onload = () => {
+                if (xhr.status === 200 || xhr.status === 201) {
+                    resolve(JSON.parse(xhr.response));
                 } else {
-                    reject(this);
+                    reject(xhr);
                 }
             };
             xhr.send(JSON.stringify(data));
-        };
-    }
-
-    makeFormRequest(url, form) {
-        return (resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('post', url, true);
-            xhr.onload = function() {
-                if (this.status == 201) {
-                    resolve(this.response);
-                } else {
-                    reject(this);
-                }
-            };
-            xhr.send(form);
         };
     }
 
