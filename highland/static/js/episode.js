@@ -206,9 +206,8 @@ var App = React.createClass({
         const self = this;
         reqFunc('/episode', inData)
             .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setEpisode(data);
-                self.context.router.replace(episodePath(data.episode.id));
+                self.setEpisode(resp);
+                self.context.router.replace(episodePath(resp.episode.id));
                 self.setState({
                     activeAlert: {
                         style: 'success',
@@ -216,12 +215,15 @@ var App = React.createClass({
                     }
                 });
             })
-            .catch(() => self.setState({
-                activeAlert: {
-                    style: 'danger',
-                    content: Texts.NOTIFY_ERROR
-                }
-            }));
+            .catch(e => {
+                console.error(e);
+                self.setState({
+                    activeAlert: {
+                        style: 'danger',
+                        content: Texts.NOTIFY_ERROR
+                    }
+                });
+            });
     },
 
     previewUrl: function() {
