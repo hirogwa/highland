@@ -22,7 +22,7 @@ const App = React.createClass({
 
     render: function() {
         return (
-            <div>
+            <div className="container">
               <h1>Dashboard</h1>
               <ul role="nav">
                 <li><IndexLink to="/">Stats</IndexLink></li>
@@ -37,7 +37,10 @@ const App = React.createClass({
                 <li><a href="" onClick={this.logout}>Logout</a></li>
               </ul>
               <hr />
-              {this.props.children}
+
+              <div className="container">
+                {this.props.children}
+              </div>
             </div>
         );
     }

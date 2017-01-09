@@ -138,14 +138,15 @@ var App = React.createClass({
     render: function() {
         return (
             <div>
+              <Deleter selectedIds={this.state.selectedIds}
+                       url="/audio"
+                       className="pull-right"
+                       authenticatedRequest={this.props.route.authenticatedRequest} />
               <Uploader label="New Audio"
                         handleSubmit={this.handleUpload} />
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />
-              <Deleter selectedIds={this.state.selectedIds}
-                       url="/audio"
-                       authenticatedRequest={this.props.route.authenticatedRequest} />
             </div>
         );
     }

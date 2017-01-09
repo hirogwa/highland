@@ -299,7 +299,7 @@ var App = React.createClass({
         };
 
         return (
-            <div className="container">
+            <div>
               {alertDraftStatus}
               {alertBox}
               <ButtonToolbar>

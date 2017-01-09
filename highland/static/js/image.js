@@ -114,14 +114,15 @@ var App = React.createClass({
     render: function() {
         return (
             <div>
+              <Deleter selectedIds={this.state.selectedIds}
+                       url="/image"
+                       className="pull-right"
+                       authenticatedRequest={this.props.route.authenticatedRequest} />
               <Uploader label="New Image"
                         handleSubmit={this.handleUpload} />
               <ImageList images={this.state.images}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectImage} />
-              <Deleter selectedIds={this.state.selectedIds}
-                       url="/image"
-                       authenticatedRequest={this.props.route.authenticatedRequest} />
             </div>
         );
     }

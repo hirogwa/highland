@@ -33,13 +33,12 @@ class Deleter extends React.Component {
 
     render() {
         return (
-            <Form>
-              <Button bsStyle="danger" onClick={this.handleDelete}
-                      type="submit"
-                      disabled={this.props.selectedIds.length < 1}>
-                      Delete Selected
-              </Button>
-            </Form>
+            <Button bsStyle="danger"
+                    onClick={this.handleDelete}
+                    className={this.props.className}
+                    disabled={this.props.selectedIds.length < 1} >
+                    Delete Selected
+            </Button>
         );
     }
 }
@@ -158,12 +157,13 @@ var App = React.createClass({
         return (
             <div>
               <AddNew showId={this.props.route.showId} />
+              <Deleter showId={this.props.route.showId}
+                       className="pull-right"
+                       authenticatedRequest={this.props.route.authenticatedRequest}
+                       selectedIds={this.state.selectedIds} />
               <EpisodeList episodes={this.state.episodes}
                            selectedIds={this.state.selectedIds}
                            handleSelect={this.handleSelectEpisode} />
-              <Deleter showId={this.props.route.showId}
-                       authenticatedRequest={this.props.route.authenticatedRequest}
-                       selectedIds={this.state.selectedIds} />
             </div>
         );
     }

@@ -166,8 +166,9 @@ class Deleter extends React.Component {
     render() {
         return (
             <Form>
-              <Button bsStyle="danger" onClick={this.handleDelete}
-                      type="submit"
+              <Button bsStyle="danger"
+                      onClick={this.handleDelete}
+                      className={this.props.className}
                       disabled={this.props.selectedIds.length < 1}>
                       Delete Selected
               </Button>

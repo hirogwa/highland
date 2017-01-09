@@ -175,49 +175,60 @@ var App = React.createClass({
         return this.state.modified || this.props.route.mode == Mode.CREATE;
     },
 
+    handleAlertDismiss: function() {
+        this.setState({
+            activeAlert: null
+        });
+    },
+
     render: function() {
         let alertBox = <div></div>;
         if (this.state.activeAlert) {
             alertBox = <AlertBox
+            handleAlertDismiss={this.handleAlertDismiss}
             style={this.state.activeAlert.style}
             content={this.state.activeAlert.content} />;
         }
         return (
-            <Form>
-              <TextInput name='Alias'
-                         value={this.state.show.alias}
-                         handleChange={this.handleChangeAlias} />
-              <TextInput name='Title'
-                         value={this.state.show.title}
-                         handleChange={this.handleChangeTitle} />
-              <TextArea name='Description'
-                        value={this.state.show.description}
-                        handleChange={this.handleChangeDescription} />
-              <TextInput name='Subtitle'
-                         value={this.state.show.subtitle}
-                         handleChange={this.handleChangeSubtitle} />
-              <LanguageSelector language={this.state.show.language}
-                              handleChange={this.handleChangeLanguage}
-                              />
-              <TextInput name='Author'
-                         value={this.state.show.author}
-                         handleChange={this.handleChangeAuthor} />
-              <CategorySelector category={this.state.show.category}
-                              handleChange={this.handleChangeCategory}
-                              />
-              <ExplicitSelector explicit={this.state.show.explicit}
-                                handleChange={this.handleChangeExplicit}
-                                />
-              <ImageSelector selectedImageId={this.state.show.image_id}
-                             handleSelect={this.handleSelectImage}
-                             authenticatedRequest={this.props.route.authenticatedRequest} />
+            <div>
               {alertBox}
               <Button bsStyle="primary"
                       onClick={this.saveShow}
                       disabled={!this.savable()}>
                 Save
               </Button>
-            </Form>
+              <hr />
+
+              <Form>
+                <TextInput name='Alias'
+                           value={this.state.show.alias}
+                           handleChange={this.handleChangeAlias} />
+                <TextInput name='Title'
+                           value={this.state.show.title}
+                           handleChange={this.handleChangeTitle} />
+                <TextArea name='Description'
+                          value={this.state.show.description}
+                          handleChange={this.handleChangeDescription} />
+                <TextInput name='Subtitle'
+                           value={this.state.show.subtitle}
+                           handleChange={this.handleChangeSubtitle} />
+                <LanguageSelector language={this.state.show.language}
+                                  handleChange={this.handleChangeLanguage}
+                                  />
+                <TextInput name='Author'
+                           value={this.state.show.author}
+                           handleChange={this.handleChangeAuthor} />
+                <CategorySelector category={this.state.show.category}
+                                  handleChange={this.handleChangeCategory}
+                                  />
+                <ExplicitSelector explicit={this.state.show.explicit}
+                                  handleChange={this.handleChangeExplicit}
+                                  />
+                <ImageSelector selectedImageId={this.state.show.image_id}
+                               handleSelect={this.handleSelectImage}
+                               authenticatedRequest={this.props.route.authenticatedRequest} />
+              </Form>
+            </div>
         );
     }
 });
