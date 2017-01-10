@@ -89,7 +89,8 @@ class Uploader extends React.Component {
         super(props);
         this.state = {
             file: null,
-            formKey: 1
+            formKey: 1,
+            uploading: false
         };
         this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -108,11 +109,17 @@ class Uploader extends React.Component {
     }
 
     handleSubmit(){
+        this.setState({ uploading: true });
         return this.props.handleSubmit(this.state.file, this.state.type)
             .then(() => this.setState({
                 file: null,
-                formKey: this.state.formKey + 1
+                formKey: this.state.formKey + 1,
+                uploading: false
             }));
+    }
+
+    uploadable() {
+        return this.state.file && !this.state.uploading;
     }
 
     render() {
@@ -124,7 +131,7 @@ class Uploader extends React.Component {
                              key={this.state.formKey}
                              onChange={this.handleFileChange} />
                 <Button onClick={this.handleSubmit}
-                        disabled={!!this.props.disabled || !this.state.file}>
+                        disabled={!this.uploadable()}>
                   Upload
                 </Button>
               </FormGroup>
