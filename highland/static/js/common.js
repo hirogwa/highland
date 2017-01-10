@@ -60,6 +60,7 @@ class TextInput extends React.Component {
               <ControlLabel>{this.props.name}</ControlLabel>
               <FormControl type={this.props.type || "text"}
                            placeholder="Enter text"
+                           disabled={this.props.disabled}
                            autoFocus={this.props.autoFocus}
                            value={this.props.value}
                            onChange={this.handleChange}
@@ -87,7 +88,8 @@ class Uploader extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            file: ''
+            file: null,
+            formKey: 1
         };
         this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -106,7 +108,11 @@ class Uploader extends React.Component {
     }
 
     handleSubmit(){
-        return this.props.handleSubmit(this.state.file, this.state.type);
+        return this.props.handleSubmit(this.state.file, this.state.type)
+            .then(() => this.setState({
+                file: null,
+                formKey: this.state.formKey + 1
+            }));
     }
 
     render() {
@@ -114,9 +120,11 @@ class Uploader extends React.Component {
             <Form>
               <FormGroup controlId="formControlsFile">
                 <ControlLabel>{this.props.label}</ControlLabel>
-                <FormControl type="file" onChange={this.handleFileChange} />
+                <FormControl type="file"
+                             key={this.state.formKey}
+                             onChange={this.handleFileChange} />
                 <Button onClick={this.handleSubmit}
-                        disabled={!this.state.file}>
+                        disabled={!!this.props.disabled || !this.state.file}>
                   Upload
                 </Button>
               </FormGroup>
@@ -150,17 +158,46 @@ function getMimeType(file) {
     });
 }
 
+function executeIfDefined(func, args) {
+    if (func) {
+        func.apply(this, args);
+    }
+}
+
 class Deleter extends React.Component {
     constructor(props) {
         super(props);
         this.handleDelete = this.handleDelete.bind(this);
+        this.state = {
+            deleting: false
+        };
     }
 
     handleDelete() {
+        executeIfDefined(this.props.onDeleting);
+        this.setState({
+            deleting: true
+        });
+
         this.props.authenticatedRequest.delete(
             this.props.url, {ids: this.props.selectedIds})
-            .then()
-            .catch((args) => console.error(args));
+            .then(() => {
+                executeIfDefined(this.props.onDeleted);
+                this.setState({
+                    deleting: true
+                });
+            })
+            .catch(e => {
+                console.error(e);
+                executeIfDefined(this.props.onDeletionFailed);
+            });
+    }
+
+    deletable() {
+        if (this.props.selectedIds.length < 1) {
+            return false;
+        }
+        return !this.state.deleting;
     }
 
     render() {
@@ -169,7 +206,7 @@ class Deleter extends React.Component {
               <Button bsStyle="danger"
                       onClick={this.handleDelete}
                       className={this.props.className}
-                      disabled={this.props.selectedIds.length < 1}>
+                      disabled={!this.deletable()}>
                       Delete Selected
               </Button>
             </Form>
@@ -197,7 +234,8 @@ class AlertBox extends React.Component {
     render() {
         if (this.state.alertVisible) {
             return (
-                <Alert bsStyle={this.props.style} onDismiss={this.handleAlertDismiss}>
+                <Alert bsStyle={this.props.style || 'info'}
+                       onDismiss={this.handleAlertDismiss}>
                   <p>{this.props.content}</p>
                 </Alert>
             );

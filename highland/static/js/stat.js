@@ -110,16 +110,14 @@ var App = React.createClass({
     },
 
     loadEpisodes: function() {
-        const self = this;
         const url = `/episodes/${this.props.route.showId}?public=yes`;
         this.props.route.authenticatedRequest.get(url)
-            .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setState({
+            .then(data => {
+                this.setState({
                     episodes: data.episodes
                 });
             })
-            .catch((args) => console.error(args));
+            .catch(args => console.error(args));
     },
 
     loadStatEpisodeByDay: function() {
@@ -135,16 +133,14 @@ var App = React.createClass({
     },
 
     loadStat: function(endpoint, stateKey) {
-        const self = this;
         const showId = encodeURIComponent(this.props.route.showId);
         this.props.route.authenticatedRequest.get(`${endpoint}?show_id=${showId}`)
-            .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setState({
+            .then(data => {
+                this.setState({
                     [stateKey]: data.stat
                 });
             })
-            .catch((args) => console.error(args));
+            .catch(args => console.error(args));
     },
 
     componentDidMount: function() {

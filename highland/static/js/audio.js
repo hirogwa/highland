@@ -1,7 +1,8 @@
 import React from "react";
 import { Checkbox, Table } from 'react-bootstrap';
-import { Deleter, NavLink, Uploader } from './common.js';
+import { NavLink } from './common.js';
 import { getAudioSeconds } from './audio-util.js';
+import { Media } from './media.js';
 
 class SingleAudio extends React.Component {
     constructor(props) {
@@ -81,15 +82,19 @@ class AudioList extends React.Component {
     }
 }
 
-var App = React.createClass({
-    getInitialState: function() {
-        return {
+class Audio extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleUpload = this.handleUpload.bind(this);
+        this.handleSelectAudio = this.handleSelectAudio.bind(this);
+        this.reloadAudioList = this.reloadAudioList.bind(this);
+        this.state = {
             audios: [],
             selectedIds: []
         };
-    },
+    }
 
-    handleSelectAudio: function(id, checked) {
+    handleSelectAudio(id, checked) {
         let ids = this.state.selectedIds;
         let index = ids.indexOf(id);
         if (checked) {
@@ -107,19 +112,19 @@ var App = React.createClass({
         this.setState({
             selectedIds: ids
         });
-    },
+    }
 
-    componentDidMount: function() {
-        const self = this;
-        this.props.route.authenticatedRequest.get('/audio')
-            .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setState({
-                    audios: data.audios
-                });
-            })
+    reloadAudioList() {
+        return this.props.route.authenticatedRequest.get('/audio')
+            .then(data => this.setState({
+                audios: data.audios
+            }))
             .catch((args) => console.error(args));
-    },
+    }
+
+    componentDidMount() {
+        return this.reloadAudioList();
+    }
 
     handleUpload(file, type) {
         const authReq = this.props.route.authenticatedRequest;
@@ -131,27 +136,29 @@ var App = React.createClass({
                 length: file.size
             }))
             .then(response => authReq.postAudio(
-                file, response.audio.guid, type))
-            .catch(e => console.error(e));
-    },
+                file, response.audio.guid, type));
+    }
 
-    render: function() {
-        return (
-            <div>
-              <Deleter selectedIds={this.state.selectedIds}
-                       url="/audio"
-                       className="pull-right"
-                       authenticatedRequest={this.props.route.authenticatedRequest} />
-              <Uploader label="New Audio"
-                        handleSubmit={this.handleUpload} />
+    render() {
+        const audioList = (
               <AudioList audios={this.state.audios}
                          selectedIds={this.state.selectedIds}
                          handleSelect={this.handleSelectAudio} />
-            </div>
+        );
+
+        return (
+            <Media selectedIds={this.state.selectedIds}
+                   url="/audio"
+                   authenticatedRequest={this.props.route.authenticatedRequest}
+                   uploaderLabel="New Audio"
+                   handleUpload={this.handleUpload}
+                   mediaList={audioList}
+                   reloadList={this.reloadAudioList}
+                   />
         );
     }
-});
+}
 
 module.exports = {
-    Audio: App
+    Audio: Audio
 };

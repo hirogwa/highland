@@ -79,7 +79,7 @@ class AuthenticatedRequest {
             xhr.open('get', url, true);
             xhr.onload = function() {
                 if (this.status === 200) {
-                    resolve(this.response);
+                    resolve(JSON.parse(this.response));
                 } else {
                     reject(this);
                 }

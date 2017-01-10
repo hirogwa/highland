@@ -1,6 +1,6 @@
 import React from "react";
 import { Checkbox, Table } from 'react-bootstrap';
-import { Deleter, Uploader } from './common.js';
+import { Media } from './media.js';
 
 class SingleImage extends React.Component {
     constructor(props) {
@@ -60,15 +60,19 @@ class ImageList extends React.Component {
     }
 }
 
-var App = React.createClass({
-    getInitialState: function() {
-        return {
+class Image extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleUpload = this.handleUpload.bind(this);
+        this.handleSelectImage = this.handleSelectImage.bind(this);
+        this.reloadImageList = this.reloadImageList.bind(this);
+        this.state = {
             images: [],
             selectedIds: []
         };
-    },
+    }
 
-    handleSelectImage: function(id, checked) {
+    handleSelectImage(id, checked) {
         let ids = this.state.selectedIds;
         let index = ids.indexOf(id);
         if (checked) {
@@ -86,19 +90,21 @@ var App = React.createClass({
         this.setState({
             selectedIds: ids
         });
-    },
+    }
 
-    componentDidMount: function() {
-        const self = this;
-        this.props.route.authenticatedRequest.get('/image')
-            .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setState({
+    reloadImageList() {
+        return this.props.route.authenticatedRequest.get('/image')
+            .then(data => {
+                this.setState({
                     images: data.images
                 });
             })
-            .catch((args) => console.error(args));
-    },
+            .catch(args => console.error(args));
+    }
+
+    componentDidMount() {
+        return this.reloadImageList();
+    }
 
     handleUpload(file, type) {
         const authReq = this.props.route.authenticatedRequest;
@@ -107,27 +113,29 @@ var App = React.createClass({
             filetype: type
         })
             .then(response => authReq.postImage(
-                file, response.image.guid, type))
-            .catch(e => console.error(e));
-    },
+                file, response.image.guid, type));
+    }
 
-    render: function() {
+    render() {
+        const imageList = (
+            <ImageList images={this.state.images}
+                       selectedIds={this.state.selectedIds}
+                       handleSelect={this.handleSelectImage} />
+        );
+
         return (
-            <div>
-              <Deleter selectedIds={this.state.selectedIds}
-                       url="/image"
-                       className="pull-right"
-                       authenticatedRequest={this.props.route.authenticatedRequest} />
-              <Uploader label="New Image"
-                        handleSubmit={this.handleUpload} />
-              <ImageList images={this.state.images}
-                         selectedIds={this.state.selectedIds}
-                         handleSelect={this.handleSelectImage} />
-            </div>
+            <Media selectedIds={this.state.selectedIds}
+                   url="/image"
+                   authenticatedRequest={this.props.route.authenticatedRequest}
+                   uploaderLabel="New Image"
+                   handleUpload={this.handleUpload}
+                   mediaList={imageList}
+                   reloadList={this.reloadImageList}
+                   />
         );
     }
-});
+}
 
 module.exports = {
-    Image: App
+    Image: Image
 };

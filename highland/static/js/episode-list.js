@@ -1,7 +1,5 @@
 import React from "react";
-import {
-    Button, Checkbox, Form, Table
-} from 'react-bootstrap';
+import { Button, Checkbox, Table } from 'react-bootstrap';
 import { NavLink } from './common.js';
 import { episodePath } from './paths';
 
@@ -141,12 +139,10 @@ var App = React.createClass({
     },
 
     componentDidMount: function() {
-        const self = this;
         this.props.route.authenticatedRequest.get(
             `/episodes/${this.props.route.showId}`, true)
-            .then((resp) => {
-                let data = JSON.parse(resp);
-                self.setState({
+            .then(data => {
+                this.setState({
                     episodes: data.episodes
                 });
             })

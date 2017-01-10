@@ -147,6 +147,13 @@ var App = React.createClass({
     },
 
     saveShow: function() {
+        this.setState({
+            activeAlert: {
+                style: 'info',
+                content: 'Saving...'
+            }
+        });
+
         const req = this.props.route.authenticatedRequest;
         const func = this.props.route.mode === Mode.UPDATE ?
                   (url, data) => req.put(url, data) :
@@ -202,6 +209,7 @@ var App = React.createClass({
               <Form>
                 <TextInput name='Alias'
                            value={this.state.show.alias}
+                           disabled={this.props.route.mode != Mode.CREATE}
                            handleChange={this.handleChangeAlias} />
                 <TextInput name='Title'
                            value={this.state.show.title}

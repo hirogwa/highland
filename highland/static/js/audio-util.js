@@ -114,8 +114,7 @@ class AudioSelector extends React.Component {
         const url = '/audio?unused_only=True' +
                 (whitelistedId ? '&whitelisted_id=' + whitelistedId : '');
         this.props.authenticatedRequest.get(url)
-            .then((resp) => {
-                const data = JSON.parse(resp);
+            .then(data => {
                 self.setState({
                     audios: data.audios
                 });

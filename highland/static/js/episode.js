@@ -165,8 +165,8 @@ var App = React.createClass({
         if (this.props.route.mode === Mode.UPDATE) {
             this.props.route.authenticatedRequest.get(
                 `/episode/${this.props.route.showId}/${this.props.routeParams.episodeId}`)
-                .then((resp) => self.setEpisode(JSON.parse(resp)))
-                .catch((args) => console.error(args));
+                .then(resp => self.setEpisode(resp))
+                .catch(args => console.error(args));
         }
     },
 

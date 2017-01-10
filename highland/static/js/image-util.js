@@ -96,11 +96,9 @@ class ImageSelector extends React.Component {
     }
 
     componentDidMount() {
-        const self = this;
         this.props.authenticatedRequest.get('/image')
-            .then((resp) => {
-                const data = JSON.parse(resp);
-                self.setState({
+            .then(data => {
+                this.setState({
                     images: data.images
                 });
             })
