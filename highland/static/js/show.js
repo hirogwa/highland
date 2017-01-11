@@ -73,13 +73,12 @@ var App = React.createClass({
             const self = this;
             this.props.route.authenticatedRequest
                 .get(`/show/${this.props.route.showId}`)
-                .then((resp) => {
-                    const data = JSON.parse(resp);
+                .then(data => {
                     self.setState({
                         show: data.show
                     });
                 })
-                .catch((args) => console.error(args));
+                .catch(args => console.error(args));
         }
     },
 

@@ -350,24 +350,8 @@ def preview_site(show_id):
         False)
 
 
-@app.route('/preview_site/<show_id>/<episode_id>', methods=['GET'])
-def preview_site_episode_test(show_id, episode_id):
-    '''
-    test only
-    '''
-    user = auth.authenticated_user
-    show = show_operation.get_show_or_assert(user, show_id)
-    show_image = image_operation.get_image_or_assert(user, show.image_id) \
-        if show.image_id else None
-    return public_view.episode_html(
-        user,
-        show,
-        show_image,
-        episode_operation.get_episode_or_assert(user, episode_id),
-        False)
-
-
 @app.route('/preview/site/', methods=['GET'])
+@auth.require_authenticated()
 def preview_site_episode():
     user = auth.authenticated_user
     args = request.args

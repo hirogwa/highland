@@ -35,23 +35,17 @@ def show_html(user, show, show_image, upload=True):
 
 
 def episode_html(user, show, show_image, episode, upload=True):
-    if episode.image_id is None:
-        image_url = image_operation.get_image_url(user, show_image)
-    else:
-        ep_image = image_operation.get_image_or_assert(user, episode.image_id)
-        image_url = image_operation.get_image_url(user, ep_image)
+    image_url = _get_episode_image_url(user, episode, show_image)
 
     if episode.audio_id:
         audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
         m, s = divmod(audio.duration, 60)
         h, m = divmod(m, 60)
         length = '{0:.2f}'.format(audio.length / 1000000)
+        audio_type = audio.type
         audio_url = audio_operation.get_audio_url(user, audio)
     else:
-        length = '0'
-        h, m, s = 0, 0, 0
-        # TODO causes console error
-        audio_url = ''
+        length, h, m, s, audio_type, audio_url = '0', 0, 0, 0, '', '#audio'
 
     html = render_template(
         'public_sites/episode.html',
@@ -64,6 +58,7 @@ def episode_html(user, show, show_image, episode, upload=True):
         episode_description=Markup(common.clean_html(episode.description)),
         duration="%d:%02d:%02d" % (h, m, s),
         length=length,
+        audio_type=audio_type,
         audio_url=audio_url,
         image_url=image_url)
     if upload:
@@ -88,3 +83,12 @@ def _delete_all_episodes(user, show):
 
 def _get_site_url(show_alias):
     return '{}/{}'.format(settings.HOST_SITE, show_alias)
+
+
+def _get_episode_image_url(user, episode, show_image):
+    if episode.image_id:
+        return image_operation.get_image_url(
+            user, image_operation.get_image_or_assert(user, episode.image_id))
+    if show_image:
+        return image_operation.get_image_url(user, show_image)
+    return ''

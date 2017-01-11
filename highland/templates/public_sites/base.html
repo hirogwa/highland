@@ -6,7 +6,9 @@
         title="{{ show.title }}" href="{{ feed_url }}" />
   <meta property="og:title" content="{{ title }}" />
   <meta property="og:url" content="{{ url }}" />
-  <meta property="og:image" content="{{ image_url }}" />
+  {% if image_url %}
+    <meta property="og:image" content="{{ image_url }}" />
+  {% endif %}
   {% block head %}
   {% endblock %}
 </head>
