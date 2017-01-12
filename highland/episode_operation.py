@@ -39,7 +39,7 @@ def update(user, episode_id, draft_status=None, alias=None, audio_id=None,
         ('draft_status', Episode.DraftStatus(draft_status).name),
         ('scheduled_datetime', scheduled_datetime)
     ]
-    for name, value in [(x, y) for x, y in name_value_pairs if y is not None]:
+    for name, value in [(x, y) for x, y in name_value_pairs]:
         setattr(episode, name, value)
 
     _autofill_attributes(user, episode)
