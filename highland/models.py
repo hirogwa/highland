@@ -2,7 +2,7 @@ import datetime
 import enum
 import uuid
 from flask_sqlalchemy import SQLAlchemy
-from highland import app
+from highland import app, aws_resources, settings
 
 db = SQLAlchemy(app)
 
@@ -190,6 +190,19 @@ class User(db.Model):
         self.username = username
         self.name = name
         self.identity_id = identity_id
+
+    def __getattr__(self, name):
+        if name == 'email':
+            app.logger.info('Calling cognito_idp.admin_get_user for email')
+            resp = aws_resources.cognito_idp.admin_get_user(
+                UserPoolId=settings.COGNITO_USER_POOL_ID,
+                Username=self.username
+            )
+            a = resp.get('UserAttributes')
+            email = [x.get('Value') for x in a if x.get('Name') == 'email'][0]
+            self.email = email
+            return email
+        raise AttributeError('unexpected attribute:{}'.format(name))
 
     def __iter__(self):
         for key in ['id', 'username', 'name', 'identity_id']:

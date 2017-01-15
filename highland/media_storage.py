@@ -1,13 +1,5 @@
-import boto3
 import os
-from highland import settings
-
-s3 = boto3.resource(
-    's3',
-    region_name=settings.S3_REGION,
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-)
+from highland.aws_resources import s3
 
 
 def upload(file_data, bucket, file_name=None, folder='', **kwargs):
