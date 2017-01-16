@@ -4,7 +4,7 @@ import { Button, Form, Modal } from 'react-bootstrap';
 import {
     AuthenticationDetails, CognitoUser, CognitoUserPool
 } from 'amazon-cognito-identity-js';
-import { postAccessToken } from './auth-utils.js';
+import { postTokens } from './identity.js';
 import { AlertBox, PasswordResetInputs, TextInput } from './common.js';
 
 
@@ -127,10 +127,9 @@ class Login extends React.Component {
         const self = this;
         cognitoUser.authenticateUser(authenticationDetails, {
             onSuccess: function (result) {
-                console.log(result);
                 const accessToken = result.getAccessToken().getJwtToken();
-                console.log('access token + ' + accessToken);
-                postAccessToken(accessToken)
+                const idToken = result.getIdToken().getJwtToken();
+                postTokens(accessToken, idToken)
                     .then(() => window.location='/')
                     .catch();
                 self.setState({

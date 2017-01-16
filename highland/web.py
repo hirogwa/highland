@@ -272,16 +272,12 @@ def image():
 
 
 @app.route('/user', methods=['POST', 'PUT'])
+@auth.require_authenticated()
 def user():
     try:
         if 'POST' == request.method:
-            args = request.get_json()
-            (username, name) = (
-                args.get('username'),
-                args.get('name'))
-            common.require_true(username, 'username required')
-            common.require_true(name, 'name required')
-            user = user_operation.create(username, name)
+            user = user_operation.create(
+                auth.authenticated_username, auth.authenticated_id_token)
             return jsonify(user=dict(user), result='success')
 
         if 'PUT' == request.method:
@@ -429,7 +425,7 @@ def login_redirect():
     return redirect(url_for('login'))
 
 
-@app.route('/access_token', methods=['POST'])
+@app.route('/auth_tokens', methods=['POST'])
 @auth.login
 def register_access_token():
     return jsonify(result='success',

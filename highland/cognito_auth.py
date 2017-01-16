@@ -66,7 +66,18 @@ class CognitoAuth:
         return func
 
     @property
+    def authenticated_id_token(self):
+        self._consume_token()
+        return session['id_token']
+
+    @property
+    def authenticated_username(self):
+        self._consume_token()
+        return self.username
+
+    @property
     def authenticated_user(self):
+        self._consume_token()
         return self.get_authenticated_user(self.username)
 
     @property
@@ -85,13 +96,15 @@ class CognitoAuth:
                 return func(*args, **kwargs)
 
             access_token = request.get_json().get('access_token')
+            id_token = request.get_json().get('id_token')
             try:
-                token_decoded = self.decode_access_token(access_token)
-                self.username = token_decoded.get('username')
+                access_token_decoded = self.decode_access_token(access_token)
+                self.username = access_token_decoded.get('username')
             except:
                 return 'Invalid token', 400
             else:
                 session['access_token'] = access_token
+                session['id_token'] = id_token
                 return func(*args, **kwargs)
         return decorator
 

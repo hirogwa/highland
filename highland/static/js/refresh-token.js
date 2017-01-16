@@ -15,7 +15,9 @@ if (cognitoUser) {
         if (err) {
             fallback();
         } else {
-            postAccessToken(session.getAccessToken().getJwtToken())
+            postAccessToken(
+                session.getAccessToken().getJwtToken(),
+                session.getIdToken().getJwtToken())
                 .then(redirect)
                 .catch(fallback);
         }

@@ -71,7 +71,9 @@ class Identity {
                     if (err) {
                         reject(err);
                     } else {
-                        postAccessToken(session.getAccessToken().getJwtToken())
+                        postTokens(
+                            session.getAccessToken().getJwtToken(),
+                            session.getIdToken().getJwtToken())
                             .then((p) => resolve(p))
                             .catch((p) => reject(p));
                     }
@@ -112,9 +114,9 @@ class Identity {
     }
 }
 
-function postAccessToken(accessToken) {
+function postTokens(accessToken, idToken) {
     const xhr = new XMLHttpRequest();
-    const url = '/access_token';
+    const url = '/auth_tokens';
     xhr.open('post', url, true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     return new Promise(function(resolve, reject) {
@@ -128,11 +130,12 @@ function postAccessToken(accessToken) {
             }
         };
         xhr.send(
-            JSON.stringify({access_token: accessToken})
+            JSON.stringify({ access_token: accessToken, id_token: idToken })
         );
     });
 }
 
 module.exports = {
-    Identity: Identity
+    Identity: Identity,
+    postTokens: postTokens
 };

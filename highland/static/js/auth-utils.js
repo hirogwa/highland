@@ -18,6 +18,7 @@ class AuthenticatedRequest {
                         Bucket: audioBucket
                     }
                 });
+                console.info(this.identity);
             })
             .catch(e => console.error(e));
     }
@@ -121,9 +122,8 @@ class AuthenticatedRequest {
     }
 
     promiseRequest(makeRequest) {
-        const self = this;
-        return new Promise(function(resolve, reject) {
-            self.identity.establishSession()
+        return new Promise((resolve, reject) => {
+            this.identity.establishSession()
                 .then(() => makeRequest(resolve, reject))
                 .catch(() => reject());
         });
