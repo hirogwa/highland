@@ -1,20 +1,13 @@
-from highland import models, exception, settings
-from highland.aws_resources import cognito_identity
+from highland import models, exception
 
 
-def create(username, id_token):
+def create(username, identity_id):
     '''
     initiate new user. intended to be called at user's first login
     '''
     if models.User.query.filter_by(username=username).first():
         raise exception.OperationNotAllowedError(
             'User already exists: {}'.format(username))
-
-    identity_id = cognito_identity.get_id(
-        IdentityPoolId=settings.COGNITO_IDENTITY_POOL_ID,
-        Logins={
-            settings.COGNITO_IDENTITY_PROVIDER: id_token
-        }).get('IdentityId')
 
     user = models.User(username, username, identity_id)
     models.db.session.add(user)
@@ -36,7 +29,7 @@ def update(id, username, name):
 def get(username):
     user = models.User.query.filter_by(username=username).first()
     if not user:
-        raise exception.NoSuchEntityError('user:{}'.format(id))
+        raise exception.NoSuchEntityError('user:{}'.format(username))
     return user
 
 

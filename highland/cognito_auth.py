@@ -6,7 +6,8 @@ import datetime
 import jwt
 import pytz
 
-from highland import exception
+from highland import exception, app, settings
+from highland.aws_resources import cognito_identity
 
 
 class CognitoAuth:
@@ -17,20 +18,28 @@ class CognitoAuth:
         self.unauthenticated = None
         self.username = ''
 
-    def decode_access_token(self, token):
+    def decode_token(self, token, use):
         kid = jwt.get_unverified_header(token).get('kid')
         jwt_set = [x for x in self.cognito_jwt_set.get('keys')
                    if x.get('kid') == kid][0]
         n_str, e_str = jwt_set.get('n'), jwt_set.get('e')
 
         # signature verification included
-        decoded = jwt.decode(token, key=_public_key(n_str, e_str))
+        if use == 'access':
+            decoded = jwt.decode(token, key=_public_key(n_str, e_str))
+        elif use == 'id':
+            decoded = jwt.decode(
+                token, key=_public_key(n_str, e_str),
+                audience=settings.COGNITO_CLIENT_ID)
+        else:
+            raise exception.AuthError('unknown token_use:{}'.format(use))
 
         if decoded.get('iss') != 'https://cognito-idp.{}.amazonaws.com/{}' \
                   .format(self.cognito_region, self.cognito_user_pool_id):
             raise exception.AuthError('token invalid. bad iss.')
-        if decoded.get('token_use') != 'access':
-            raise exception.AuthError('token invalid. bad token_use.')
+        if decoded.get('token_use') != use:
+            raise exception.AuthError(
+                'token invalid. bad token_use. expected {}'.format(use))
         if datetime.datetime.fromtimestamp(decoded.get('exp'), pytz.utc) \
            < datetime.datetime.now(pytz.utc):
             raise exception.AuthError('token invalid. expired.')
@@ -66,11 +75,6 @@ class CognitoAuth:
         return func
 
     @property
-    def authenticated_id_token(self):
-        self._consume_token()
-        return session['id_token']
-
-    @property
     def authenticated_username(self):
         self._consume_token()
         return self.username
@@ -89,6 +93,30 @@ class CognitoAuth:
         else:
             return True
 
+    def signup(self, func):
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            if request.method != 'POST':
+                return func(*args, **kwargs)
+
+            try:
+                id_token = request.get_json().get('id_token')
+                self.decode_token(id_token, 'id')
+                self.identity_id = self._get_identity_id(id_token)
+            except Exception as e:
+                app.logger.exception(e)
+                return 'Invalid id token', 400
+
+            try:
+                access_token = request.get_json().get('access_token')
+                self._login_user(access_token)
+            except Exception as e:
+                app.logger.exception(e)
+                return 'Login failed', 400
+
+            return func(*args, **kwargs)
+        return decorator
+
     def login(self, func):
         @wraps(func)
         def decorator(*args, **kwargs):
@@ -96,15 +124,12 @@ class CognitoAuth:
                 return func(*args, **kwargs)
 
             access_token = request.get_json().get('access_token')
-            id_token = request.get_json().get('id_token')
             try:
-                access_token_decoded = self.decode_access_token(access_token)
-                self.username = access_token_decoded.get('username')
-            except:
+                self._login_user(access_token)
+            except Exception as e:
+                app.logger.exception(e)
                 return 'Invalid token', 400
             else:
-                session['access_token'] = access_token
-                session['id_token'] = id_token
                 return func(*args, **kwargs)
         return decorator
 
@@ -118,8 +143,22 @@ class CognitoAuth:
     def _consume_token(self):
         if 'access_token' not in session:
             raise exception.AuthError('access token not in session')
-        token_decoded = self.decode_access_token(session['access_token'])
+        token_decoded = self.decode_token(session['access_token'], 'access')
         self.username = token_decoded.get('username')
+
+    def _get_identity_id(self, id_token):
+        app.logger.info('calling get_id to get identity_id')
+        identity_id = cognito_identity.get_id(
+            IdentityPoolId=settings.COGNITO_IDENTITY_POOL_ID,
+            Logins={
+                settings.COGNITO_IDENTITY_PROVIDER: id_token
+            }).get('IdentityId')
+        return identity_id
+
+    def _login_user(self, access_token):
+        access_token_decoded = self.decode_token(access_token, 'access')
+        self.username = access_token_decoded.get('username')
+        session['access_token'] = access_token
 
 
 def _public_key(n_str, e_str):

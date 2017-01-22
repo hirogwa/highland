@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 import {
-    CognitoAccessToken, CognitoIdToken, CognitoRefreshToken,
-    CognitoUserPool, CognitoUserSession
+    AuthenticationDetails, CognitoAccessToken, CognitoIdToken, CognitoRefreshToken,
+    CognitoUser, CognitoUserPool, CognitoUserSession
 } from 'amazon-cognito-identity-js';
 
 class Identity {
@@ -58,6 +58,77 @@ class Identity {
 
     getIdentityCredentials() {
         return this.identityCredentials;
+    }
+
+    initiateUser() {
+        const cognitoUser = this.userPool.getCurrentUser();
+        const currentSession = this._cachedSession(cognitoUser);
+        if (currentSession && currentSession.isValid()) {
+            const xhr = new XMLHttpRequest();
+            const idToken = currentSession.getIdToken().getJwtToken();
+            const accessToken = currentSession.getAccessToken().getJwtToken();
+
+            xhr.open('post', '/initiate_user', true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            return new Promise((resolve, reject) => {
+                xhr.onload = () => {
+                    if (xhr.status == 200) {
+                        const data = JSON.parse(xhr.response);
+                        resolve(data);
+                    } else {
+                        reject(xhr.statusText);
+                    }
+                };
+                xhr.send(JSON.stringify({
+                    id_token: idToken,
+                    access_token: accessToken
+                }));
+            });
+        } else {
+            return Promise.reject();
+        }
+    }
+
+    authenticateUser(username, password) {
+        const authenticationDetails = new AuthenticationDetails({
+            Username : username,
+            Password : password
+        });
+        const cognitoUser = new CognitoUser({
+            Username : username,
+            Pool : this.userPool
+        });
+
+        const p = new Promise((resolve, reject) => {
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: result => resolve(result),
+                newPasswordRequired: () => {
+                    this.cognitoUserNewPasswordRequired = cognitoUser;
+                    resolve('newPasswordRequired');
+                },
+                onFailure: e => reject(e)
+            });
+        });
+        return p
+            .then(result => {
+                if (result === 'newPasswordRequired') {
+                    return Promise.resolve(result);
+                } else {
+                    const accessToken = result.getAccessToken().getJwtToken();
+                    const idToken = result.getIdToken().getJwtToken();
+                    return postTokens(accessToken, idToken);
+                }
+            });
+    }
+
+    completeNewPasswordChallenge(password) {
+        const cognitoUser = this.cognitoUserNewPasswordRequired;
+        return new Promise((resolve, reject) => {
+            cognitoUser.completeNewPasswordChallenge(password, {}, {
+                onSuccess: resp => resolve(resp),
+                onFailure: err => reject(err)
+            });
+        });
     }
 
     establishSession() {
@@ -136,6 +207,5 @@ function postTokens(accessToken, idToken) {
 }
 
 module.exports = {
-    Identity: Identity,
-    postTokens: postTokens
+    Identity: Identity
 };

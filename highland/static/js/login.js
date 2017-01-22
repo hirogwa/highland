@@ -1,10 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Button, Form, Modal } from 'react-bootstrap';
-import {
-    AuthenticationDetails, CognitoUser, CognitoUserPool
-} from 'amazon-cognito-identity-js';
-import { postTokens } from './identity.js';
+import { Identity } from './identity.js';
 import { AlertBox, PasswordResetInputs, TextInput } from './common.js';
 
 
@@ -28,26 +25,23 @@ class NewPasswordRequiredModal extends React.Component {
 
     handleSubmit() {
         this.setState({ authStatus: AuthStatus.AUTHENTICATING });
-
-        const self = this;
-        this.props.cognitoUser.completeNewPasswordChallenge(
-            this.state.password, {}, {
-                onFailure: function(err) {
-                    self.setState({
-                        authStatus: AuthStatus.NOT_STARTED,
-                        activeAlert: {
-                            style: 'danger',
-                            content: 'Password reset failed. Please try again.'
-                        }
-                    });
-                },
-
-                onSuccess: function(resp) {
-                    self.setState({
-                        authStatus: AuthStatus.AUTHENTICATED
-                    });
-                    window.location = '/';
-                }
+        this.props.identity.completeNewPasswordChallenge(this.state.password)
+            .then(() => this.props.identity.initiateUser())
+            .then(() => {
+                this.setState({
+                    authStatus: AuthStatus.AUTHENTICATED
+                });
+                window.location = '/';
+            })
+            .catch(err => {
+                console.error(err);
+                this.setState({
+                    authStatus: AuthStatus.NOT_STARTED,
+                    activeAlert: {
+                        style: 'danger',
+                        content: 'Password reset failed. Please try again.'
+                    }
+                });
             });
     }
 
@@ -101,7 +95,6 @@ class Login extends React.Component {
         this.state = {
             username: '',
             password: '',
-            cognitoUser: undefined,
             showRequireNewPasswordModal: false,
             activeAlert: null,
             authStatus: AuthStatus.NOT_STARTED
@@ -110,36 +103,21 @@ class Login extends React.Component {
 
     authenticate() {
         this.setState({ authStatus: AuthStatus.AUTHENTICATING });
-
-        const authenticationDetails = new AuthenticationDetails({
-            Username : this.state.username,
-            Password : this.state.password
-        });
-        const userPool = new CognitoUserPool({
-            UserPoolId : this.props.cognitoUserPoolId,
-            ClientId : this.props.cognitoClientId
-        });
-
-        const cognitoUser = new CognitoUser({
-            Username : this.state.username,
-            Pool : userPool
-        });
-        const self = this;
-        cognitoUser.authenticateUser(authenticationDetails, {
-            onSuccess: function (result) {
-                const accessToken = result.getAccessToken().getJwtToken();
-                const idToken = result.getIdToken().getJwtToken();
-                postTokens(accessToken, idToken)
-                    .then(() => window.location='/')
-                    .catch();
-                self.setState({
-                    authStatus: AuthStatus.AUTHENTICATED
-                });
-            },
-
-            onFailure: function(e) {
+        this.props.identity.authenticateUser(this.state.username, this.state.password)
+            .then(result => {
+                if (result === 'newPasswordRequired') {
+                    this.setState({
+                        showRequireNewPasswordModal : true
+                    });
+                } else {
+                    window.location = '/';
+                    this.setState({
+                        authStatus: AuthStatus.AUTHENTICATED
+                    });
+                }
+            })
+            .catch(e => {
                 let content = '';
-
                 if (e && e.code === 'UserNotFoundException') {
                     content = 'User does not exist in our record. Please double check and try again.';
                 } else if (e && e.code === 'NotAuthorizedException') {
@@ -147,22 +125,14 @@ class Login extends React.Component {
                 } else {
                     content = 'Login failed. Please try again.';
                 }
-                self.setState({
+                this.setState({
                     authStatus: AuthStatus.NOT_STARTED,
                     activeAlert: {
                         style: 'danger',
                         content: content
                     }
                 });
-            },
-
-            newPasswordRequired: function() {
-                self.setState({
-                    cognitoUser: cognitoUser,
-                    showRequireNewPasswordModal : true
-                });
-            }
-        });
+            });
     }
 
     validInput() {
@@ -219,7 +189,7 @@ class Login extends React.Component {
 
               <NewPasswordRequiredModal
                  showModal={this.state.showRequireNewPasswordModal}
-                 cognitoUser={this.state.cognitoUser}
+                 identity={this.props.identity}
                  handleHide={() => {this.setState({showRequireNewPasswordModal: false});}}
                  />
             </div>
@@ -227,7 +197,10 @@ class Login extends React.Component {
     }
 }
 
+const identity = new Identity(
+    cognitoUserPoolId, cognitoClientId,
+    cognitoIdentityPoolId, cognitoIdentityProvider);
+
 ReactDOM.render(
-    <Login cognitoUserPoolId={cognitoUserPoolId}
-           cognitoClientId={cognitoClientId} />,
+    <Login identity={identity} />,
     document.querySelector(".mainContainer"));

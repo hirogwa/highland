@@ -271,15 +271,22 @@ def image():
         raise e
 
 
-@app.route('/user', methods=['POST', 'PUT'])
+@app.route('/initiate_user', methods=['POST'])
+@auth.signup
+def initiate_user():
+    try:
+        user = user_operation.create(
+            auth.authenticated_username, auth.identity_id)
+        return jsonify(result='success', user=dict(user))
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        raise e
+
+
+@app.route('/user', methods=['PUT'])
 @auth.require_authenticated()
 def user():
     try:
-        if 'POST' == request.method:
-            user = user_operation.create(
-                auth.authenticated_username, auth.authenticated_id_token)
-            return jsonify(user=dict(user), result='success')
-
         if 'PUT' == request.method:
             args = request.get_json()
             (id, username, name) = (
@@ -417,7 +424,9 @@ def login():
     return render_template(
         'dashboard/login.html',
         cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
-        cognito_client_id=settings.COGNITO_CLIENT_ID)
+        cognito_client_id=settings.COGNITO_CLIENT_ID,
+        cognito_identity_pool_id=settings.COGNITO_IDENTITY_POOL_ID,
+        cognito_identity_provider=settings.COGNITO_IDENTITY_PROVIDER)
 
 
 @auth.unauthenticated_redirect

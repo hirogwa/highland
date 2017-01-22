@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 
 class AuthenticatedRequest {
-    constructor(identity, imageBucket, audioBucket) {
+    constructor(identity, options) {
         this.identity = identity;
         this.identity.init()
             .then(() => {
@@ -10,12 +10,12 @@ class AuthenticatedRequest {
                 });
                 this.s3Image = new AWS.S3({
                     params: {
-                        Bucket: imageBucket
+                        Bucket: options.imageBucket
                     }
                 });
                 this.s3Audio = new AWS.S3({
                     params: {
-                        Bucket: audioBucket
+                        Bucket: options.audioBucket
                     }
                 });
                 console.info(this.identity);
