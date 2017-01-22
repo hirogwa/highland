@@ -103,16 +103,19 @@ class Identity {
             cognitoUser.authenticateUser(authenticationDetails, {
                 onSuccess: result => resolve(result),
                 newPasswordRequired: () => {
-                    this.cognitoUserNewPasswordRequired = cognitoUser;
-                    resolve('newPasswordRequired');
+                    resolve({
+                        inChallenge: true,
+                        challenge: 'newPasswordRequired'
+                    });
                 },
                 onFailure: e => reject(e)
             });
         });
         return p
             .then(result => {
-                if (result === 'newPasswordRequired') {
-                    return Promise.resolve(result);
+                if (result.inChallenge) {
+                    this.cognitoUserInChallenge = cognitoUser;
+                    return Promise.resolve(result.challenge);
                 } else {
                     const accessToken = result.getAccessToken().getJwtToken();
                     const idToken = result.getIdToken().getJwtToken();
@@ -122,7 +125,7 @@ class Identity {
     }
 
     completeNewPasswordChallenge(password) {
-        const cognitoUser = this.cognitoUserNewPasswordRequired;
+        const cognitoUser = this.cognitoUserInChallenge;
         return new Promise((resolve, reject) => {
             cognitoUser.completeNewPasswordChallenge(password, {}, {
                 onSuccess: resp => resolve(resp),
