@@ -1,6 +1,6 @@
 from flask import render_template, Markup
 from highland import show_operation, episode_operation, media_storage, \
-    settings, audio_operation, feed_operation, image_operation, common
+    app, audio_operation, feed_operation, image_operation, common
 
 
 def update_full(user, show_id):
@@ -29,7 +29,7 @@ def show_html(user, show, show_image, upload=True):
         image_url=image_url,
         episodes=episodes)
     if upload:
-        media_storage.upload(html, settings.S3_BUCKET_SITES, show.alias,
+        media_storage.upload(html, app.config.get('S3_BUCKET_SITES'), show.alias,
                              ContentType='text/html; charset=utf-8')
     return html
 
@@ -63,7 +63,7 @@ def episode_html(user, show, show_image, episode, upload=True):
         image_url=image_url)
     if upload:
         media_storage.upload(
-            html, settings.S3_BUCKET_SITES, episode.alias,
+            html, app.config.get('S3_BUCKET_SITES'), episode.alias,
             show.alias, ContentType='text/html; charset=utf-8')
     return html
 
@@ -78,11 +78,11 @@ def preview_episode(user, show, title, subtitle, description, audio_id,
 
 
 def _delete_all_episodes(user, show):
-    media_storage.delete_folder(settings.S3_BUCKET_SITES, show.alias)
+    media_storage.delete_folder(app.config.get('S3_BUCKET_SITES'), show.alias)
 
 
 def _get_site_url(show_alias):
-    return '{}/{}'.format(settings.HOST_SITE, show_alias)
+    return '{}/{}'.format(app.config.get('HOST_SITE'), show_alias)
 
 
 def _get_episode_image_url(user, episode, show_image):

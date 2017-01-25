@@ -6,7 +6,7 @@ import datetime
 import jwt
 import pytz
 
-from highland import exception, app, settings
+from highland import exception, app
 from highland.aws_resources import cognito_identity
 
 
@@ -30,7 +30,7 @@ class CognitoAuth:
         elif use == 'id':
             decoded = jwt.decode(
                 token, key=_public_key(n_str, e_str),
-                audience=settings.COGNITO_CLIENT_ID)
+                audience=app.config.get('COGNITO_CLIENT_ID'))
         else:
             raise exception.AuthError('unknown token_use:{}'.format(use))
 
@@ -149,9 +149,9 @@ class CognitoAuth:
     def _get_identity_id(self, id_token):
         app.logger.info('calling get_id to get identity_id')
         identity_id = cognito_identity.get_id(
-            IdentityPoolId=settings.COGNITO_IDENTITY_POOL_ID,
+            IdentityPoolId=app.config.get('COGNITO_IDENTITY_POOL_ID'),
             Logins={
-                settings.COGNITO_IDENTITY_PROVIDER: id_token
+                app.config.get('COGNITO_IDENTITY_PROVIDER'): id_token
             }).get('IdentityId')
         return identity_id
 

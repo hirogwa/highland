@@ -1,7 +1,7 @@
 import urllib.parse
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, media_storage,\
-    audio_operation, image_operation, settings, common
+    audio_operation, image_operation, app, common
 
 FEED_FOLDER_RSS = 'rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
@@ -10,7 +10,7 @@ FEED_CONTENT_TYPE = 'application/rss+xml'
 def update(user, show_id):
     show = show_operation.get_show_or_assert(user, show_id)
     return media_storage.upload(
-        generate(user, show), settings.S3_BUCKET_FEED,
+        generate(user, show), app.config.get('S3_BUCKET_FEED'),
         show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
 
 
@@ -60,7 +60,8 @@ def generate(user, show):
 def get_feed_url(user, show):
     common.require_true(user.id == show.owner_user_id)
     return urllib.parse.urljoin(
-        settings.HOST_FEED, '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
+        app.config.get('HOST_FEED'),
+        '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
 
 
 def _format_seconds(sec):

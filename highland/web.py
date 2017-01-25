@@ -6,14 +6,13 @@ from flask import request, jsonify, redirect, render_template, \
 
 from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
-    image_operation, public_view, feed_operation, stat_operation, settings,\
+    image_operation, public_view, feed_operation, stat_operation, \
     cognito_auth, publish, common
 
-app.secret_key = settings.APP_SECRET
-auth = cognito_auth.CognitoAuth(settings.COGNITO_JWT_SET,
-                                settings.COGNITO_REGION,
-                                settings.COGNITO_USER_POOL_ID)
-
+app.secret_key = app.config.get('APP_SECRET')
+auth = cognito_auth.CognitoAuth(app.config.get('COGNITO_JWT_SET'),
+                                app.config.get('COGNITO_REGION'),
+                                app.config.get('COGNITO_USER_POOL_ID'))
 
 page_loaders = []
 
@@ -408,12 +407,12 @@ def dashboard_page():
     return render_template(
         'dashboard/dashboard.html',
         show_id=show.id,
-        s3_bucket_image=settings.S3_BUCKET_IMAGE,
-        s3_bucket_audio=settings.S3_BUCKET_AUDIO,
-        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
-        cognito_client_id=settings.COGNITO_CLIENT_ID,
-        cognito_identity_pool_id=settings.COGNITO_IDENTITY_POOL_ID,
-        cognito_identity_provider=settings.COGNITO_IDENTITY_PROVIDER)
+        s3_bucket_image=app.config.get('S3_BUCKET_IMAGE'),
+        s3_bucket_audio=app.config.get('S3_BUCKET_AUDIO'),
+        cognito_user_pool_id=app.config.get('COGNITO_USER_POOL_ID'),
+        cognito_client_id=app.config.get('COGNITO_CLIENT_ID'),
+        cognito_identity_pool_id=app.config.get('COGNITO_IDENTITY_POOL_ID'),
+        cognito_identity_provider=app.config.get('COGNITO_IDENTITY_PROVIDER'))
 
 
 @app.route('/login', methods=['GET'])
@@ -423,10 +422,10 @@ def login():
 
     return render_template(
         'dashboard/login.html',
-        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
-        cognito_client_id=settings.COGNITO_CLIENT_ID,
-        cognito_identity_pool_id=settings.COGNITO_IDENTITY_POOL_ID,
-        cognito_identity_provider=settings.COGNITO_IDENTITY_PROVIDER)
+        cognito_user_pool_id=app.config.get('COGNITO_USER_POOL_ID'),
+        cognito_client_id=app.config.get('COGNITO_CLIENT_ID'),
+        cognito_identity_pool_id=app.config.get('COGNITO_IDENTITY_POOL_ID'),
+        cognito_identity_provider=app.config.get('COGNITO_IDENTITY_PROVIDER'))
 
 
 @auth.unauthenticated_redirect
@@ -450,8 +449,8 @@ def refresh_token_attempt():
 def refresh_token():
     return render_template(
         'dashboard/refresh-token.html',
-        cognito_user_pool_id=settings.COGNITO_USER_POOL_ID,
-        cognito_client_id=settings.COGNITO_CLIENT_ID,
+        cognito_user_pool_id=app.config.get('COGNITO_USER_POOL_ID'),
+        cognito_client_id=app.config.get('COGNITO_CLIENT_ID'),
         redirect_url='/', fallback_url='/login')
 
 

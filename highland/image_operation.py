@@ -1,6 +1,6 @@
 import urllib.parse
 import uuid
-from highland import models, media_storage, settings, app, exception
+from highland import models, media_storage, app, exception
 
 
 def create(user, file_name, file_type):
@@ -16,7 +16,7 @@ def delete(user, image_ids):
         image = get_image_or_assert(user, id)
         try:
             media_storage.delete(
-                _get_image_key(user, image), settings.S3_BUCKET_IMAGE)
+                _get_image_key(user, image), app.config.get('S3_BUCKET_IMAGE'))
         except:
             app.logger.error(
                 'Failed to delete media:({},{})'.format(
@@ -44,7 +44,8 @@ def get_image_or_assert(user, image_id):
 def get_image_url(user, image):
     access_allowed_or_raise(user.id, image)
     return urllib.parse.urljoin(
-        settings.HOST_IMAGE, urllib.parse.quote(_get_image_key(user, image)))
+        app.config.get('HOST_IMAGE'),
+        urllib.parse.quote(_get_image_key(user, image)))
 
 
 def access_allowed_or_raise(user_id, image):

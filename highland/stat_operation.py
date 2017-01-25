@@ -1,7 +1,7 @@
 import requests
 import urllib.parse
 from datetime import date, datetime, timedelta
-from highland import settings, show_operation, episode_operation
+from highland import app, show_operation, episode_operation
 
 DATE_FORMAT = '%Y%m%d'
 STAT_USERS = 'users'
@@ -11,7 +11,7 @@ STAT_DOWNLOADS = 'downloads'
 def get_episode_by_day(user, show_id, date_from=None, date_to=None):
     show = show_operation.get_show_or_assert(user, show_id)
     p = {
-        'bucket': settings.S3_BUCKET_AUDIO,
+        'bucket': app.config.get('S3_BUCKET_AUDIO'),
         'key_prefix': show.alias + '/'
     }
     if date_from:
@@ -20,7 +20,8 @@ def get_episode_by_day(user, show_id, date_from=None, date_to=None):
         p['date_to'] = date_to
 
     r = requests.get(
-        urllib.parse.urljoin(settings.HOST_OLYMPIA, '/stat/key_by_day'),
+        urllib.parse.urljoin(
+            app.config.get('HOST_OLYMPIA'), '/stat/key_by_day'),
         params=p)
     episode_stat = _stat_from_audio_to_episode(
         user, show, r.json().get('keys'))
@@ -48,13 +49,14 @@ def get_episode_one_week(user, show_id, date_to=None):
 def get_episode_cumulative(user, show_id, date_from=None, date_to=None):
     show = show_operation.get_show_or_assert(user, show_id)
     p = {
-        'bucket': settings.S3_BUCKET_AUDIO,
+        'bucket': app.config.get('S3_BUCKET_AUDIO'),
         'key_prefix': show.alias + '/',
         'date_from': date_from,
         'date_to': date_to
     }
     r = requests.get(
-        urllib.parse.urljoin(settings.HOST_OLYMPIA, '/stat/key_cumulative'),
+        urllib.parse.urljoin(
+            app.config.get('HOST_OLYMPIA'), '/stat/key_cumulative'),
         params=p)
     return {
         'stat': _stat_from_audio_to_episode(user, show, r.json().get('keys')),

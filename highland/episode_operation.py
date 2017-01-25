@@ -1,6 +1,6 @@
 import datetime
 import urllib.parse
-from highland import models, show_operation, settings, audio_operation,\
+from highland import models, show_operation, app, audio_operation,\
     image_operation, common, app, exception
 from highland.models import Episode
 
@@ -131,7 +131,7 @@ def get_episode_url(user, episode, show=None):
     else:
         show = show_operation.get_show_or_assert(user, episode.show_id)
     return urllib.parse.urljoin(
-        settings.HOST_SITE, '{}/{}'.format(show.alias, episode.alias))
+        app.config.get('HOST_SITE'), '{}/{}'.format(show.alias, episode.alias))
 
 
 def get_preview_episode(user, show, title, subtitle, description, audio_id,

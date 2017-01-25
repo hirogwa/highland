@@ -1,6 +1,6 @@
 import datetime
 import urllib.parse
-from highland import models, settings, common, exception
+from highland import models, app, common, exception
 
 
 def create(user, title, description, subtitle, language, author, category,
@@ -52,7 +52,7 @@ def get_show_or_assert(user, show_id):
 
 
 def get_show_url(show):
-    return urllib.parse.urljoin(settings.HOST_SITE, show.alias)
+    return urllib.parse.urljoin(app.config.get('HOST_SITE'), show.alias)
 
 
 def access_allowed_or_raise(user_id, show):
