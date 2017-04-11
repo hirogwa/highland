@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 from highland import models, show_operation, app, audio_operation,\
-    image_operation, common, app, exception
+    image_operation, common, exception
 from highland.models import Episode
 
 
