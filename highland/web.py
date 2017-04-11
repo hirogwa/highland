@@ -23,6 +23,12 @@ def page_loader(func):
     return func
 
 
+@app.errorhandler(Exception)
+def handleError(error):
+    app.logger.error(traceback.format_exc())
+    return jsonify(result='error'), 500
+
+
 @app.route('/stat/episode_by_day', methods=['GET'])
 @auth.require_authenticated()
 def stat_episode_by_day():
@@ -56,250 +62,214 @@ def stat_episode_cumulative():
 @app.route('/show/<show_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_show(show_id):
-    try:
-        show = show_operation.get_show_or_assert(
-            auth.authenticated_user, show_id)
-        return jsonify(show=dict(show), result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    show = show_operation.get_show_or_assert(
+        auth.authenticated_user, show_id)
+    return jsonify(show=dict(show), result='success')
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
 @auth.require_authenticated()
 def show():
-    try:
-        if 'POST' == request.method:
-            args = request.get_json()
-            (title, description, subtitle, language, author, category,
-             explicit, image_id, alias) = _get_args(
-                 args, 'title', 'description', 'subtitle', 'language',
-                 'author', 'category', 'explicit', 'image_id', 'alias')
-            common.require_true(title, 'title required')
-            common.require_true(description, 'description required')
-            common.require_true(subtitle, 'subtitle required')
-            common.require_true(language, 'language required')
-            common.require_true(author, 'author required')
-            common.require_true(category, 'category required')
-            common.require_true(explicit is not None, 'explicit required')
-            common.require_true(alias, 'alias required')
+    if 'POST' == request.method:
+        args = request.get_json()
+        (title, description, subtitle, language, author, category,
+         explicit, image_id, alias) = _get_args(
+             args, 'title', 'description', 'subtitle', 'language',
+             'author', 'category', 'explicit', 'image_id', 'alias')
+        common.require_true(title, 'title required')
+        common.require_true(description, 'description required')
+        common.require_true(subtitle, 'subtitle required')
+        common.require_true(language, 'language required')
+        common.require_true(author, 'author required')
+        common.require_true(category, 'category required')
+        common.require_true(explicit is not None, 'explicit required')
+        common.require_true(alias, 'alias required')
 
-            show = show_operation.create(
-                auth.authenticated_user, title, description, subtitle,
-                language, author, category, explicit, image_id, alias)
-            return jsonify(show=dict(show), result='success'), 201
+        show = show_operation.create(
+            auth.authenticated_user, title, description, subtitle,
+            language, author, category, explicit, image_id, alias)
+        return jsonify(show=dict(show), result='success'), 201
 
-        if 'PUT' == request.method:
-            args = request.get_json()
-            (id, title, description, subtitle, language, author, category,
-             explicit, image_id) = _get_args(
-                 args, 'id', 'title', 'description', 'subtitle', 'language',
-                 'author', 'category', 'explicit', 'image_id')
-            common.require_true(id, 'id required')
-            common.require_true(title, 'title required')
-            common.require_true(description, 'description required')
-            common.require_true(subtitle, 'subtitle required')
-            common.require_true(language, 'language required')
-            common.require_true(author, 'author required')
-            common.require_true(category, 'category required')
-            common.require_true(explicit is not None, 'explicit required')
+    if 'PUT' == request.method:
+        args = request.get_json()
+        (id, title, description, subtitle, language, author, category,
+         explicit, image_id) = _get_args(
+             args, 'id', 'title', 'description', 'subtitle', 'language',
+             'author', 'category', 'explicit', 'image_id')
+        common.require_true(id, 'id required')
+        common.require_true(title, 'title required')
+        common.require_true(description, 'description required')
+        common.require_true(subtitle, 'subtitle required')
+        common.require_true(language, 'language required')
+        common.require_true(author, 'author required')
+        common.require_true(category, 'category required')
+        common.require_true(explicit is not None, 'explicit required')
 
-            show = show_operation.update(
-                auth.authenticated_user, id, title, description, subtitle,
-                language, author, category, explicit, image_id)
-            return jsonify(show=dict(show), result='success')
+        show = show_operation.update(
+            auth.authenticated_user, id, title, description, subtitle,
+            language, author, category, explicit, image_id)
+        return jsonify(show=dict(show), result='success')
 
-        if 'GET' == request.method:
-            shows = show_operation.load(auth.authenticated_user)
-            return jsonify(shows=list(map(dict, shows)), result='success')
-    except Exception:
-        app.logger.error(traceback.format_exc())
-        return jsonify(result='error'), 500
+    if 'GET' == request.method:
+        shows = show_operation.load(auth.authenticated_user)
+        return jsonify(shows=list(map(dict, shows)), result='success')
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
 @auth.require_authenticated()
 def episode():
-    try:
-        if 'POST' == request.method:
-            args = request.get_json()
-            (show_id, draft_status, alias, scheduled_datetime, title, subtitle,
-             description, audio_id, explicit, image_id) = _get_args(
-                 args, 'show_id', 'draft_status', 'alias',
-                 'scheduled_datetime', 'title', 'subtitle', 'description',
-                 'audio_id', 'explicit', 'image_id')
+    if 'POST' == request.method:
+        args = request.get_json()
+        (show_id, draft_status, alias, scheduled_datetime, title, subtitle,
+         description, audio_id, explicit, image_id) = _get_args(
+             args, 'show_id', 'draft_status', 'alias',
+             'scheduled_datetime', 'title', 'subtitle', 'description',
+             'audio_id', 'explicit', 'image_id')
 
-            common.require_true(show_id, 'show id required')
-            common.require_true(draft_status, 'draft status required')
-            common.require_true(explicit is not None, 'explicit required')
+        common.require_true(show_id, 'show id required')
+        common.require_true(draft_status, 'draft status required')
+        common.require_true(explicit is not None, 'explicit required')
 
-            episode = episode_operation.create(
-                auth.authenticated_user, show_id, draft_status, alias,
-                audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
-                title, subtitle, description, explicit)
+        episode = episode_operation.create(
+            auth.authenticated_user, show_id, draft_status, alias,
+            audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+            title, subtitle, description, explicit)
 
-            return jsonify(episode=dict(episode), result='success'), 201
+        return jsonify(episode=dict(episode), result='success'), 201
 
-        if 'PUT' == request.method:
-            args = request.get_json()
-            (id, draft_status, alias, scheduled_datetime, title,
-             subtitle, description, audio_id, explicit, image_id) = _get_args(
-                 args, 'id', 'draft_status', 'alias', 'scheduled_datetime',
-                 'title', 'subtitle', 'description', 'audio_id', 'explicit',
-                 'image_id')
+    if 'PUT' == request.method:
+        args = request.get_json()
+        (id, draft_status, alias, scheduled_datetime, title,
+         subtitle, description, audio_id, explicit, image_id) = _get_args(
+             args, 'id', 'draft_status', 'alias', 'scheduled_datetime',
+             'title', 'subtitle', 'description', 'audio_id', 'explicit',
+             'image_id')
 
-            common.require_true(id, 'id required')
-            common.require_true(draft_status, 'draft status required')
-            common.require_true(explicit is not None, 'explicit required')
+        common.require_true(id, 'id required')
+        common.require_true(draft_status, 'draft status required')
+        common.require_true(explicit is not None, 'explicit required')
 
-            episode = episode_operation.update(
-                auth.authenticated_user, id, draft_status, alias,
-                audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
-                title, subtitle, description, explicit)
-            return jsonify(episode=dict(episode), result='success')
+        episode = episode_operation.update(
+            auth.authenticated_user, id, draft_status, alias,
+            audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+            title, subtitle, description, explicit)
+        return jsonify(episode=dict(episode), result='success')
 
-        if 'DELETE' == request.method:
-            args = request.get_json()
-            episode_operation.delete(auth.authenticated_user,
-                                     args.get('episode_ids'))
-            return jsonify(result='success')
-    except Exception:
-        app.logger.error(traceback.format_exc())
-        return jsonify(result='error'), 500
+    if 'DELETE' == request.method:
+        args = request.get_json()
+        episode_operation.delete(auth.authenticated_user,
+                                 args.get('episode_ids'))
+        return jsonify(result='success')
 
 
 @app.route('/episodes/<show_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_episode_list(show_id):
-    try:
-        public = request.args.get('public')
-        if public:
-            episodes = episode_operation.load_public(
-                auth.authenticated_user, show_id)
-        else:
-            episodes = episode_operation.load(
-                auth.authenticated_user, show_id)
-        return jsonify(episodes=[dict(x) for x in episodes], result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    public = request.args.get('public')
+    if public:
+        episodes = episode_operation.load_public(
+            auth.authenticated_user, show_id)
+    else:
+        episodes = episode_operation.load(
+            auth.authenticated_user, show_id)
+    return jsonify(episodes=[dict(x) for x in episodes], result='success')
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_episode(show_id, episode_id):
-    try:
-        episode = episode_operation.get_episode_or_assert(
-            auth.authenticated_user, episode_id)
-        return jsonify(episode=dict(episode), result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    episode = episode_operation.get_episode_or_assert(
+        auth.authenticated_user, episode_id)
+    return jsonify(episode=dict(episode), result='success')
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
 @auth.require_authenticated()
 def audio():
-    try:
-        if 'POST' == request.method:
-            file_name, duration, length, file_type = _get_args(
-                request.get_json(), 'filename', 'duration', 'length',
-                'filetype')
-            audio = audio_operation.create(
-                auth.authenticated_user, file_name, duration, length,
-                file_type)
-            return jsonify(audio=dict(audio), result='success'), 201
-        if 'GET' == request.method:
-            args = request.args
-            unused_only = args.get('unused_only') == 'True'
-            whitelisted_id = args.get('whitelisted_id')
-            user = auth.authenticated_user
-            audios = audio_operation.load(
-                user, unused_only,
-                int(whitelisted_id) if whitelisted_id else None)
+    if 'POST' == request.method:
+        file_name, duration, length, file_type = _get_args(
+            request.get_json(), 'filename', 'duration', 'length',
+            'filetype')
+        audio = audio_operation.create(
+            auth.authenticated_user, file_name, duration, length,
+            file_type)
+        return jsonify(audio=dict(audio), result='success'), 201
 
-            return jsonify(audios=audios, result='success')
-        if 'DELETE' == request.method:
-            args = request.get_json()
-            audio_operation.delete(auth.authenticated_user, args.get('ids'))
-            return jsonify(result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    if 'GET' == request.method:
+        args = request.args
+        unused_only = args.get('unused_only') == 'True'
+        whitelisted_id = args.get('whitelisted_id')
+        user = auth.authenticated_user
+        audios = audio_operation.load(
+            user, unused_only,
+            int(whitelisted_id) if whitelisted_id else None)
+
+        return jsonify(audios=audios, result='success')
+
+    if 'DELETE' == request.method:
+        args = request.get_json()
+        audio_operation.delete(auth.authenticated_user, args.get('ids'))
+        return jsonify(result='success')
 
 
 @app.route('/image/<image_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_image(image_id):
-    try:
-        user = auth.authenticated_user
-        image = image_operation.get_image_or_assert(user, image_id)
-        image_d = dict(image)
-        image_d['url'] = image_operation.get_image_url(user, image)
-        return jsonify(image=image_d, result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    user = auth.authenticated_user
+    image = image_operation.get_image_or_assert(user, image_id)
+    image_d = dict(image)
+    image_d['url'] = image_operation.get_image_url(user, image)
+    return jsonify(image=image_d, result='success')
 
 
 @app.route('/image', methods=['POST', 'GET', 'DELETE'])
 @auth.require_authenticated()
 def image():
-    try:
-        if 'POST' == request.method:
-            file_name, file_type = _get_args(
-                request.get_json(), 'filename', 'filetype')
-            image = image_operation.create(
-                auth.authenticated_user, file_name, file_type)
-            return jsonify(image=dict(image), result='success'), 201
-        if 'GET' == request.method:
-            user = auth.authenticated_user
-            images = image_operation.load(user)
+    if 'POST' == request.method:
+        file_name, file_type = _get_args(
+            request.get_json(), 'filename', 'filetype')
+        image = image_operation.create(
+            auth.authenticated_user, file_name, file_type)
+        return jsonify(image=dict(image), result='success'), 201
 
-            def _dict(x):
-                d = dict(x)
-                d['url'] = image_operation.get_image_url(user, x)
-                return d
-            return jsonify(images=[_dict(x) for x in images], result='success')
-        if 'DELETE' == request.method:
-            args = request.get_json()
-            image_operation.delete(auth.authenticated_user, args.get('ids'))
-            return jsonify(result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    if 'GET' == request.method:
+        user = auth.authenticated_user
+        images = image_operation.load(user)
+
+        def _dict(x):
+            d = dict(x)
+            d['url'] = image_operation.get_image_url(user, x)
+            return d
+        return jsonify(images=[_dict(x) for x in images], result='success')
+
+    if 'DELETE' == request.method:
+        args = request.get_json()
+        image_operation.delete(auth.authenticated_user, args.get('ids'))
+        return jsonify(result='success')
 
 
 @app.route('/initiate_user', methods=['POST'])
 @auth.signup
 def initiate_user():
-    try:
-        user = user_operation.create(
-            auth.authenticated_username, auth.identity_id)
-        return jsonify(result='success', user=dict(user))
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    user = user_operation.create(
+        auth.authenticated_username, auth.identity_id)
+    return jsonify(result='success', user=dict(user))
 
 
 @app.route('/user', methods=['PUT'])
 @auth.require_authenticated()
 def user():
-    try:
-        if 'PUT' == request.method:
-            args = request.get_json()
-            (id, username, name) = (
-                args.get('id'),
-                args.get('username'),
-                args.get('name'))
-            common.require_true(id, 'id required')
-            common.require_true(username, 'username required')
-            common.require_true(name, 'name required')
-            user = user_operation.update(int(id), username, name)
-            return jsonify(user=dict(user), result='success')
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
-        raise e
+    if 'PUT' == request.method:
+        args = request.get_json()
+        (id, username, name) = (
+            args.get('id'),
+            args.get('username'),
+            args.get('name'))
+        common.require_true(id, 'id required')
+        common.require_true(username, 'username required')
+        common.require_true(name, 'name required')
+        user = user_operation.update(int(id), username, name)
+        return jsonify(user=dict(user), result='success')
 
 
 @auth.user_loader
