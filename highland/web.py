@@ -14,14 +14,6 @@ auth = cognito_auth.CognitoAuth(app.config.get('COGNITO_JWT_SET'),
                                 app.config.get('COGNITO_REGION'),
                                 app.config.get('COGNITO_USER_POOL_ID'))
 
-page_loaders = []
-
-
-def page_loader(func):
-    if func.__name__ not in []:
-        page_loaders.append(func.__name__)
-    return func
-
 
 @app.errorhandler(Exception)
 def handleError(error):
@@ -364,7 +356,6 @@ def publish_feed():
 
 @app.route('/', methods=['GET'])
 @auth.require_authenticated(fallback=True, page=True)
-@page_loader
 def dashboard_page():
     shows = show_operation.load(auth.authenticated_user)
     if not shows:

@@ -162,8 +162,9 @@ class CognitoAuth:
 
 
 def _public_key(n_str, e_str):
-    to_num = lambda x: int.from_bytes(
-        base64.urlsafe_b64decode(_pad(x)), byteorder='big')
+    def to_num(x):
+        return int.from_bytes(
+            base64.urlsafe_b64decode(_pad(x)), byteorder='big')
     pub = RSA.construct([to_num(x) for x in [n_str, e_str]])
     return pub.exportKey(format='PEM').decode('ascii')
 
