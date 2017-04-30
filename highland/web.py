@@ -1,6 +1,7 @@
 import dateutil.parser
 import traceback
 
+from datetime import datetime
 from flask import request, jsonify, redirect, render_template, \
     url_for, Response
 
@@ -56,7 +57,7 @@ def stat_episode_cumulative():
 def get_show(show_id):
     show = show_operation.get_show_or_assert(
         auth.authenticated_user, show_id)
-    return jsonify(show=dict(show), result='success')
+    return jsonify(show=api_model(show), result='success')
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
@@ -422,6 +423,17 @@ def logout():
         return jsonify(result='success')
     if request.method == 'GET':
         return login_redirect()
+
+
+def api_model(model):
+    """Format model object in a way the client expects"""
+
+    def _value(value):
+        if isinstance(value, datetime):
+            return str(value)
+        else:
+            return value
+    return {k: _value(v) for k, v in dict(model).items()}
 
 
 def _get_args(param, *names):

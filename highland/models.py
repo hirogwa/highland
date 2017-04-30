@@ -4,14 +4,22 @@ import uuid
 from flask_sqlalchemy import SQLAlchemy
 from highland import app, aws_resources
 
+
+class ModelMappingMixin():
+    """Iterable to present model as a mapping"""
+
+    def __iter__(self):
+        for key in (x.name for x in self.__table__.columns):
+            yield key, getattr(self, key)
+
+
 db = SQLAlchemy(app)
 
 
-class Show(db.Model):
-    '''
-    last_build_datetime: when the last public change under the show was made
+class Show(ModelMappingMixin, db.Model):
+    """last_build_datetime: when the last public change under the show was made
     update_datetime: when the last change to the show entity was made
-    '''
+    """
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     description = db.Column(db.Text())
@@ -45,15 +53,6 @@ class Show(db.Model):
         self.explicit = explicit
         self.image_id = image_id
         self.alias = alias
-
-    def __iter__(self):
-        for key in ['owner_user_id', 'id', 'title', 'description', 'subtitle',
-                    'language', 'author', 'category', 'explicit', 'image_id',
-                    'alias']:
-            yield(key, getattr(self, key))
-        yield('last_build_datetime', str(self.last_build_datetime))
-        yield('update_datetime', str(self.update_datetime))
-        yield('create_datetime', str(self.create_datetime))
 
 
 class Episode(db.Model):
