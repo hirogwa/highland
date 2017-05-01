@@ -55,7 +55,7 @@ class Show(ModelMappingMixin, db.Model):
         self.alias = alias
 
 
-class Episode(db.Model):
+class Episode(ModelMappingMixin, db.Model):
     class DraftStatus(enum.Enum):
         draft = 'draft'
         scheduled = 'scheduled'
@@ -104,27 +104,11 @@ class Episode(db.Model):
         self.image_id = image_id
         self.alias = alias
 
-    def __iter__(self):
-        for key in ['owner_user_id', 'show_id', 'id', 'title', 'subtitle',
-                    'description', 'audio_id', 'explicit', 'guid', 'image_id',
-                    'alias']:
-            yield(key, getattr(self, key))
-        yield('draft_status', self.draft_status)
-        yield('scheduled_datetime',
-              '' if self.scheduled_datetime is None else str(self.scheduled_datetime))
-        yield('update_datetime',
-              '' if self.update_datetime is None else str(self.update_datetime))
-        yield('create_datetime',
-              '' if self.create_datetime is None else str(self.create_datetime))
-        yield('published_datetime',
-              '' if self.published_datetime is None else str(self.published_datetime))
 
-
-class Audio(db.Model):
-    '''
-    duration: in seconds
+class Audio(ModelMappingMixin, db.Model):
+    """duration: in seconds
     length: in bytes
-    '''
+    """
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     duration = db.Column(db.Integer())
@@ -144,14 +128,8 @@ class Audio(db.Model):
         self.type = type
         self.guid = guid
 
-    def __iter__(self):
-        for key in ['owner_user_id', 'id', 'filename', 'duration', 'length',
-                    'type', 'guid']:
-            yield(key, getattr(self, key))
-        yield('create_datetime', str(self.create_datetime))
 
-
-class Image(db.Model):
+class Image(ModelMappingMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     guid = db.Column(db.String(32))
@@ -167,13 +145,8 @@ class Image(db.Model):
         self.guid = guid
         self.type = type
 
-    def __iter__(self):
-        for key in ['owner_user_id', 'id', 'filename', 'guid', 'type']:
-            yield(key, getattr(self, key))
-        yield('create_datetime', str(self.create_datetime))
 
-
-class User(db.Model):
+class User(ModelMappingMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     name = db.Column(db.String(100))
@@ -202,9 +175,3 @@ class User(db.Model):
             self.email = email
             return email
         raise AttributeError('unexpected attribute:{}'.format(name))
-
-    def __iter__(self):
-        for key in ['id', 'username', 'name', 'identity_id']:
-            yield(key, getattr(self, key))
-        yield('update_datetime', str(self.update_datetime))
-        yield('create_datetime', str(self.create_datetime))
