@@ -81,7 +81,7 @@ def show():
         show = show_operation.create(
             auth.authenticated_user, title, description, subtitle,
             language, author, category, explicit, image_id, alias)
-        return jsonify(show=dict(show), result='success'), 201
+        return jsonify(show=api_model(show), result='success'), 201
 
     if 'PUT' == request.method:
         args = request.get_json()
@@ -101,11 +101,11 @@ def show():
         show = show_operation.update(
             auth.authenticated_user, id, title, description, subtitle,
             language, author, category, explicit, image_id)
-        return jsonify(show=dict(show), result='success')
+        return jsonify(show=api_model(show), result='success')
 
     if 'GET' == request.method:
         shows = show_operation.load(auth.authenticated_user)
-        return jsonify(shows=list(map(dict, shows)), result='success')
+        return jsonify(shows=[api_model(x) for x in shows], result='success')
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
@@ -128,7 +128,7 @@ def episode():
             audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
 
-        return jsonify(episode=dict(episode), result='success'), 201
+        return jsonify(episode=api_model(episode), result='success'), 201
 
     if 'PUT' == request.method:
         args = request.get_json()
@@ -146,7 +146,7 @@ def episode():
             auth.authenticated_user, id, draft_status, alias,
             audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
-        return jsonify(episode=dict(episode), result='success')
+        return jsonify(episode=api_model(episode), result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
@@ -165,7 +165,7 @@ def get_episode_list(show_id):
     else:
         episodes = episode_operation.load(
             auth.authenticated_user, show_id)
-    return jsonify(episodes=[dict(x) for x in episodes], result='success')
+    return jsonify(episodes=[api_model(x) for x in episodes], result='success')
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
@@ -173,7 +173,7 @@ def get_episode_list(show_id):
 def get_episode(show_id, episode_id):
     episode = episode_operation.get_episode_or_assert(
         auth.authenticated_user, episode_id)
-    return jsonify(episode=dict(episode), result='success')
+    return jsonify(episode=api_model(episode), result='success')
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
@@ -186,7 +186,7 @@ def audio():
         audio = audio_operation.create(
             auth.authenticated_user, file_name, duration, length,
             file_type)
-        return jsonify(audio=dict(audio), result='success'), 201
+        return jsonify(audio=api_model(audio), result='success'), 201
 
     if 'GET' == request.method:
         args = request.args
@@ -197,7 +197,7 @@ def audio():
             user, unused_only,
             int(whitelisted_id) if whitelisted_id else None)
 
-        return jsonify(audios=audios, result='success')
+        return jsonify(audios=[api_model(x) for x in audios], result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
@@ -210,7 +210,7 @@ def audio():
 def get_image(image_id):
     user = auth.authenticated_user
     image = image_operation.get_image_or_assert(user, image_id)
-    image_d = dict(image)
+    image_d = api_model(image)
     image_d['url'] = image_operation.get_image_url(user, image)
     return jsonify(image=image_d, result='success')
 
@@ -223,14 +223,14 @@ def image():
             request.get_json(), 'filename', 'filetype')
         image = image_operation.create(
             auth.authenticated_user, file_name, file_type)
-        return jsonify(image=dict(image), result='success'), 201
+        return jsonify(image=api_model(image), result='success'), 201
 
     if 'GET' == request.method:
         user = auth.authenticated_user
         images = image_operation.load(user)
 
         def _dict(x):
-            d = dict(x)
+            d = api_model(x)
             d['url'] = image_operation.get_image_url(user, x)
             return d
         return jsonify(images=[_dict(x) for x in images], result='success')
@@ -246,7 +246,7 @@ def image():
 def initiate_user():
     user = user_operation.create(
         auth.authenticated_username, auth.identity_id)
-    return jsonify(result='success', user=dict(user))
+    return jsonify(result='success', user=api_model(user))
 
 
 @app.route('/user', methods=['PUT'])
@@ -262,7 +262,7 @@ def user():
         common.require_true(username, 'username required')
         common.require_true(name, 'name required')
         user = user_operation.update(int(id), username, name)
-        return jsonify(user=dict(user), result='success')
+        return jsonify(user=api_model(user), result='success')
 
 
 @auth.user_loader
