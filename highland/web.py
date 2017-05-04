@@ -55,8 +55,8 @@ def stat_episode_cumulative():
 @app.route('/show/<show_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_show(show_id):
-    show = show_operation.get_show_or_assert(
-        auth.authenticated_user, show_id)
+    show = show_operation.get(
+        auth.authenticated_user.id, show_id)
     return jsonify(show=api_model(show), result='success')
 
 
@@ -79,7 +79,7 @@ def show():
         common.require_true(alias, 'alias required')
 
         show = show_operation.create(
-            auth.authenticated_user, title, description, subtitle,
+            auth.authenticated_user.id, title, description, subtitle,
             language, author, category, explicit, image_id, alias)
         return jsonify(show=api_model(show), result='success'), 201
 
@@ -99,12 +99,12 @@ def show():
         common.require_true(explicit is not None, 'explicit required')
 
         show = show_operation.update(
-            auth.authenticated_user, id, title, description, subtitle,
+            auth.authenticated_user.id, id, title, description, subtitle,
             language, author, category, explicit, image_id)
         return jsonify(show=api_model(show), result='success')
 
     if 'GET' == request.method:
-        shows = show_operation.load(auth.authenticated_user)
+        shows = show_operation.load(auth.authenticated_user.id)
         return jsonify(shows=[api_model(x) for x in shows], result='success')
 
 
@@ -304,7 +304,7 @@ def preview_site(show_id):
     test only
     '''
     user = auth.authenticated_user
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
     return public_view.show_html(
@@ -328,7 +328,7 @@ def preview_site_episode():
         args.get('audio_id'), \
         args.get('image_id')
 
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     return public_view.preview_episode(
         user, show, title, subtitle, description, audio_id, image_id)
 
@@ -341,7 +341,7 @@ def preview_feed(show_id):
     user = auth.authenticated_user
     return Response(
         feed_operation.generate(
-            user, show_operation.get_show_or_assert(user, show_id)),
+            user, show_operation.get(user.id, show_id)),
         mimetype=feed_operation.FEED_CONTENT_TYPE)
 
 
@@ -358,7 +358,7 @@ def publish_feed():
 @app.route('/', methods=['GET'])
 @auth.require_authenticated(fallback=True, page=True)
 def dashboard_page():
-    shows = show_operation.load(auth.authenticated_user)
+    shows = show_operation.load(auth.authenticated_user.id)
     if not shows:
         # TODO redirect: some way to create one
         return '', 401

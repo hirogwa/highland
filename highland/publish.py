@@ -1,5 +1,5 @@
-from highland import app, models, show_operation, public_view, feed_operation, \
-    user_operation, image_operation, episode_operation
+from highland import app, models, show_operation, public_view, \
+    feed_operation, user_operation, image_operation, episode_operation
 
 
 def publish_scheduled():
@@ -11,7 +11,7 @@ def publish_scheduled():
 
     def _reset(episode):
         user = user_operation.get_or_assert(episode.owner_user_id)
-        show = show_operation.get_show_or_assert(user, episode.show_id)
+        show = show_operation.get(user.id, episode.show_id)
         show_image = image_operation.get_image_or_assert(user, show.image_id)
         return user, show, show_image, {
             'user_id': user.id,
@@ -50,7 +50,8 @@ def publish(episode):
         return
 
     user = user_operation.get_or_assert(episode.owner_user_id)
-    show = show_operation.get_show_or_assert(episode.user_id, episode.show_id)
+    show = show_operation.get(
+        episode.owner_user_id, episode.show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id)
     public_view.episode_html(user, show, show_image, episode)
     public_view.show_html(user, show, show_image)

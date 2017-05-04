@@ -9,7 +9,7 @@ def create(user, show_id, draft_status, alias, audio_id, image_id,
            scheduled_datetime=None, title='', subtitle='', description='',
            explicit=False):
     draft_status = Episode.DraftStatus(draft_status).name
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     episode = Episode(
         show, title, subtitle, description, audio_id, draft_status,
         scheduled_datetime, explicit, image_id, alias)
@@ -60,7 +60,7 @@ def delete(user, episode_ids):
 
 
 def load(user, show_id, **kwargs):
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     return Episode.query.\
         filter_by(owner_user_id=user.id, show_id=show.id, **kwargs).\
         order_by(Episode.published_datetime.desc()).\
@@ -68,7 +68,7 @@ def load(user, show_id, **kwargs):
 
 
 def load_with_audio(user, show_id):
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     return models.db.session. \
         query(
             Episode,
@@ -82,7 +82,7 @@ def load_with_audio(user, show_id):
 
 
 def load_public(user, show_id):
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     return Episode.query.\
         filter_by(owner_user_id=user.id, show_id=show.id,
                   draft_status=Episode.DraftStatus.published.name).\
@@ -129,7 +129,7 @@ def get_episode_url(user, episode, show=None):
     if show:
         show_operation.access_allowed_or_raise(user.id, show)
     else:
-        show = show_operation.get_show_or_assert(user, episode.show_id)
+        show = show_operation.get(user.id, episode.show_id)
     return urllib.parse.urljoin(
         app.config.get('HOST_SITE'), '{}/{}'.format(show.alias, episode.alias))
 
@@ -189,7 +189,7 @@ def _update_show_build_datetime(user, episode):
     if episode.draft_status != Episode.DraftStatus.published.name:
         return None
 
-    show = show_operation.get_show_or_assert(user, episode.show_id)
+    show = show_operation.get(user.id, episode.show_id)
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show
