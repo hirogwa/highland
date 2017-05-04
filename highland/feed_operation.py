@@ -8,7 +8,7 @@ FEED_CONTENT_TYPE = 'application/rss+xml'
 
 
 def update(user, show_id):
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     return media_storage.upload(
         generate(user, show), app.config.get('S3_BUCKET_FEED'),
         show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)

@@ -41,9 +41,9 @@ class Show(ModelMappingMixin, db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, title, description, subtitle, language, author,
+    def __init__(self, user_id, title, description, subtitle, language, author,
                  category, explicit, image_id, alias):
-        self.owner_user_id = user.id
+        self.owner_user_id = user_id
         self.title = title
         self.description = description
         self.subtitle = subtitle

@@ -4,7 +4,7 @@ from highland import show_operation, episode_operation, media_storage, \
 
 
 def update_full(user, show_id):
-    show = show_operation.get_show_or_assert(user, show_id)
+    show = show_operation.get(user.id, show_id)
     show_image = image_operation.get_image_or_assert(user, show.image_id) \
         if show.image_id else None
     episodes = episode_operation.load_public(user, show_id)
