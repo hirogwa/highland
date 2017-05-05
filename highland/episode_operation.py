@@ -9,7 +9,8 @@ def create(user, show_id, draft_status, alias, audio_id, image_id,
            scheduled_datetime=None, title='', subtitle='', description='',
            explicit=False):
     draft_status = Episode.DraftStatus(draft_status).name
-    show = show_operation.get(user.id, show_id)
+    # check if corresponding show exists
+    show = show_operation.get(show_id)
     episode = Episode(
         show, title, subtitle, description, audio_id, draft_status,
         scheduled_datetime, explicit, image_id, alias)
@@ -26,7 +27,7 @@ def create(user, show_id, draft_status, alias, audio_id, image_id,
 def update(user, episode_id, draft_status=None, alias=None, audio_id=None,
            image_id=None, scheduled_datetime=None, title=None, subtitle=None,
            description=None, explicit=None):
-    episode = get_episode_or_assert(user, episode_id)
+    episode = get(episode_id)
 
     name_value_pairs = [
         ('title', title),
@@ -50,9 +51,18 @@ def update(user, episode_id, draft_status=None, alias=None, audio_id=None,
     return episode
 
 
+def get(episode_id):
+    """Retrieves the episode. Exception is raised if not found."""
+    episode = Episode.query.filter_by(id=episode_id).first()
+    if not episode:
+        raise exception.NoSuchEntityError(
+            'episode does not exist. id:{}'.format(episode_id))
+    return episode
+
+
 def delete(user, episode_ids):
     for id in episode_ids:
-        episode = get_episode_or_assert(user, id)
+        episode = get(id)
         models.db.session.delete(episode)
     models.db.session.commit()
     _update_show_build_datetime(user, episode)
@@ -60,7 +70,7 @@ def delete(user, episode_ids):
 
 
 def load(user, show_id, **kwargs):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     return Episode.query.\
         filter_by(owner_user_id=user.id, show_id=show.id, **kwargs).\
         order_by(Episode.published_datetime.desc()).\
@@ -68,7 +78,7 @@ def load(user, show_id, **kwargs):
 
 
 def load_with_audio(user, show_id):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     return models.db.session. \
         query(
             Episode,
@@ -82,7 +92,7 @@ def load_with_audio(user, show_id):
 
 
 def load_public(user, show_id):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     return Episode.query.\
         filter_by(owner_user_id=user.id, show_id=show.id,
                   draft_status=Episode.DraftStatus.published.name).\
@@ -114,22 +124,12 @@ def publish(episode):
     return episode
 
 
-def get_episode_or_assert(user, episode_id):
-    episode = Episode.query.\
-        filter_by(owner_user_id=user.id, id=episode_id).first()
-    if not episode:
-        raise exception.NoSuchEntityError(
-            'episode does not exist. id:{}'.format(episode_id))
-    access_allowed_or_raise(user.id, episode)
-    return episode
-
-
 def get_episode_url(user, episode, show=None):
     access_allowed_or_raise(user.id, episode)
     if show:
         show_operation.access_allowed_or_raise(user.id, show)
     else:
-        show = show_operation.get(user.id, episode.show_id)
+        show = show_operation.get(episode.show_id)
     return urllib.parse.urljoin(
         app.config.get('HOST_SITE'), '{}/{}'.format(show.alias, episode.alias))
 
@@ -169,9 +169,9 @@ def _valid_or_assert(user, episode):
             'episode alias not accepted. {}'.format(episode.alias))
 
     if episode.audio_id is not None:
-        audio_operation.get_audio_or_assert(user, episode.audio_id)
+        audio_operation.get(episode.audio_id)
     if episode.image_id is not None:
-        image_operation.get_image_or_assert(user, episode.image_id)
+        image_operation.get(episode.image_id)
 
     if episode.draft_status != Episode.DraftStatus.draft.name:
         common.require_true(episode.title, 'title required')
@@ -189,7 +189,7 @@ def _update_show_build_datetime(user, episode):
     if episode.draft_status != Episode.DraftStatus.published.name:
         return None
 
-    show = show_operation.get(user.id, episode.show_id)
+    show = show_operation.get(episode.show_id)
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show

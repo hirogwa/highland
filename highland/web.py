@@ -55,8 +55,7 @@ def stat_episode_cumulative():
 @app.route('/show/<show_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_show(show_id):
-    show = show_operation.get(
-        auth.authenticated_user.id, show_id)
+    show = show_operation.get(show_id)
     return jsonify(show=api_model(show), result='success')
 
 
@@ -171,8 +170,7 @@ def get_episode_list(show_id):
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_episode(show_id, episode_id):
-    episode = episode_operation.get_episode_or_assert(
-        auth.authenticated_user, episode_id)
+    episode = episode_operation.get(episode_id)
     return jsonify(episode=api_model(episode), result='success')
 
 
@@ -209,7 +207,7 @@ def audio():
 @auth.require_authenticated()
 def get_image(image_id):
     user = auth.authenticated_user
-    image = image_operation.get_image_or_assert(user, image_id)
+    image = image_operation.get(image_id)
     image_d = api_model(image)
     image_d['url'] = image_operation.get_image_url(user, image)
     return jsonify(image=image_d, result='success')
@@ -267,7 +265,7 @@ def user():
 
 @auth.user_loader
 def get_user(username):
-    return user_operation.get(username)
+    return user_operation.get(username=username)
 
 
 @app.route('/ping', methods=['GET'])
@@ -304,9 +302,8 @@ def preview_site(show_id):
     test only
     '''
     user = auth.authenticated_user
-    show = show_operation.get(user.id, show_id)
-    show_image = image_operation.get_image_or_assert(user, show.image_id) \
-        if show.image_id else None
+    show = show_operation.get(show_id)
+    show_image = image_operation.get(show.image_id) if show.image_id else None
     return public_view.show_html(
         user,
         show,
@@ -328,7 +325,7 @@ def preview_site_episode():
         args.get('audio_id'), \
         args.get('image_id')
 
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     return public_view.preview_episode(
         user, show, title, subtitle, description, audio_id, image_id)
 
@@ -340,8 +337,7 @@ def preview_feed(show_id):
     '''
     user = auth.authenticated_user
     return Response(
-        feed_operation.generate(
-            user, show_operation.get(user.id, show_id)),
+        feed_operation.generate(user, show_operation.get(show_id)),
         mimetype=feed_operation.FEED_CONTENT_TYPE)
 
 

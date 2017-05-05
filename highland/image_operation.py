@@ -13,7 +13,7 @@ def create(user, file_name, file_type):
 
 def delete(user, image_ids):
     for id in image_ids:
-        image = get_image_or_assert(user, id)
+        image = get(id)
         try:
             media_storage.delete(
                 _get_image_key(user, image), app.config.get('S3_BUCKET_IMAGE'))
@@ -31,13 +31,12 @@ def load(user):
     return models.Image.query.filter_by(owner_user_id=user.id).all()
 
 
-def get_image_or_assert(user, image_id):
-    image = models.Image.query.\
-        filter_by(owner_user_id=user.id, id=image_id).first()
+def get(image_id):
+    """Retrieves image. Exception is raised if not found."""
+    image = models.Image.query.filter_by(id=image_id).first()
     if not image:
         raise exception.NoSuchEntityError(
-            'user:{}, image:{}'.format(user.id, image_id))
-    access_allowed_or_raise(user.id, image)
+            'Image not found. Id:{}'.format(image_id))
     return image
 
 

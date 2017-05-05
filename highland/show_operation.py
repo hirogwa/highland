@@ -22,7 +22,7 @@ def update(user_id, show_id, title, description, subtitle, language, author,
            category, explicit, image_id):
     """Updates the show. Exception is thrown if the show is not found."""
 
-    show = get(user_id, show_id)
+    show = get(show_id)
     show.title = title
     show.description = description
     show.subtitle = subtitle
@@ -39,7 +39,7 @@ def update(user_id, show_id, title, description, subtitle, language, author,
 def delete(user_id, show_id):
     """Deletes the show. Exception is thrown if the show is not found."""
 
-    show = get(user_id, show_id)
+    show = get(show_id)
     models.db.session.delete(show)
     models.db.session.commit()
     return True
@@ -51,15 +51,13 @@ def load(user_id):
     return models.Show.query.filter_by(owner_user_id=user_id).all()
 
 
-def get(user_id, show_id):
-    """Retrieves the show."""
+def get(show_id):
+    """Retrieves the show. Exception is raised if not found."""
 
-    show = models.Show.query \
-        .filter_by(owner_user_id=user_id, id=show_id) \
-        .first()
+    show = models.Show.query.filter_by(id=show_id).first()
     if not show:
         raise exception.NoSuchEntityError(
-            'Show does not exist. user:{},id:{}'.format(user_id, show_id))
+            'Show does not exist. Id:{}'.format(show_id))
     return show
 
 
