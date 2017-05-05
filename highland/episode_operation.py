@@ -5,28 +5,34 @@ from highland import models, show_operation, app, audio_operation,\
 from highland.models import Episode
 
 
-def create(user, show_id, draft_status, alias, audio_id, image_id,
+def create(show_id, draft_status, alias, audio_id, image_id,
            scheduled_datetime=None, title='', subtitle='', description='',
            explicit=False):
+    """Creates a new episode under the specified show.
+    If corresponding show does not exist, exception is raised.
+    """
+
     draft_status = Episode.DraftStatus(draft_status).name
     # check if corresponding show exists
     show = show_operation.get(show_id)
     episode = Episode(
-        show, title, subtitle, description, audio_id, draft_status,
-        scheduled_datetime, explicit, image_id, alias)
-    _autofill_attributes(user, episode)
-    _valid_or_assert(user, episode)
+        show.id, show.owner_user_id, title, subtitle, description, audio_id,
+        draft_status, scheduled_datetime, explicit, image_id, alias)
+    _autofill_attributes(episode)
+    _valid_or_assert(episode)
 
     models.db.session.add(episode)
     models.db.session.commit()
 
-    _update_show_build_datetime(user, episode)
+    _update_show_build_datetime(episode)
     return episode
 
 
-def update(user, episode_id, draft_status=None, alias=None, audio_id=None,
+def update(episode_id, draft_status=None, alias=None, audio_id=None,
            image_id=None, scheduled_datetime=None, title=None, subtitle=None,
            description=None, explicit=None):
+    """Updates the episode.
+    Exception is raised if the episode with the given id does not exist."""
     episode = get(episode_id)
 
     name_value_pairs = [
@@ -43,16 +49,17 @@ def update(user, episode_id, draft_status=None, alias=None, audio_id=None,
     for name, value in [(x, y) for x, y in name_value_pairs]:
         setattr(episode, name, value)
 
-    _autofill_attributes(user, episode)
-    _valid_or_assert(user, episode)
+    _autofill_attributes(episode)
+    _valid_or_assert(episode)
     models.db.session.commit()
 
-    _update_show_build_datetime(user, episode)
+    _update_show_build_datetime(episode)
     return episode
 
 
 def get(episode_id):
     """Retrieves the episode. Exception is raised if not found."""
+
     episode = Episode.query.filter_by(id=episode_id).first()
     if not episode:
         raise exception.NoSuchEntityError(
@@ -60,41 +67,44 @@ def get(episode_id):
     return episode
 
 
-def delete(user, episode_ids):
-    for id in episode_ids:
-        episode = get(id)
+def delete(episode_ids):
+    """Deletes episodes.
+    If no episode exists for the passed id, exception is raised."""
+
+    for episode in (get(id) for id in episode_ids):
         models.db.session.delete(episode)
     models.db.session.commit()
-    _update_show_build_datetime(user, episode)
+    _update_show_build_datetime(episode)
     return True
 
 
-def load(user, show_id, **kwargs):
+def load(show_id):
+    """Retrieves all the episodes under the show."""
+
     show = show_operation.get(show_id)
-    return Episode.query.\
-        filter_by(owner_user_id=user.id, show_id=show.id, **kwargs).\
-        order_by(Episode.published_datetime.desc()).\
+    return Episode.query. \
+        filter_by(show_id=show.id). \
+        order_by(Episode.published_datetime.desc()). \
         all()
 
 
-def load_with_audio(user, show_id):
+def load_with_audio(show_id):
+    """Retrieves all the episodes, along with the associated audio."""
+
     show = show_operation.get(show_id)
     return models.db.session. \
-        query(
-            Episode,
-            models.Audio). \
-        join(
-            models.Audio). \
-        filter(
-            Episode.owner_user_id == show.owner_user_id,
-            Episode.show_id == show.id). \
+        query(Episode, models.Audio). \
+        join(models.Audio). \
+        filter(Episode.show_id == show.id). \
         all()
 
 
-def load_public(user, show_id):
+def load_public(show_id):
+    """Retrieves all the public episodes under the show."""
+
     show = show_operation.get(show_id)
     return Episode.query.\
-        filter_by(owner_user_id=user.id, show_id=show.id,
+        filter_by(show_id=show.id,
                   draft_status=Episode.DraftStatus.published.name).\
         order_by(Episode.published_datetime.desc()).\
         all()
@@ -136,17 +146,17 @@ def get_episode_url(user, episode, show=None):
 
 def get_preview_episode(user, show, title, subtitle, description, audio_id,
                         image_id):
-    episode = Episode(show, title, subtitle, description, audio_id,
-                      Episode.DraftStatus.published.name,
-                      None, False, image_id, '_preview')
+    episode = Episode(
+        show.id, show.owner_user_id, title, subtitle, description, audio_id,
+        Episode.DraftStatus.published.name, None, False, image_id, '_preview')
     episode.published_datetime = datetime.datetime.now(datetime.timezone.utc)
     return episode
 
 
-def get_default_alias(user, show_id):
+def get_default_alias(show_id):
     q = models.db.session. \
         query(Episode.alias). \
-        filter(Episode.owner_user_id == user.id and Episode.show_id == show_id)
+        filter(Episode.show_id == show_id)
     existing_aliases = [a for a, in q.all()]
 
     candidate = len(existing_aliases) + 1
@@ -163,7 +173,7 @@ def access_allowed_or_raise(user_id, episode):
     return episode
 
 
-def _valid_or_assert(user, episode):
+def _valid_or_assert(episode):
     if not common.is_valid_alias(episode.alias):
         raise exception.InvalidValueError(
             'episode alias not accepted. {}'.format(episode.alias))
@@ -185,7 +195,7 @@ def _valid_or_assert(user, episode):
     return episode
 
 
-def _update_show_build_datetime(user, episode):
+def _update_show_build_datetime(episode):
     if episode.draft_status != Episode.DraftStatus.published.name:
         return None
 
@@ -195,9 +205,9 @@ def _update_show_build_datetime(user, episode):
     return show
 
 
-def _autofill_attributes(user, episode):
+def _autofill_attributes(episode):
     if not episode.alias:
-        episode.alias = get_default_alias(user, episode.show_id)
+        episode.alias = get_default_alias(episode.show_id)
 
     episode.published_datetime = \
         PUBLISHED_DATETIME_FUNC[episode.draft_status]()

@@ -33,7 +33,7 @@ def generate(user, show):
         image = image_operation.get(show.image_id)
         fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
-    for episode in episode_operation.load_public(user, show.id):
+    for episode in episode_operation.load_public(show.id):
         audio = audio_operation.get(episode.audio_id)
         fe = fg.add_entry()
         fe.title(episode.title)
