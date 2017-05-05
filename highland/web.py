@@ -123,8 +123,8 @@ def episode():
         common.require_true(explicit is not None, 'explicit required')
 
         episode = episode_operation.create(
-            auth.authenticated_user, show_id, draft_status, alias,
-            audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+            show_id, draft_status, alias, audio_id, image_id,
+            datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
 
         return jsonify(episode=api_model(episode), result='success'), 201
@@ -142,15 +142,14 @@ def episode():
         common.require_true(explicit is not None, 'explicit required')
 
         episode = episode_operation.update(
-            auth.authenticated_user, id, draft_status, alias,
-            audio_id, image_id, datetime_valid_or_none(scheduled_datetime),
+            id, draft_status, alias, audio_id, image_id,
+            datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
         return jsonify(episode=api_model(episode), result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        episode_operation.delete(auth.authenticated_user,
-                                 args.get('episode_ids'))
+        episode_operation.delete(args.get('episode_ids'))
         return jsonify(result='success')
 
 
@@ -159,11 +158,9 @@ def episode():
 def get_episode_list(show_id):
     public = request.args.get('public')
     if public:
-        episodes = episode_operation.load_public(
-            auth.authenticated_user, show_id)
+        episodes = episode_operation.load_public(show_id)
     else:
-        episodes = episode_operation.load(
-            auth.authenticated_user, show_id)
+        episodes = episode_operation.load(show_id)
     return jsonify(episodes=[api_model(x) for x in episodes], result='success')
 
 
@@ -308,7 +305,7 @@ def preview_site(show_id):
         user,
         show,
         show_image,
-        episode_operation.load_public(user, show_id),
+        episode_operation.load_public(show_id),
         False)
 
 

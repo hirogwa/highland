@@ -6,7 +6,7 @@ from highland import show_operation, episode_operation, media_storage, \
 def update_full(user, show_id):
     show = show_operation.get(show_id)
     show_image = image_operation.get(show.image_id) if show.image_id else None
-    episodes = episode_operation.load_public(user, show_id)
+    episodes = episode_operation.load_public(show_id)
     show_html(user, show, show_image)
     _delete_all_episodes(user, show)
     for episode in episodes:
@@ -15,7 +15,7 @@ def update_full(user, show_id):
 
 
 def show_html(user, show, show_image, upload=True):
-    episodes = episode_operation.load_public(user, show.id)
+    episodes = episode_operation.load_public(show.id)
     image_url = image_operation.get_image_url(user, show_image) \
         if show_image else ''
     html = render_template(

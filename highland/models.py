@@ -90,10 +90,11 @@ class Episode(ModelMappingMixin, db.Model):
         db.UniqueConstraint('show_id', 'alias'),
     )
 
-    def __init__(self, show, title, subtitle, description, audio_id,
-                 draft_status, scheduled_datetime, explicit, image_id, alias):
-        self.owner_user_id = show.owner_user_id
-        self.show_id = show.id
+    def __init__(
+            self, show_id, user_id, title, subtitle, description, audio_id,
+            draft_status, scheduled_datetime, explicit, image_id, alias):
+        self.owner_user_id = user_id
+        self.show_id = show_id
         self.title = title
         self.subtitle = subtitle
         self.description = description

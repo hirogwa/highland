@@ -83,7 +83,7 @@ def _fill_in_missing_date(data, date_from, date_to):
 
 
 def _stat_from_audio_to_episode(user, show, key_stat):
-    e_a_list = episode_operation.load_with_audio(user, show.id)
+    e_a_list = episode_operation.load_with_audio(show.id)
     key_to_episode = \
         {'{}/{}'.format(show.alias, a.guid): e for (e, a) in e_a_list}
 
