@@ -26,15 +26,24 @@ def update(id, username, name):
     return user
 
 
-def get(username):
-    user = models.User.query.filter_by(username=username).first()
-    if not user:
-        raise exception.NoSuchEntityError('user:{}'.format(username))
-    return user
+def get(id=None, username=None):
+    """Retrieves user by id or username.
 
+    Either id or username is required. If provided, both keys are used.
+    If no such user is found, an exception is raised.
+    """
 
-def get_or_assert(id):
-    user = models.User.query.filter_by(id=id).first()
+    if not username and not id:
+        raise ValueError('Either username or id is required')
+
+    q = models.User.query
+    if id:
+        q = q.filter_by(id=id)
+    if username:
+        q = q.filter_by(username=username)
+    user = q.first()
+
     if not user:
-        raise exception.NoSuchEntityError('user:{}'.format(id))
+        raise exception.NoSuchEntityError(
+            'No such user. username:{}, id:{}'.format(username, id))
     return user

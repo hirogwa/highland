@@ -8,7 +8,7 @@ FEED_CONTENT_TYPE = 'application/rss+xml'
 
 
 def update(user, show_id):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     return media_storage.upload(
         generate(user, show), app.config.get('S3_BUCKET_FEED'),
         show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
@@ -30,11 +30,11 @@ def generate(user, show):
     fg.podcast.itunes_subtitle(show.subtitle)
     fg.podcast.itunes_summary(show.description)
     if show.image_id is not None:
-        image = image_operation.get_image_or_assert(user, show.image_id)
+        image = image_operation.get(show.image_id)
         fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
     for episode in episode_operation.load_public(user, show.id):
-        audio = audio_operation.get_audio_or_assert(user, episode.audio_id)
+        audio = audio_operation.get(episode.audio_id)
         fe = fg.add_entry()
         fe.title(episode.title)
         fe.link(href=episode_operation.get_episode_url(user, episode, show))
@@ -49,8 +49,7 @@ def generate(user, show):
         fe.podcast.itunes_explicit('yes' if episode.explicit else 'no')
         fe.podcast.itunes_subtitle(episode.subtitle)
         if episode.image_id is not None:
-            image_episode = image_operation.get_image_or_assert(
-                user, episode.image_id)
+            image_episode = image_operation.get(episode.image_id)
             fe.podcast.itunes_image(
                 image_operation.get_image_url(user, image_episode))
 

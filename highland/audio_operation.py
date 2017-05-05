@@ -13,7 +13,7 @@ def create(user, file_name, duration, length, file_type):
 
 def delete(user, audio_ids):
     for id in audio_ids:
-        audio = get_audio_or_assert(user, id)
+        audio = get(id)
         try:
             media_storage.delete(
                 _get_audio_key(user, audio), app.config.get('S3_BUCKET_AUDIO'))
@@ -54,13 +54,13 @@ def load(user, unused_only=False, whitelisted_id=None):
     return [_dict_with_episode(user, x, a_to_e.get(x.id)) for x in audios]
 
 
-def get_audio_or_assert(user, audio_id):
-    audio = models.Audio.query.\
-        filter_by(owner_user_id=user.id, id=audio_id).first()
+def get(audio_id):
+    """Retrieves audio. Exception is raised if not found."""
+
+    audio = models.Audio.query.filter_by(id=audio_id).first()
     if not audio:
         raise exception.NoSuchEntityError(
-            'user:{}, audio:{}'.format(user.id, audio_id))
-    access_allowed_or_raise(user.id, audio)
+            'Audio not found. Id:{}'.format(audio_id))
     return audio
 
 

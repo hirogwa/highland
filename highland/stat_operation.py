@@ -9,7 +9,7 @@ STAT_DOWNLOADS = 'downloads'
 
 
 def get_episode_by_day(user, show_id, date_from=None, date_to=None):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     p = {
         'bucket': app.config.get('S3_BUCKET_AUDIO'),
         'key_prefix': show.alias + '/'
@@ -47,7 +47,7 @@ def get_episode_one_week(user, show_id, date_to=None):
 
 
 def get_episode_cumulative(user, show_id, date_from=None, date_to=None):
-    show = show_operation.get(user.id, show_id)
+    show = show_operation.get(show_id)
     p = {
         'bucket': app.config.get('S3_BUCKET_AUDIO'),
         'key_prefix': show.alias + '/',
