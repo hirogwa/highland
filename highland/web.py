@@ -98,7 +98,7 @@ def show():
         common.require_true(explicit is not None, 'explicit required')
 
         show = show_operation.update(
-            auth.authenticated_user.id, id, title, description, subtitle,
+            id, title, description, subtitle,
             language, author, category, explicit, image_id)
         return jsonify(show=api_model(show), result='success')
 
