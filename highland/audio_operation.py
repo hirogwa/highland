@@ -1,20 +1,29 @@
 import uuid
 import urllib.parse
 from highland import models, media_storage, app, exception, user_operation
+from highland.models import Audio, Episode, User
 
 
 def create(user_id, file_name, duration, length, file_type):
     """Creates a new audio entity, owned by the specified user"""
     guid = uuid.uuid4().hex
-    audio = models.Audio(user_id, file_name, duration, length, file_type, guid)
+    audio = Audio(user_id, file_name, duration, length, file_type, guid)
     models.db.session.add(audio)
     models.db.session.commit()
     return audio
 
 
-def delete(user, audio_ids):
-    for id in audio_ids:
-        audio = get(id)
+def delete(audio_ids):
+    """Deletes the audios."""
+
+    targets = models.db.session. \
+        query(Audio, User). \
+        join(User). \
+        filter(Audio.id.in_(audio_ids)). \
+        order_by(Audio.owner_user_id). \
+        all()
+
+    for audio, user in targets:
         try:
             media_storage.delete(
                 _get_audio_key(user, audio), app.config.get('S3_BUCKET_AUDIO'))
@@ -30,11 +39,11 @@ def delete(user, audio_ids):
 
 def load(user_id, unused_only=False, whitelisted_id=None):
     """Returns sequence of the audios owned by the user"""
-    audios = models.Audio.query.\
+    audios = Audio.query.\
         filter_by(owner_user_id=user_id).\
         all()
 
-    episodes = models.Episode.query.\
+    episodes = Episode.query.\
         filter_by(owner_user_id=user_id).\
         all()
 
@@ -60,7 +69,7 @@ def load(user_id, unused_only=False, whitelisted_id=None):
 def get(audio_id):
     """Retrieves audio. Exception is raised if not found."""
 
-    audio = models.Audio.query.filter_by(id=audio_id).first()
+    audio = Audio.query.filter_by(id=audio_id).first()
     if not audio:
         raise exception.NoSuchEntityError(
             'Audio not found. Id:{}'.format(audio_id))
