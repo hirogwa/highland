@@ -121,8 +121,8 @@ class Audio(ModelMappingMixin, db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, filename, duration, length, type, guid):
-        self.owner_user_id = user.id
+    def __init__(self, user_id, filename, duration, length, type, guid):
+        self.owner_user_id = user_id
         self.filename = filename
         self.duration = duration
         self.length = length

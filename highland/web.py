@@ -179,7 +179,7 @@ def audio():
             request.get_json(), 'filename', 'duration', 'length',
             'filetype')
         audio = audio_operation.create(
-            auth.authenticated_user, file_name, duration, length,
+            auth.authenticated_user.id, file_name, duration, length,
             file_type)
         return jsonify(audio=api_model(audio), result='success'), 201
 
@@ -189,7 +189,7 @@ def audio():
         whitelisted_id = args.get('whitelisted_id')
         user = auth.authenticated_user
         audios = audio_operation.load(
-            user, unused_only,
+            user.id, unused_only,
             int(whitelisted_id) if whitelisted_id else None)
 
         return jsonify(audios=[api_model(x) for x in audios], result='success')

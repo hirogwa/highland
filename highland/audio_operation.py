@@ -1,11 +1,12 @@
 import uuid
 import urllib.parse
-from highland import models, media_storage, app, exception
+from highland import models, media_storage, app, exception, user_operation
 
 
-def create(user, file_name, duration, length, file_type):
+def create(user_id, file_name, duration, length, file_type):
+    """Creates a new audio entity, owned by the specified user"""
     guid = uuid.uuid4().hex
-    audio = models.Audio(user, file_name, duration, length, file_type, guid)
+    audio = models.Audio(user_id, file_name, duration, length, file_type, guid)
     models.db.session.add(audio)
     models.db.session.commit()
     return audio
@@ -27,13 +28,14 @@ def delete(user, audio_ids):
     return True
 
 
-def load(user, unused_only=False, whitelisted_id=None):
+def load(user_id, unused_only=False, whitelisted_id=None):
+    """Returns sequence of the audios owned by the user"""
     audios = models.Audio.query.\
-        filter_by(owner_user_id=user.id).\
+        filter_by(owner_user_id=user_id).\
         all()
 
     episodes = models.Episode.query.\
-        filter_by(owner_user_id=user.id).\
+        filter_by(owner_user_id=user_id).\
         all()
 
     if unused_only:
@@ -51,6 +53,7 @@ def load(user, unused_only=False, whitelisted_id=None):
         d['episode_title'] = episode.title if episode else None
         return d
 
+    user = user_operation.get(id=user_id)
     return [_dict_with_episode(user, x, a_to_e.get(x.id)) for x in audios]
 
 
@@ -65,17 +68,13 @@ def get(audio_id):
 
 
 def get_audio_url(user, audio):
-    access_allowed_or_raise(user.id, audio)
+    if user.id != audio.owner_user_id:
+        raise ValueError(
+            'Audio {} is owned by user {} but {} was given'.format(
+                audio.id, audio.owner_user_id, user.id))
     return urllib.parse.urljoin(
         app.config.get('HOST_AUDIO'),
         urllib.parse.quote(_get_audio_key(user, audio)))
-
-
-def access_allowed_or_raise(user_id, audio):
-    if audio.owner_user_id != user_id:
-        raise exception.AccessNotAllowedError(
-            'user:{}, audio: {}'.format(user_id, audio.id))
-    return audio
 
 
 def _get_audio_key(user, audio):
