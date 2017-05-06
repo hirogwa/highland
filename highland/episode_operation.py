@@ -134,18 +134,17 @@ def publish(episode):
     return episode
 
 
-def get_episode_url(user, episode, show=None):
-    access_allowed_or_raise(user.id, episode)
-    if show:
-        show_operation.access_allowed_or_raise(user.id, show)
-    else:
-        show = show_operation.get(episode.show_id)
+def get_episode_url(episode, show=None):
+    """Returns the url for the episode page"""
+
+    show = show or show_operation.get(episode.show_id)
     return urllib.parse.urljoin(
         app.config.get('HOST_SITE'), '{}/{}'.format(show.alias, episode.alias))
 
 
-def get_preview_episode(user, show, title, subtitle, description, audio_id,
+def get_preview_episode(show, title, subtitle, description, audio_id,
                         image_id):
+    """Creates temporary episode instance for a preview"""
     episode = Episode(
         show.id, show.owner_user_id, title, subtitle, description, audio_id,
         Episode.DraftStatus.published.name, None, False, image_id, '_preview')
@@ -164,13 +163,6 @@ def get_default_alias(show_id):
         candidate += 1
 
     return str(candidate)
-
-
-def access_allowed_or_raise(user_id, episode):
-    if episode.owner_user_id != user_id:
-        raise exception.AccessNotAllowedError(
-            'user:{}, episode:{}'.format(user_id, episode.id))
-    return episode
 
 
 def _valid_or_assert(episode):

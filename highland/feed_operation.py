@@ -37,7 +37,7 @@ def generate(user, show):
         audio = audio_operation.get(episode.audio_id)
         fe = fg.add_entry()
         fe.title(episode.title)
-        fe.link(href=episode_operation.get_episode_url(user, episode, show))
+        fe.link(href=episode_operation.get_episode_url(episode, show))
         fe.description(common.clean_html(episode.description))
         fe.enclosure(url=audio_operation.get_audio_url(user, audio),
                      length=str(audio.length), type=audio.type)
