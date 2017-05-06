@@ -196,7 +196,7 @@ def audio():
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        audio_operation.delete(auth.authenticated_user, args.get('ids'))
+        audio_operation.delete(args.get('ids'))
         return jsonify(result='success')
 
 
