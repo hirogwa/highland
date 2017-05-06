@@ -50,7 +50,7 @@ def episode_html(user, show, show_image, episode, upload=True):
         'public_sites/episode.html',
         title=episode.title,
         show=show,
-        url=episode_operation.get_episode_url(user, episode),
+        url=episode_operation.get_episode_url(episode),
         home_url=_get_site_url(show.alias),
         feed_url=feed_operation.get_feed_url(user, show),
         episode=episode,
@@ -70,7 +70,7 @@ def episode_html(user, show, show_image, episode, upload=True):
 def preview_episode(user, show, title, subtitle, description, audio_id,
                     image_id):
     episode = episode_operation.get_preview_episode(
-        user, show, title, subtitle, description, audio_id, image_id)
+        show, title, subtitle, description, audio_id, image_id)
     show_image = image_operation.get(show.image_id) if show.image_id else None
     return episode_html(user, show, show_image, episode)
 
