@@ -140,8 +140,8 @@ class Image(ModelMappingMixin, db.Model):
         db.DateTime(timezone=True),
         default=lambda x: datetime.datetime.now(datetime.timezone.utc))
 
-    def __init__(self, user, filename, guid, type):
-        self.owner_user_id = user.id
+    def __init__(self, user_id, filename, guid, type):
+        self.owner_user_id = user_id
         self.filename = filename
         self.guid = guid
         self.type = type

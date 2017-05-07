@@ -217,12 +217,12 @@ def image():
         file_name, file_type = _get_args(
             request.get_json(), 'filename', 'filetype')
         image = image_operation.create(
-            auth.authenticated_user, file_name, file_type)
+            auth.authenticated_user.id, file_name, file_type)
         return jsonify(image=api_model(image), result='success'), 201
 
     if 'GET' == request.method:
         user = auth.authenticated_user
-        images = image_operation.load(user)
+        images = image_operation.load(user.id)
 
         def _dict(x):
             d = api_model(x)
@@ -232,7 +232,7 @@ def image():
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        image_operation.delete(auth.authenticated_user, args.get('ids'))
+        image_operation.delete(args.get('ids'))
         return jsonify(result='success')
 
 
