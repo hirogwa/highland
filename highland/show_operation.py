@@ -58,10 +58,5 @@ def get(show_id):
     if not show:
         raise exception.NoSuchEntityError(
             'Show does not exist. Id:{}'.format(show_id))
+    show.url = urllib.parse.urljoin(app.config.get('HOST_SITE'), show.alias)
     return show
-
-
-def get_show_url(show):
-    """Returns the website url for the show."""
-
-    return urllib.parse.urljoin(app.config.get('HOST_SITE'), show.alias)

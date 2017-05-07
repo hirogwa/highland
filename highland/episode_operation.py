@@ -152,7 +152,7 @@ def get_preview_episode(show, title, subtitle, description, audio_id,
     return episode
 
 
-def get_default_alias(show_id):
+def _get_default_alias(show_id):
     q = models.db.session. \
         query(Episode.alias). \
         filter(Episode.show_id == show_id)
@@ -199,7 +199,7 @@ def _update_show_build_datetime(episode):
 
 def _autofill_attributes(episode):
     if not episode.alias:
-        episode.alias = get_default_alias(episode.show_id)
+        episode.alias = _get_default_alias(episode.show_id)
 
     episode.published_datetime = \
         PUBLISHED_DATETIME_FUNC[episode.draft_status]()

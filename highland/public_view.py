@@ -22,7 +22,7 @@ def show_html(user, show, show_image, upload=True):
         'public_sites/index.html',
         title=show.title,
         show=show,
-        url=show_operation.get_show_url(show),
+        url=show.url,
         home_url=_get_site_url(show.alias),
         feed_url=feed_operation.get_feed_url(show),
         image_url=image_url,
