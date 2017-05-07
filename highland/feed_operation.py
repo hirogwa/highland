@@ -31,7 +31,7 @@ def _generate(user, show):
     fg = FeedGenerator()
     fg.title(show.title)
     fg.description(show.description)
-    fg.link(href=show_operation.get_show_url(show))
+    fg.link(href=show.url)
     fg.language(show.language)
     fg.lastBuildDate(show.last_build_datetime)
 
