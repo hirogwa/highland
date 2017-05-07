@@ -334,7 +334,7 @@ def preview_feed(show_id):
     '''
     user = auth.authenticated_user
     return Response(
-        feed_operation.generate(user, show_operation.get(show_id)),
+        feed_operation._generate(user, show_operation.get(show_id)),
         mimetype=feed_operation.FEED_CONTENT_TYPE)
 
 
@@ -344,7 +344,7 @@ def publish_feed():
     test only
     '''
     args = request.get_json()
-    feed_operation.update(auth.authenticated_user, args.get('show_id'))
+    feed_operation.update(args.get('show_id'))
     return 'feed published'
 
 

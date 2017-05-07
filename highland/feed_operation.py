@@ -1,20 +1,33 @@
 import urllib.parse
 from feedgen.feed import FeedGenerator
 from highland import show_operation, episode_operation, media_storage,\
-    audio_operation, image_operation, app, common
+    audio_operation, image_operation, app, common, user_operation
 
 FEED_FOLDER_RSS = 'rss'
 FEED_CONTENT_TYPE = 'application/rss+xml'
 
 
-def update(user, show_id):
+def update(show_id):
+    """Generate the latest feed and update the public repository with that"""
+
     show = show_operation.get(show_id)
+    user = user_operation.get(show.owner_user_id)
     return media_storage.upload(
-        generate(user, show), app.config.get('S3_BUCKET_FEED'),
+        _generate(user, show), app.config.get('S3_BUCKET_FEED'),
         show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)
 
 
-def generate(user, show):
+def get_feed_url(show):
+    """Returns the feed url for the show."""
+
+    return urllib.parse.urljoin(
+        app.config.get('HOST_FEED'),
+        '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
+
+
+def _generate(user, show):
+    """Generate the feed for the show"""
+
     fg = FeedGenerator()
     fg.title(show.title)
     fg.description(show.description)
@@ -54,13 +67,6 @@ def generate(user, show):
                 image_operation.get_image_url(user, image_episode))
 
     return fg.rss_str(pretty=True)
-
-
-def get_feed_url(user, show):
-    common.require_true(user.id == show.owner_user_id)
-    return urllib.parse.urljoin(
-        app.config.get('HOST_FEED'),
-        '{}/{}'.format(FEED_FOLDER_RSS, show.alias))
 
 
 def _format_seconds(sec):
