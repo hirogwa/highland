@@ -24,7 +24,7 @@ def show_html(user, show, show_image, upload=True):
         show=show,
         url=show_operation.get_show_url(show),
         home_url=_get_site_url(show.alias),
-        feed_url=feed_operation.get_feed_url(user, show),
+        feed_url=feed_operation.get_feed_url(show),
         image_url=image_url,
         episodes=episodes)
     if upload:
@@ -52,7 +52,7 @@ def episode_html(user, show, show_image, episode, upload=True):
         show=show,
         url=episode_operation.get_episode_url(episode),
         home_url=_get_site_url(show.alias),
-        feed_url=feed_operation.get_feed_url(user, show),
+        feed_url=feed_operation.get_feed_url(show),
         episode=episode,
         episode_description=Markup(common.clean_html(episode.description)),
         duration="%d:%02d:%02d" % (h, m, s),

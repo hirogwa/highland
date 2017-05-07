@@ -2,9 +2,8 @@ from highland import models, exception
 
 
 def create(username, identity_id):
-    '''
-    initiate new user. intended to be called at user's first login
-    '''
+    """Initiate new user. intended to be called at user's first login.
+    """
     if models.User.query.filter_by(username=username).first():
         raise exception.OperationNotAllowedError(
             'User already exists: {}'.format(username))
@@ -16,6 +15,7 @@ def create(username, identity_id):
 
 
 def update(id, username, name):
+    """Updates the user. Exception is raised if no such user is found."""
     user = models.User.query.filter_by(id=id).first()
     if not user:
         raise exception.NoSuchEntityError('user:{}'.format(id))

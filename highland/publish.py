@@ -36,7 +36,7 @@ def publish_scheduled():
 
 def _update_show(user, show, show_image):
     public_view.show_html(user, show, show_image)
-    feed_operation.update(user, show.id)
+    feed_operation.update(show.id)
     app.logger.info('published show:{}'.format(show.id))
 
 
@@ -54,4 +54,4 @@ def publish(episode):
     show_image = image_operation.get(show.image_id)
     public_view.episode_html(user, show, show_image, episode)
     public_view.show_html(user, show, show_image)
-    feed_operation.update(user, show.id)
+    feed_operation.update(show.id)
