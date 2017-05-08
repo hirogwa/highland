@@ -2,14 +2,16 @@ import datetime
 import urllib.parse
 from highland import models, show_operation, app, audio_operation,\
     image_operation, common, exception
-from highland.models import Episode
+from highland.models import Episode, Show
 
 
 def create(show_id, draft_status, alias, audio_id, image_id,
            scheduled_datetime=None, title='', subtitle='', description='',
            explicit=False):
-    """Creates a new episode under the specified show.
+    """Creates a new episode under the specified show and returns it as dict.
+
     If corresponding show does not exist, exception is raised.
+    Intended to be called by front end.
     """
 
     draft_status = Episode.DraftStatus(draft_status).name
@@ -22,19 +24,22 @@ def create(show_id, draft_status, alias, audio_id, image_id,
     _valid_or_assert(episode)
 
     models.db.session.add(episode)
-    models.db.session.commit()
+    _update_show_build_datetime(episode, show)
 
-    _update_show_build_datetime(episode)
-    return episode
+    models.db.session.commit()
+    return dict(episode)
 
 
 def update(episode_id, draft_status=None, alias=None, audio_id=None,
            image_id=None, scheduled_datetime=None, title=None, subtitle=None,
            description=None, explicit=None):
-    """Updates the episode.
-    Exception is raised if the episode with the given id does not exist."""
-    episode = get(episode_id)
+    """Updates the episode and returns the updated episode as dict.
 
+    Exception is raised if the episode with the given id does not exist.
+    Intended to be called by front end.
+    """
+
+    episode = _get_model(episode_id)
     name_value_pairs = [
         ('title', title),
         ('subtitle', subtitle),
@@ -51,15 +56,22 @@ def update(episode_id, draft_status=None, alias=None, audio_id=None,
 
     _autofill_attributes(episode)
     _valid_or_assert(episode)
-    models.db.session.commit()
-
     _update_show_build_datetime(episode)
-    return episode
+
+    models.db.session.commit()
+    return dict(episode)
 
 
 def get(episode_id):
-    """Retrieves the episode. Exception is raised if not found."""
+    """Returns the episode as dict.
 
+    Exception is raised if not found.
+    Intended to be called by front end.
+    """
+    return dict(_get_model(episode_id))
+
+
+def _get_model(episode_id):
     episode = Episode.query.filter_by(id=episode_id).first()
     if not episode:
         raise exception.NoSuchEntityError(
@@ -78,14 +90,20 @@ def delete(episode_ids):
     return True
 
 
-def load(show_id):
-    """Retrieves all the episodes under the show."""
+def load(show_id, public_only=False):
+    """Returns all the episodes under the show as a sequence of dict.
+    Intended to be called by front end.
+    """
 
     show = show_operation.get_model(show_id)
-    return Episode.query. \
+    q = Episode.query. \
         filter_by(show_id=show.id). \
-        order_by(Episode.published_datetime.desc()). \
-        all()
+        order_by(Episode.published_datetime.desc())
+
+    if public_only:
+        q = q.filter_by(draft_status=Episode.DraftStatus.published.name)
+
+    return [dict(episode) for episode in q.all()]
 
 
 def load_with_audio(show_id):
