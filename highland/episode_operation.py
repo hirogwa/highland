@@ -14,7 +14,7 @@ def create(show_id, draft_status, alias, audio_id, image_id,
 
     draft_status = Episode.DraftStatus(draft_status).name
     # check if corresponding show exists
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     episode = Episode(
         show.id, show.owner_user_id, title, subtitle, description, audio_id,
         draft_status, scheduled_datetime, explicit, image_id, alias)
@@ -81,7 +81,7 @@ def delete(episode_ids):
 def load(show_id):
     """Retrieves all the episodes under the show."""
 
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     return Episode.query. \
         filter_by(show_id=show.id). \
         order_by(Episode.published_datetime.desc()). \
@@ -91,7 +91,7 @@ def load(show_id):
 def load_with_audio(show_id):
     """Retrieves all the episodes, along with the associated audio."""
 
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     return models.db.session. \
         query(Episode, models.Audio). \
         join(models.Audio). \
@@ -102,7 +102,7 @@ def load_with_audio(show_id):
 def load_public(show_id):
     """Retrieves all the public episodes under the show."""
 
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     return Episode.query.\
         filter_by(show_id=show.id,
                   draft_status=Episode.DraftStatus.published.name).\
@@ -137,7 +137,7 @@ def publish(episode):
 def get_episode_url(episode, show=None):
     """Returns the url for the episode page"""
 
-    show = show or show_operation.get(episode.show_id)
+    show = show or show_operation.get_model(episode.show_id)
     return urllib.parse.urljoin(
         app.config.get('HOST_SITE'), '{}/{}'.format(show.alias, episode.alias))
 
@@ -191,7 +191,7 @@ def _update_show_build_datetime(episode):
     if episode.draft_status != Episode.DraftStatus.published.name:
         return None
 
-    show = show_operation.get(episode.show_id)
+    show = show_operation.get_model(episode.show_id)
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
     models.db.session.commit()
     return show
