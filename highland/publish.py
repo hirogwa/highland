@@ -11,7 +11,7 @@ def publish_scheduled():
 
     def _reset(episode):
         user = user_operation.get(id=episode.owner_user_id)
-        show = show_operation.get(episode.show_id)
+        show = show_operation.get_model(episode.show_id)
         show_image = image_operation.get(show.image_id)
         return user, show, show_image, {
             'user_id': user.id,
@@ -50,7 +50,7 @@ def publish(episode):
         return
 
     user = user_operation.get(id=episode.owner_user_id)
-    show = show_operation.get(episode.show_id)
+    show = show_operation.get_model(episode.show_id)
     show_image = image_operation.get(show.image_id)
     public_view.episode_html(user, show, show_image, episode)
     public_view.show_html(user, show, show_image)

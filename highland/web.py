@@ -56,7 +56,7 @@ def stat_episode_cumulative():
 @auth.require_authenticated()
 def get_show(show_id):
     show = show_operation.get(show_id)
-    return jsonify(show=api_model(show), result='success')
+    return jsonify(show=show, result='success')
 
 
 @app.route('/show', methods=['POST', 'PUT', 'GET'])
@@ -80,7 +80,7 @@ def show():
         show = show_operation.create(
             auth.authenticated_user.id, title, description, subtitle,
             language, author, category, explicit, image_id, alias)
-        return jsonify(show=api_model(show), result='success'), 201
+        return jsonify(show=show, result='success'), 201
 
     if 'PUT' == request.method:
         args = request.get_json()
@@ -100,11 +100,11 @@ def show():
         show = show_operation.update(
             id, title, description, subtitle,
             language, author, category, explicit, image_id)
-        return jsonify(show=api_model(show), result='success')
+        return jsonify(show=show, result='success')
 
     if 'GET' == request.method:
         shows = show_operation.load(auth.authenticated_user.id)
-        return jsonify(shows=[api_model(x) for x in shows], result='success')
+        return jsonify(shows=shows, result='success')
 
 
 @app.route('/episode', methods=['POST', 'PUT', 'DELETE'])
@@ -299,7 +299,7 @@ def preview_site(show_id):
     test only
     '''
     user = auth.authenticated_user
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     show_image = image_operation.get(show.image_id) if show.image_id else None
     return public_view.show_html(
         user,
@@ -322,7 +322,7 @@ def preview_site_episode():
         args.get('audio_id'), \
         args.get('image_id')
 
-    show = show_operation.get(show_id)
+    show = show_operation.get_model(show_id)
     return public_view.preview_episode(
         user, show, title, subtitle, description, audio_id, image_id)
 
@@ -334,7 +334,7 @@ def preview_feed(show_id):
     '''
     user = auth.authenticated_user
     return Response(
-        feed_operation._generate(user, show_operation.get(show_id)),
+        feed_operation._generate(user, show_operation.get_model(show_id)),
         mimetype=feed_operation.FEED_CONTENT_TYPE)
 
 
@@ -361,7 +361,7 @@ def dashboard_page():
 
     return render_template(
         'dashboard/dashboard.html',
-        show_id=show.id,
+        show_id=show.get('id'),
         s3_bucket_image=app.config.get('S3_BUCKET_IMAGE'),
         s3_bucket_audio=app.config.get('S3_BUCKET_AUDIO'),
         cognito_user_pool_id=app.config.get('COGNITO_USER_POOL_ID'),

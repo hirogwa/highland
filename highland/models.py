@@ -10,7 +10,9 @@ class ModelMappingMixin():
 
     def __iter__(self):
         for key in (x.name for x in self.__table__.columns):
-            yield key, getattr(self, key)
+            v = getattr(self, key)
+            v = str(v) if isinstance(v, datetime.datetime) else v
+            yield key, v
 
 
 db = SQLAlchemy(app)
