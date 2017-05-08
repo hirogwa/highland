@@ -127,7 +127,7 @@ def episode():
             datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
 
-        return jsonify(episode=api_model(episode), result='success'), 201
+        return jsonify(episode=episode, result='success'), 201
 
     if 'PUT' == request.method:
         args = request.get_json()
@@ -145,7 +145,7 @@ def episode():
             id, draft_status, alias, audio_id, image_id,
             datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
-        return jsonify(episode=api_model(episode), result='success')
+        return jsonify(episode=episode, result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
@@ -157,18 +157,15 @@ def episode():
 @auth.require_authenticated()
 def get_episode_list(show_id):
     public = request.args.get('public')
-    if public:
-        episodes = episode_operation.load_public(show_id)
-    else:
-        episodes = episode_operation.load(show_id)
-    return jsonify(episodes=[api_model(x) for x in episodes], result='success')
+    episodes = episode_operation.load(show_id, public_only=public)
+    return jsonify(episodes=episodes, result='success')
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_episode(show_id, episode_id):
     episode = episode_operation.get(episode_id)
-    return jsonify(episode=api_model(episode), result='success')
+    return jsonify(episode=episode, result='success')
 
 
 @app.route('/audio', methods=['POST', 'GET', 'DELETE'])
