@@ -5,16 +5,21 @@ from highland.models import Audio, Episode, User
 
 
 def create(user_id, file_name, duration, length, file_type):
-    """Creates a new audio entity, owned by the specified user"""
+    """Creates a new audio entity, owned by the specified user.
+    Intended to be called by front end.
+    """
+
     guid = uuid.uuid4().hex
     audio = Audio(user_id, file_name, duration, length, file_type, guid)
     models.db.session.add(audio)
     models.db.session.commit()
-    return audio
+    return dict(audio)
 
 
 def delete(audio_ids):
-    """Deletes the audios."""
+    """Deletes the audios.
+    Intended to be called by front end.
+    """
 
     targets = models.db.session. \
         query(Audio, User). \
@@ -38,21 +43,23 @@ def delete(audio_ids):
 
 
 def load(user_id, unused_only=False, whitelisted_id=None):
-    """Returns sequence of the audios owned by the user"""
-    audios = Audio.query.\
-        filter_by(owner_user_id=user_id).\
-        all()
+    """Returns sequence of the audios owned by the user.
+    Intended to be called by front end.
+    """
 
-    episodes = Episode.query.\
-        filter_by(owner_user_id=user_id).\
-        all()
+    audio_query = models.db.session. \
+        query(Audio, Episode). \
+        outerjoin(Episode). \
+        filter(Audio.owner_user_id == user_id)
 
     if unused_only:
-        black_list = \
-            [x.audio_id for x in episodes if x.audio_id != whitelisted_id]
-        audios = [x for x in audios if x.id not in black_list]
-
-    a_to_e = {e.audio_id: e for e in episodes}
+        episodes_with_audio_reserved = Episode.query. \
+            filter_by(owner_user_id=user_id). \
+            filter(Episode.audio_id.isnot(None)). \
+            filter(Episode.audio_id != whitelisted_id) .\
+            all()
+        black_list = (e.audio_id for e in episodes_with_audio_reserved)
+        audio_query = audio_query.filter(Audio.id.notin_(black_list))
 
     def _dict_with_episode(user, audio, episode):
         d = dict(audio)
@@ -63,7 +70,7 @@ def load(user_id, unused_only=False, whitelisted_id=None):
         return d
 
     user = user_operation.get(id=user_id)
-    return [_dict_with_episode(user, x, a_to_e.get(x.id)) for x in audios]
+    return [_dict_with_episode(user, a, e) for a, e in audio_query.all()]
 
 
 def get(audio_id):
