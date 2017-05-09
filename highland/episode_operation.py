@@ -83,10 +83,18 @@ def delete(episode_ids):
     """Deletes episodes.
     If no episode exists for the passed id, exception is raised."""
 
-    for episode in (get(id) for id in episode_ids):
+    targets = models.db.session. \
+        query(Episode, Show). \
+        join(Show). \
+        filter(Episode.id.in_(episode_ids)). \
+        order_by(Show.id). \
+        all()
+
+    for episode, show in targets:
         models.db.session.delete(episode)
+        _update_show_build_datetime(episode, show)
+
     models.db.session.commit()
-    _update_show_build_datetime(episode)
     return True
 
 
@@ -205,13 +213,15 @@ def _valid_or_assert(episode):
     return episode
 
 
-def _update_show_build_datetime(episode):
+def _update_show_build_datetime(episode, show=None):
+    """Updates the build datetime for the show as an episode is updated.
+    It does not commit the session."""
+
     if episode.draft_status != Episode.DraftStatus.published.name:
         return None
 
-    show = show_operation.get_model(episode.show_id)
+    show = show or show_operation.get_model(episode.show_id)
     show.last_build_datetime = datetime.datetime.now(datetime.timezone.utc)
-    models.db.session.commit()
     return show
 
 
