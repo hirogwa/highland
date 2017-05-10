@@ -43,7 +43,7 @@ def _generate(user, show):
     fg.podcast.itunes_subtitle(show.subtitle)
     fg.podcast.itunes_summary(show.description)
     if show.image_id is not None:
-        image = image_operation.get(show.image_id)
+        image = image_operation.get_model(show.image_id)
         fg.podcast.itunes_image(image_operation.get_image_url(user, image))
 
     for episode in episode_operation.load_public(show.id):
@@ -62,7 +62,7 @@ def _generate(user, show):
         fe.podcast.itunes_explicit('yes' if episode.explicit else 'no')
         fe.podcast.itunes_subtitle(episode.subtitle)
         if episode.image_id is not None:
-            image_episode = image_operation.get(episode.image_id)
+            image_episode = image_operation.get_model(episode.image_id)
             fe.podcast.itunes_image(
                 image_operation.get_image_url(user, image_episode))
 

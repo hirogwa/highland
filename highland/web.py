@@ -200,11 +200,8 @@ def audio():
 @app.route('/image/<image_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_image(image_id):
-    user = auth.authenticated_user
     image = image_operation.get(image_id)
-    image_d = api_model(image)
-    image_d['url'] = image_operation.get_image_url(user, image)
-    return jsonify(image=image_d, result='success')
+    return jsonify(image=image, result='success')
 
 
 @app.route('/image', methods=['POST', 'GET', 'DELETE'])
@@ -215,17 +212,12 @@ def image():
             request.get_json(), 'filename', 'filetype')
         image = image_operation.create(
             auth.authenticated_user.id, file_name, file_type)
-        return jsonify(image=api_model(image), result='success'), 201
+        return jsonify(image=image, result='success'), 201
 
     if 'GET' == request.method:
         user = auth.authenticated_user
         images = image_operation.load(user.id)
-
-        def _dict(x):
-            d = api_model(x)
-            d['url'] = image_operation.get_image_url(user, x)
-            return d
-        return jsonify(images=[_dict(x) for x in images], result='success')
+        return jsonify(images=images, result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
@@ -297,7 +289,8 @@ def preview_site(show_id):
     '''
     user = auth.authenticated_user
     show = show_operation.get_model(show_id)
-    show_image = image_operation.get(show.image_id) if show.image_id else None
+    show_image = \
+        image_operation.get_model(show.image_id) if show.image_id else None
     return public_view.show_html(
         user,
         show,

@@ -199,7 +199,7 @@ def _valid_or_assert(episode):
     if episode.audio_id is not None:
         audio_operation.get(episode.audio_id)
     if episode.image_id is not None:
-        image_operation.get(episode.image_id)
+        image_operation.get_model(episode.image_id)
 
     if episode.draft_status != Episode.DraftStatus.draft.name:
         common.require_true(episode.title, 'title required')
