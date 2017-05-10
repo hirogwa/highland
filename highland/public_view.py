@@ -5,7 +5,8 @@ from highland import show_operation, episode_operation, media_storage, \
 
 def update_full(user, show_id):
     show = show_operation.get_model(show_id)
-    show_image = image_operation.get(show.image_id) if show.image_id else None
+    show_image = \
+        image_operation.get_model(show.image_id) if show.image_id else None
     episodes = episode_operation.load_public(show_id)
     show_html(user, show, show_image)
     _delete_all_episodes(user, show)
@@ -71,7 +72,8 @@ def preview_episode(user, show, title, subtitle, description, audio_id,
                     image_id):
     episode = episode_operation.get_preview_episode(
         show, title, subtitle, description, audio_id, image_id)
-    show_image = image_operation.get(show.image_id) if show.image_id else None
+    show_image = \
+        image_operation.get_model(show.image_id) if show.image_id else None
     return episode_html(user, show, show_image, episode)
 
 
@@ -86,7 +88,7 @@ def _get_site_url(show_alias):
 def _get_episode_image_url(user, episode, show_image):
     if episode.image_id:
         return image_operation.get_image_url(
-            user, image_operation.get(episode.image_id))
+            user, image_operation.get_model(episode.image_id))
     if show_image:
         return image_operation.get_image_url(user, show_image)
     return ''
