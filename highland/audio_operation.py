@@ -69,7 +69,7 @@ def load(user_id, unused_only=False, whitelisted_id=None):
         d['episode_title'] = episode.title if episode else None
         return d
 
-    user = user_operation.get(id=user_id)
+    user = user_operation.get_model(id=user_id)
     return [_dict_with_episode(user, a, e) for a, e in audio_query.all()]
 
 
