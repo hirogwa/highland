@@ -43,7 +43,7 @@ def load(user_id):
     Intended to be called by front end.
     """
 
-    user = user_operation.get(user_id)
+    user = user_operation.get_model(user_id)
     q = models.Image.query.filter_by(owner_user_id=user_id)
     return [_add_attributes(user, image) for image in q.all()]
 
@@ -53,7 +53,7 @@ def get(image_id):
     Intended to be called by front end
     """
     image = get_model(image_id)
-    user = user_operation.get(image.owner_user_id)
+    user = user_operation.get_model(image.owner_user_id)
     return _add_attributes(user, image)
 
 

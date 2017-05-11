@@ -1,3 +1,4 @@
+from collections import namedtuple
 import dateutil.parser
 import traceback
 
@@ -230,7 +231,7 @@ def image():
 def initiate_user():
     user = user_operation.create(
         auth.authenticated_username, auth.identity_id)
-    return jsonify(result='success', user=api_model(user))
+    return jsonify(result='success', user=user)
 
 
 @app.route('/user', methods=['PUT'])
@@ -246,12 +247,14 @@ def user():
         common.require_true(username, 'username required')
         common.require_true(name, 'name required')
         user = user_operation.update(int(id), username, name)
-        return jsonify(user=api_model(user), result='success')
+        return jsonify(user=user, result='success')
 
 
 @auth.user_loader
 def get_user(username):
-    return user_operation.get(username=username)
+    user = user_operation.get(username=username)
+    User = namedtuple('User', 'id username')
+    return User(user.get('id'), user.get('name'))
 
 
 @app.route('/ping', methods=['GET'])
@@ -406,17 +409,6 @@ def logout():
         return jsonify(result='success')
     if request.method == 'GET':
         return login_redirect()
-
-
-def api_model(model):
-    """Format model object in a way the client expects"""
-
-    def _value(value):
-        if isinstance(value, datetime):
-            return str(value)
-        else:
-            return value
-    return {k: _value(v) for k, v in dict(model).items()}
 
 
 def _get_args(param, *names):

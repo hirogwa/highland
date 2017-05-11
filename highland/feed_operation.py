@@ -11,7 +11,7 @@ def update(show_id):
     """Generate the latest feed and update the public repository with that"""
 
     show = show_operation.get_model(show_id)
-    user = user_operation.get(show.owner_user_id)
+    user = user_operation.get_model(show.owner_user_id)
     return media_storage.upload(
         _generate(user, show), app.config.get('S3_BUCKET_FEED'),
         show.alias, FEED_FOLDER_RSS, ContentType=FEED_CONTENT_TYPE)

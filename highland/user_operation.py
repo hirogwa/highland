@@ -2,7 +2,10 @@ from highland import models, exception
 
 
 def create(username, identity_id):
-    """Initiate new user. intended to be called at user's first login.
+    """Initiate new user and returns the created user as dict.
+
+    Exception is raised if a user with the username already exists.
+    Intended to be called by front end at user's first login.
     """
     if models.User.query.filter_by(username=username).first():
         raise exception.OperationNotAllowedError(
@@ -11,11 +14,15 @@ def create(username, identity_id):
     user = models.User(username, username, identity_id)
     models.db.session.add(user)
     models.db.session.commit()
-    return user
+    return dict(user)
 
 
 def update(id, username, name):
-    """Updates the user. Exception is raised if no such user is found."""
+    """Updates the user and returns the user as dict.
+
+    Exception is raised if no such user is found.
+    Intended to be called by front end.
+    """
     user = models.User.query.filter_by(id=id).first()
     if not user:
         raise exception.NoSuchEntityError('user:{}'.format(id))
@@ -23,16 +30,26 @@ def update(id, username, name):
     user.username = username
     user.name = name
     models.db.session.commit()
-    return user
+    return dict(user)
 
 
 def get(id=None, username=None):
-    """Retrieves user by id or username.
+    """Retrieves user by id or username and returns it as dict.
+
+    Either id or username is required. If provided, both keys are used.
+    If no such user is found, an exception is raised.
+
+    Intended to be called by front end.
+    """
+    return dict(get_model(id, username))
+
+
+def get_model(id=None, username=None):
+    """Retrieves user by id or username and returns it as the raw model.
 
     Either id or username is required. If provided, both keys are used.
     If no such user is found, an exception is raised.
     """
-
     if not username and not id:
         raise ValueError('Either username or id is required')
 
