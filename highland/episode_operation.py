@@ -2,6 +2,7 @@ import datetime
 import urllib.parse
 from highland import models, show_operation, app, audio_operation,\
     image_operation, common, exception
+from highland.common import verify_ownership
 from highland.models import Episode, Show
 
 
@@ -30,7 +31,7 @@ def create(show_id, draft_status, alias, audio_id, image_id,
     return dict(episode)
 
 
-def update(episode_id, draft_status=None, alias=None, audio_id=None,
+def update(user_id, episode_id, draft_status=None, alias=None, audio_id=None,
            image_id=None, scheduled_datetime=None, title=None, subtitle=None,
            description=None, explicit=None):
     """Updates the episode and returns the updated episode as dict.
@@ -39,7 +40,7 @@ def update(episode_id, draft_status=None, alias=None, audio_id=None,
     Intended to be called by front end.
     """
 
-    episode = _get_model(episode_id)
+    episode = verify_ownership(user_id, _get_model(episode_id))
     name_value_pairs = [
         ('title', title),
         ('subtitle', subtitle),
@@ -62,13 +63,13 @@ def update(episode_id, draft_status=None, alias=None, audio_id=None,
     return dict(episode)
 
 
-def get(episode_id):
+def get(user_id, episode_id):
     """Returns the episode as dict.
 
     Exception is raised if not found.
     Intended to be called by front end.
     """
-    return dict(_get_model(episode_id))
+    return dict(verify_ownership(user_id, _get_model(episode_id)))
 
 
 def _get_model(episode_id):
@@ -79,7 +80,7 @@ def _get_model(episode_id):
     return episode
 
 
-def delete(episode_ids):
+def delete(user_id, episode_ids):
     """Deletes episodes.
     If no episode exists for the passed id, exception is raised."""
 
@@ -91,19 +92,20 @@ def delete(episode_ids):
         all()
 
     for episode, show in targets:
-        models.db.session.delete(episode)
+        models.db.session.delete(verify_ownership(user_id, episode))
         _update_show_build_datetime(episode, show)
 
     models.db.session.commit()
     return True
 
 
-def load(show_id, public_only=False):
+def load(user_id, show_id, public_only=False):
     """Returns all the episodes under the show as a sequence of dict.
     Intended to be called by front end.
     """
 
     show = show_operation.get_model(show_id)
+    verify_ownership(user_id, show)
     q = Episode.query. \
         filter_by(show_id=show.id). \
         order_by(Episode.published_datetime.desc())

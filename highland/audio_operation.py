@@ -1,6 +1,7 @@
 import uuid
 import urllib.parse
 from highland import models, media_storage, app, exception, user_operation
+from highland.common import verify_ownership
 from highland.models import Audio, Episode, User
 
 
@@ -16,7 +17,7 @@ def create(user_id, file_name, duration, length, file_type):
     return dict(audio)
 
 
-def delete(audio_ids):
+def delete(user_id, audio_ids):
     """Deletes the audios.
     Intended to be called by front end.
     """
@@ -29,6 +30,7 @@ def delete(audio_ids):
         all()
 
     for audio, user in targets:
+        verify_ownership(user_id, audio)
         try:
             media_storage.delete(
                 _get_audio_key(user, audio), app.config.get('S3_BUCKET_AUDIO'))

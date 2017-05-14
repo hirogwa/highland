@@ -1,6 +1,7 @@
 import datetime
 import urllib.parse
 from highland import models, app, common, exception
+from highland.common import verify_ownership
 from highland.models import Show
 
 
@@ -21,13 +22,13 @@ def create(user_id, title, description, subtitle, language, author, category,
     return dict(show)
 
 
-def update(show_id, title, description, subtitle, language, author,
+def update(user_id, show_id, title, description, subtitle, language, author,
            category, explicit, image_id):
     """Updates the show. Exception is thrown if the show is not found.
     Intended to be called by front end.
     """
 
-    show = get(show_id)
+    show = verify_ownership(user_id, get(show_id))
     show.title = title
     show.description = description
     show.subtitle = subtitle
@@ -41,12 +42,12 @@ def update(show_id, title, description, subtitle, language, author,
     return dict(show)
 
 
-def delete(show_id):
+def delete(user_id, show_id):
     """Deletes the show. Exception is thrown if the show is not found.
     Intended to be called by front end.
     """
 
-    show = get(show_id)
+    show = verify_ownership(user_id, get(show_id))
     models.db.session.delete(show)
     models.db.session.commit()
     return True
@@ -61,12 +62,11 @@ def load(user_id):
     return [dict(x) for x in shows]
 
 
-def get(show_id):
+def get(user_id, show_id):
     """Gets and returns the show as dict. Exception is raised if not found.
     Intended to be called by front end.
     """
-
-    return dict(get_model(show_id))
+    return dict(verify_ownership(user_id, get_model(show_id)))
 
 
 def get_model(show_id):
