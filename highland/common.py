@@ -1,7 +1,17 @@
 import re
 import bleach
 
-from highland import exception
+from highland.exception import AccessNotAllowedError, ValueError
+
+
+def verify_ownership(user_id, entity):
+    """Checks if the user with the given user_id owns the entity.
+    Exception is raised if not.
+    """
+    if entity.owner_user_id == user_id:
+        return entity
+    else:
+        raise AccessNotAllowedError
 
 
 def is_valid_alias(alias):
@@ -18,6 +28,6 @@ def require_true(expression, message=None):
     if expression:
         return expression
     if message:
-        raise exception.ValueError(message)
+        raise ValueError(message)
     else:
-        raise exception.ValueError()
+        raise ValueError()

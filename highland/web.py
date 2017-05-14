@@ -2,7 +2,6 @@ from collections import namedtuple
 import dateutil.parser
 import traceback
 
-from datetime import datetime
 from flask import request, jsonify, redirect, render_template, \
     url_for, Response
 
@@ -10,6 +9,7 @@ from highland import app, \
     show_operation, episode_operation, audio_operation, user_operation,\
     image_operation, public_view, feed_operation, stat_operation, \
     cognito_auth, publish, common
+from highland.exception import AccessNotAllowedError
 
 app.secret_key = app.config.get('APP_SECRET')
 auth = cognito_auth.CognitoAuth(app.config.get('COGNITO_JWT_SET'),
@@ -18,9 +18,15 @@ auth = cognito_auth.CognitoAuth(app.config.get('COGNITO_JWT_SET'),
 
 
 @app.errorhandler(Exception)
-def handleError(error):
+def handle_error(error):
     app.logger.error(traceback.format_exc())
     return jsonify(result='error'), 500
+
+
+@app.errorhandler(AccessNotAllowedError)
+def handle_access_not_allowed(error):
+    app.logger.error(traceback.format_exc())
+    return jsonify(result='error'), 403
 
 
 @app.route('/stat/episode_by_day', methods=['GET'])
@@ -56,7 +62,7 @@ def stat_episode_cumulative():
 @app.route('/show/<show_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_show(show_id):
-    show = show_operation.get(show_id)
+    show = show_operation.get(auth.authenticated_user.id, show_id)
     return jsonify(show=show, result='success')
 
 
@@ -99,7 +105,7 @@ def show():
         common.require_true(explicit is not None, 'explicit required')
 
         show = show_operation.update(
-            id, title, description, subtitle,
+            auth.authenticated_user.id, id, title, description, subtitle,
             language, author, category, explicit, image_id)
         return jsonify(show=show, result='success')
 
@@ -143,14 +149,15 @@ def episode():
         common.require_true(explicit is not None, 'explicit required')
 
         episode = episode_operation.update(
-            id, draft_status, alias, audio_id, image_id,
-            datetime_valid_or_none(scheduled_datetime),
+            auth.authenticated_user.id, id, draft_status, alias, audio_id,
+            image_id, datetime_valid_or_none(scheduled_datetime),
             title, subtitle, description, explicit)
         return jsonify(episode=episode, result='success')
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        episode_operation.delete(args.get('episode_ids'))
+        episode_operation.delete(
+            auth.authenticated_user.id, args.get('episode_ids'))
         return jsonify(result='success')
 
 
@@ -158,14 +165,15 @@ def episode():
 @auth.require_authenticated()
 def get_episode_list(show_id):
     public = request.args.get('public')
-    episodes = episode_operation.load(show_id, public_only=public)
+    episodes = episode_operation.load(
+        auth.authenticated_user.id, show_id, public_only=public)
     return jsonify(episodes=episodes, result='success')
 
 
 @app.route('/episode/<show_id>/<episode_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_episode(show_id, episode_id):
-    episode = episode_operation.get(episode_id)
+    episode = episode_operation.get(auth.authenticated_user.id, episode_id)
     return jsonify(episode=episode, result='success')
 
 
@@ -194,14 +202,14 @@ def audio():
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        audio_operation.delete(args.get('ids'))
+        audio_operation.delete(auth.authenticated_user.id, args.get('ids'))
         return jsonify(result='success')
 
 
 @app.route('/image/<image_id>', methods=['GET'])
 @auth.require_authenticated()
 def get_image(image_id):
-    image = image_operation.get(image_id)
+    image = image_operation.get(auth.authenticated_user.id, image_id)
     return jsonify(image=image, result='success')
 
 
@@ -222,7 +230,7 @@ def image():
 
     if 'DELETE' == request.method:
         args = request.get_json()
-        image_operation.delete(args.get('ids'))
+        image_operation.delete(auth.authenticated_user.id, args.get('ids'))
         return jsonify(result='success')
 
 

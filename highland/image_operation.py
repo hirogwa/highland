@@ -1,6 +1,7 @@
 import urllib.parse
 import uuid
 from highland import models, media_storage, app, exception, user_operation
+from highland.common import verify_ownership
 from highland.models import Image, User
 
 
@@ -14,8 +15,10 @@ def create(user_id, file_name, file_type):
     return dict(image)
 
 
-def delete(image_ids):
-    """Deletes the images."""
+def delete(user_id, image_ids):
+    """Deletes the images.
+    Intended to be called by front end.
+    """
 
     targets = models.db.session. \
         query(Image, User). \
@@ -25,6 +28,7 @@ def delete(image_ids):
         all()
 
     for image, user in targets:
+        verify_ownership(user_id, image)
         try:
             media_storage.delete(
                 _get_image_key(user, image), app.config.get('S3_BUCKET_IMAGE'))
@@ -48,11 +52,11 @@ def load(user_id):
     return [_add_attributes(user, image) for image in q.all()]
 
 
-def get(image_id):
+def get(user_id, image_id):
     """Returns the image as dict. Exception is raised if not found.
     Intended to be called by front end
     """
-    image = get_model(image_id)
+    image = verify_ownership(user_id, get_model(image_id))
     user = user_operation.get_model(image.owner_user_id)
     return _add_attributes(user, image)
 
