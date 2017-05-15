@@ -1,16 +1,16 @@
 import unittest
+from unittest.mock import patch
 from unittest.mock import MagicMock
 from highland import show_operation, models, common, exception, settings
+from highland.exception import InvalidValueError
 
 
 class TestShowOperation(unittest.TestCase):
-    @unittest.mock.patch('highland.models.Show')
-    @unittest.mock.patch.object(models.db.session, 'commit')
-    @unittest.mock.patch.object(models.db.session, 'add')
-    @unittest.mock.patch.object(common, 'is_valid_alias')
-    def test_create(self, mocked_valid_alias, mocked_add, mocked_commit,
-                    mocked_show_class):
-        mocked_user = MagicMock()
+    @patch.object(models.db.session, 'commit')
+    @patch.object(models.db.session, 'add')
+    @patch.object(common, 'is_valid_alias')
+    def test_create(self, mocked_valid_alias, mocked_add, mocked_commit):
+        user_id = 1
         title = 'my show'
         description = 'my show description'
         subtitle = 'my show subtitle'
@@ -21,29 +21,21 @@ class TestShowOperation(unittest.TestCase):
         image_id = 2
         alias = 'ultraSpaceShow'
 
-        mocked_show = MagicMock()
-        mocked_show_class.return_value = mocked_show
         mocked_valid_alias.return_value = True
 
-        result = show_operation.create(
-            mocked_user, title, description, subtitle, language, author,
+        show_operation.create(
+            user_id, title, description, subtitle, language, author,
             category, explicit, image_id, alias)
 
         mocked_valid_alias.assert_called_with(alias)
-        mocked_show_class.assert_called_with(
-            mocked_user, title, description, subtitle, language, author,
-            category, explicit, image_id, alias)
-        mocked_add.assert_called_with(mocked_show)
-        mocked_commit.assert_called_with()
-        self.assertEqual(mocked_show, result)
+        self.assertEqual(1, mocked_add.call_count)
+        self.assertEqual(1, mocked_commit.call_count)
 
     @unittest.mock.patch.object(common, 'is_valid_alias')
     def test_create_bad_alias(self, mocked_valid_alias):
-        mocked_alias = MagicMock()
         mocked_valid_alias.return_value = False
-        with self.assertRaises(exception.InvalidValueError):
-            show_operation.create(
-                *([MagicMock() for x in range(9)] + [mocked_alias]))
+        with self.assertRaises(InvalidValueError):
+            show_operation.create(*(MagicMock() for x in range(10)))
 
     @unittest.mock.patch('highland.models.Show.query')
     @unittest.mock.patch.object(models.db.session, 'commit')
