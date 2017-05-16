@@ -28,7 +28,7 @@ def update(user_id, show_id, title, description, subtitle, language, author,
     Intended to be called by front end.
     """
 
-    show = verify_ownership(user_id, get(show_id))
+    show = verify_ownership(user_id, get_model(show_id))
     show.title = title
     show.description = description
     show.subtitle = subtitle
