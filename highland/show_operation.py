@@ -47,7 +47,7 @@ def delete(user_id, show_id):
     Intended to be called by front end.
     """
 
-    show = verify_ownership(user_id, get(show_id))
+    show = verify_ownership(user_id, get_model(show_id))
     models.db.session.delete(show)
     models.db.session.commit()
     return True
