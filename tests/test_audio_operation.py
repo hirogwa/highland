@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 from highland import audio_operation, models, media_storage, settings, \
     exception
+from highland.exception import AccessNotAllowedError
+from highland.models import Audio, User
 
 
 class TestAudioOperation(unittest.TestCase):
@@ -18,41 +20,67 @@ class TestAudioOperation(unittest.TestCase):
         self.assertEqual(1, result.get('owner_user_id'))
         self.assertEqual('some_guid', result.get('guid'))
 
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'delete')
     @patch.object(media_storage, 'delete')
-    @patch.object(audio_operation, 'get_audio_or_assert')
-    def test_delete(self, mock_get_audio, mock_media_delete,
-                    mock_delete, mock_commit):
-        mock_audio, mock_user = MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_audio.guid = 'someguid'
-        audio_ids = [2]
-        mock_get_audio.return_value = mock_audio
+    @patch.object(models.db, 'session')
+    def test_delete(self, mock_session, mock_delete):
+        audios = [
+            Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
+            Audio(1, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
+        ]
+        self._delete_prep(mock_session, audios)
 
-        result = audio_operation.delete(mock_user, audio_ids)
+        audio_operation.delete(1, [x.id for x in audios])
 
-        mock_get_audio.assert_called_with(mock_user, audio_ids[0])
-        mock_media_delete.assert_called_with(
-            'identity_id/someguid', settings.S3_BUCKET_AUDIO)
-        mock_delete.assert_called_with(mock_audio)
-        mock_commit.assert_called_with()
-        self.assertTrue(result)
+        self.assertEqual(2, mock_delete.call_count)
+        mock_session.commit.assert_called_with()
 
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'delete')
     @patch.object(media_storage, 'delete')
-    @patch.object(audio_operation, 'get_audio_or_assert')
-    def test_delete_file_error(self, mock_get_audio, mock_media_delete,
-                               mock_delete, mock_commit):
-        mock_user = MagicMock()
-        audio_ids = [2]
-        mock_media_delete.side_effect = ValueError()
+    @patch.object(models.db, 'session')
+    def test_delete_raises_when_audio_is_not_owned_by_the_user(
+            self, mock_session, mock_delete):
+        audios = [
+            Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
+            Audio(9, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
+        ]
+        self._delete_prep(mock_session, audios)
 
-        audio_operation.delete(mock_user, audio_ids)
+        with self.assertRaises(AccessNotAllowedError):
+            audio_operation.delete(9, [x.id for x in audios])
 
         mock_delete.assert_not_called()
-        mock_commit.assert_called_with()
+        mock_session.delete.assert_not_called()
+        mock_session.commit.assert_not_called()
+
+    @patch.object(media_storage, 'delete')
+    @patch.object(models.db, 'session')
+    def test_delete_db_record_is_not_deleted_when_storage_error(
+            self, mock_session, mock_delete):
+        audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
+        self._delete_prep(mock_session, [audio])
+        mock_delete.side_effect = ValueError
+
+        audio_operation.delete(1, [audio.id])
+
+        self.assertEqual(1, mock_delete.call_count)
+        mock_session.delete.assert_not_called()
+        mock_session.commit.assert_called_with()
+
+    def _delete_prep(self, mock_session, audios):
+        audio_id_base = 10
+        for x in audios:
+            x.id = audio_id_base
+            audio_id_base += 1
+
+        def create_user(audio):
+            user = User('username', 'name', 'identity')
+            user.id = id
+            return user
+
+        audio_ids = [x.id for x in audios]
+        users = [create_user(audio) for audio in audios]
+        mock_session.query(Audio, User).join(User). \
+            filter(Audio.id.in_(audio_ids)).order_by(Audio.owner_user_id). \
+            all.return_value = [(x, y) for x, y in zip(audios, users)]
 
     @patch.object(audio_operation, 'get_audio_url')
     @patch('highland.models.Episode.query')
