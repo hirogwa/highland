@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from highland import audio_operation, models, media_storage, settings, \
-    exception
+    exception, user_operation
 from highland.exception import AccessNotAllowedError
-from highland.models import Audio, User
+from highland.models import Audio, Episode, User
 
 
 class TestAudioOperation(unittest.TestCase):
@@ -65,67 +65,106 @@ class TestAudioOperation(unittest.TestCase):
         mock_session.delete.assert_not_called()
         mock_session.commit.assert_called_with()
 
+    def _create_user(self, id):
+        user = User('username', 'name', 'identity')
+        user.id = id
+        return user
+
+    def _assign_ids(self, entities, base):
+        for x in entities:
+            x.id = base
+            base += 1
+        return entities
+
     def _delete_prep(self, mock_session, audios):
-        audio_id_base = 10
-        for x in audios:
-            x.id = audio_id_base
-            audio_id_base += 1
-
-        def create_user(audio):
-            user = User('username', 'name', 'identity')
-            user.id = id
-            return user
-
+        audios = self._assign_ids(audios, 10)
         audio_ids = [x.id for x in audios]
-        users = [create_user(audio) for audio in audios]
+        users = [self._create_user(audio.owner_user_id) for audio in audios]
         mock_session.query(Audio, User).join(User). \
             filter(Audio.id.in_(audio_ids)).order_by(Audio.owner_user_id). \
             all.return_value = [(x, y) for x, y in zip(audios, users)]
 
     @patch.object(audio_operation, 'get_audio_url')
+    @patch.object(user_operation, 'get_model')
+    @patch.object(models.db, 'session')
+    def test_load(self, mock_session, mock_get_user, mock_get_url):
+        user = self._create_user(id=1)
+        audios = [
+            Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
+            Audio(1, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
+        ]
+        audios, episodes, mock_audio_query = \
+            self._load_prep(audios, mock_session, user.id)
+        episodes[1] = None
+
+        mock_audio_query.all.return_value = \
+            ((a, e) for a, e in zip(audios, episodes))
+
+        mock_get_user.return_value = user
+        mock_get_url.return_value = 'some_url'
+
+        one, two = audio_operation.load(user.id)
+
+        self.assertEqual(1, one.get('owner_user_id'))
+        self.assertEqual(1, two.get('owner_user_id'))
+        self.assertEqual('file_one', one.get('filename'))
+        self.assertEqual('file_two', two.get('filename'))
+        self.assertEqual(11, one.get('show_id'))
+        self.assertEqual(20, one.get('episode_id'))
+        self.assertIsNone(two.get('show_id'))
+        self.assertIsNone(two.get('episode_id'))
+
+    @patch.object(audio_operation, 'get_audio_url')
+    @patch.object(user_operation, 'get_model')
     @patch('highland.models.Episode.query')
-    @patch('highland.models.Audio.query')
-    def test_load(
-            self, mock_query_audio, mock_query_episode, mock_get_url):
-        mock_user = MagicMock()
-        mock_user.id = 1
+    @patch.object(models.db, 'session')
+    def test_load_loads_unused_only_when_unused_only_is_set(
+            self, mock_session, mock_episode_query, mock_get_user,
+            mock_get_url):
+        user = self._create_user(id=1)
+        audios = [
+            Audio(1, 'whitelisted', 30, 128, 'audio/mpeg', 'some_guid_01'),
+            Audio(1, 'unused', 60, 256, 'audio/mpeg', 'some_guid_02'),
+            Audio(1, 'used', 90, 512, 'audio/mpeg', 'some_guid_03')
+        ]
+        audios, episodes, mock_audio_query = \
+            self._load_prep(audios, mock_session, user.id)
 
-        mock_filter_audio = MagicMock()
-        mock_audio_01, mock_audio_02, mock_audio_03 = \
-            MagicMock(), MagicMock(), MagicMock()
-        mock_audio_01.id = 11    # used
-        mock_audio_02.id = 12    # used but whitelisted
-        mock_audio_03.id = 13    # not used
-        mock_audio_01.__iter__.return_value = iter({'id': 11})
-        mock_audio_02.__iter__.return_value = iter({'id': 12})
-        mock_audio_03.__iter__.return_value = iter({'id': 13})
-        mock_filter_audio.all.return_value = [
-            mock_audio_01, mock_audio_02, mock_audio_03]
-        mock_query_audio.filter_by.return_value = mock_filter_audio
+        mock_episode_query. \
+            filter_by(owner_user_id=user.id). \
+            filter(Episode.audio_id.isnot(None)). \
+            filter(Episode.audio_id != audios[0].id) .\
+            all.return_value = episodes[2:]
+        mock_audio_query. \
+            filter(Audio.id.notin_(x.audio_id for x in episodes[2:])). \
+            all. \
+            return_value = ((a, e) for a, e in zip(audios[:2], episodes[:2]))
 
-        mock_filter_episode = MagicMock()
-        mock_episode_01, mock_episode_02, mock_episode_03 = \
-            MagicMock(), MagicMock(), MagicMock()
-        mock_episode_01.audio_id = 11    # used
-        mock_episode_02.audio_id = 12    # used but whitelisted
-        mock_episode_03.audio_id = None  # not used
-        mock_episode_01.id = 21
-        mock_episode_02.id = 22
-        mock_episode_03.id = 23
-        mock_filter_episode.all.return_value = [
-            mock_episode_01, mock_episode_02, mock_episode_03]
-        mock_query_episode.filter_by.return_value = mock_filter_episode
+        result = audio_operation.load(
+            user.id, unused_only=True, whitelisted_id=audios[0].id)
 
-        result = audio_operation.load(mock_user, True, 12)
-
-        mock_query_audio.filter_by.assert_called_with(
-            owner_user_id=mock_user.id)
-        mock_filter_audio.all.assert_called_with()
-        mock_query_episode.filter_by.assert_called_with(
-            owner_user_id=mock_user.id)
-        mock_filter_episode.all.assert_called_with()
         self.assertEqual(2, len(result))
-        self.assertEqual([22, None], [x['episode_id'] for x in result])
+        self.assertEqual('whitelisted', result[0].get('filename'))
+        self.assertEqual('unused', result[1].get('filename'))
+
+    def _load_prep(self, audios, mock_session, user_id):
+        audios = self._assign_ids(audios, 10)
+        episodes = []
+        for audio in audios:
+            episodes.append(Episode(
+                show_id=11, user_id=user_id, title='some ep', subtitle='sub',
+                description='desc', audio_id=audio.id, draft_status=None,
+                scheduled_datetime=None, explicit=False, image_id=None,
+                alias='alias')
+            )
+        self._assign_ids(episodes, 20)
+
+        mock_audio_query = mock_session. \
+            query(Audio, Episode). \
+            outerjoin(Episode). \
+            filter(Audio.owner_user_id == user_id)
+
+        return audios, episodes, mock_audio_query
 
     @patch.object(audio_operation, 'access_allowed_or_raise')
     @patch('highland.models.Audio.query')
