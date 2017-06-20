@@ -167,7 +167,7 @@ class TestAudioOperation(unittest.TestCase):
 
     @patch.object(Audio, 'query')
     def test_get(self, mock_query):
-        audio = Audio(1, 'whitelisted', 30, 128, 'audio/mpeg', 'some_guid_01')
+        audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
         mock_query.filter_by.return_value.first.return_value = audio
         self.assertEqual(audio, audio_operation.get(audio.id))
 
@@ -177,14 +177,18 @@ class TestAudioOperation(unittest.TestCase):
         with self.assertRaises(NoSuchEntityError):
             audio_operation.get(1)
 
-    @patch.object(audio_operation, 'access_allowed_or_raise')
-    def test_get_audio_url(self, mock_access):
-        mock_user, mock_audio = MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_audio.guid = 'someguid'
+    @patch('highland.app.config')
+    def test_get_audio_url(self, mock_config):
+        user = self._create_user(1)
+        audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
+        mock_config.get.return_value = 'http://somehost.com'
 
-        result = audio_operation.get_audio_url(mock_user, mock_audio)
-
-        mock_access.assert_called_with(mock_user.id, mock_audio)
         self.assertEqual(
-            '{}/identity_id/someguid'.format(settings.HOST_AUDIO), result)
+            'http://somehost.com/identity/some_guid_01',
+            audio_operation.get_audio_url(user, audio))
+
+    def test_get_audio_url_raises_if_user_is_incorrect(self):
+        user = self._create_user(9)
+        audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
+        with self.assertRaises(ValueError):
+            audio_operation.get_audio_url(user, audio)
