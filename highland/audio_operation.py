@@ -29,8 +29,11 @@ def delete(user_id, audio_ids):
         order_by(Audio.owner_user_id). \
         all()
 
+    # execute the deletion only when ownership is correct for all
     for audio, user in targets:
         verify_ownership(user_id, audio)
+
+    for audio, user in targets:
         try:
             media_storage.delete(
                 _get_audio_key(user, audio), app.config.get('S3_BUCKET_AUDIO'))
