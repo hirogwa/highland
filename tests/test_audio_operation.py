@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from highland import audio_operation, models, media_storage, settings, \
     exception, user_operation
-from highland.exception import AccessNotAllowedError
+from highland.exception import AccessNotAllowedError, NoSuchEntityError
 from highland.models import Audio, Episode, User
 
 
@@ -116,7 +116,7 @@ class TestAudioOperation(unittest.TestCase):
 
     @patch.object(audio_operation, 'get_audio_url')
     @patch.object(user_operation, 'get_model')
-    @patch('highland.models.Episode.query')
+    @patch.object(Episode, 'query')
     @patch.object(models.db, 'session')
     def test_load_loads_unused_only_when_unused_only_is_set(
             self, mock_session, mock_episode_query, mock_get_user,
@@ -165,6 +165,18 @@ class TestAudioOperation(unittest.TestCase):
             filter(Audio.owner_user_id == user_id)
 
         return audios, episodes, mock_audio_query
+
+    @patch.object(Audio, 'query')
+    def test_get(self, mock_query):
+        audio = Audio(1, 'whitelisted', 30, 128, 'audio/mpeg', 'some_guid_01')
+        mock_query.filter_by.return_value.first.return_value = audio
+        self.assertEqual(audio, audio_operation.get(audio.id))
+
+    @patch.object(Audio, 'query')
+    def test_get_raises_when_audio_not_found(self, mock_query):
+        mock_query.filter_by.return_value.first.return_value = None
+        with self.assertRaises(NoSuchEntityError):
+            audio_operation.get(1)
 
     @patch.object(audio_operation, 'access_allowed_or_raise')
     @patch('highland.models.Audio.query')
