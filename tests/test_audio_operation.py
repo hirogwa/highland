@@ -1,14 +1,13 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from highland import audio_operation, models, media_storage, settings, \
-    exception, user_operation
+from highland import audio_operation, media_storage, settings, user_operation
 from highland.exception import AccessNotAllowedError, NoSuchEntityError
-from highland.models import Audio, Episode, User
+from highland.models import db, Audio, Episode, User
 
 
 class TestAudioOperation(unittest.TestCase):
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'add')
+    @patch.object(db.session, 'commit')
+    @patch.object(db.session, 'add')
     @patch('uuid.uuid4')
     def test_create(self, mock_uuid4, mock_add, mock_commit):
         mock_uuid4.return_value.hex = 'some_guid'
@@ -21,7 +20,7 @@ class TestAudioOperation(unittest.TestCase):
         self.assertEqual('some_guid', result.get('guid'))
 
     @patch.object(media_storage, 'delete')
-    @patch.object(models.db, 'session')
+    @patch.object(db, 'session')
     def test_delete(self, mock_session, mock_delete):
         audios = [
             Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
@@ -35,7 +34,7 @@ class TestAudioOperation(unittest.TestCase):
         mock_session.commit.assert_called_with()
 
     @patch.object(media_storage, 'delete')
-    @patch.object(models.db, 'session')
+    @patch.object(db, 'session')
     def test_delete_raises_when_audio_is_not_owned_by_the_user(
             self, mock_session, mock_delete):
         audios = [
@@ -52,7 +51,7 @@ class TestAudioOperation(unittest.TestCase):
         mock_session.commit.assert_not_called()
 
     @patch.object(media_storage, 'delete')
-    @patch.object(models.db, 'session')
+    @patch.object(db, 'session')
     def test_delete_db_record_is_not_deleted_when_storage_error(
             self, mock_session, mock_delete):
         audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
@@ -86,7 +85,7 @@ class TestAudioOperation(unittest.TestCase):
 
     @patch.object(audio_operation, 'get_audio_url')
     @patch.object(user_operation, 'get_model')
-    @patch.object(models.db, 'session')
+    @patch.object(db, 'session')
     def test_load(self, mock_session, mock_get_user, mock_get_url):
         user = self._create_user(id=1)
         audios = [
@@ -117,7 +116,7 @@ class TestAudioOperation(unittest.TestCase):
     @patch.object(audio_operation, 'get_audio_url')
     @patch.object(user_operation, 'get_model')
     @patch.object(Episode, 'query')
-    @patch.object(models.db, 'session')
+    @patch.object(db, 'session')
     def test_load_loads_unused_only_when_unused_only_is_set(
             self, mock_session, mock_episode_query, mock_get_user,
             mock_get_url):
@@ -179,34 +178,6 @@ class TestAudioOperation(unittest.TestCase):
             audio_operation.get(1)
 
     @patch.object(audio_operation, 'access_allowed_or_raise')
-    @patch('highland.models.Audio.query')
-    def test_get_audio_or_assert(self, mock_query, mock_access):
-        mock_user, mock_audio = MagicMock(), MagicMock()
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = mock_audio
-        mock_query.filter_by.return_value = mock_filter
-
-        result = audio_operation.get_audio_or_assert(
-            mock_user, mock_audio.id)
-
-        mock_query.filter_by.assert_called_with(
-            owner_user_id=mock_user.id, id=mock_audio.id)
-        mock_filter.first.assert_called_with()
-        mock_access.assert_called_with(mock_user.id, mock_audio)
-        self.assertEqual(result, mock_audio)
-
-    @patch.object(audio_operation, 'access_allowed_or_raise')
-    @patch('highland.models.Audio.query')
-    def test_get_audio_or_assert_not_found(self, mock_query, mock_access):
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
-        with self.assertRaises(exception.NoSuchEntityError):
-            audio_operation.get_audio_or_assert(MagicMock(), 1)
-        mock_access.assert_not_called()
-
-    @patch.object(audio_operation, 'access_allowed_or_raise')
     def test_get_audio_url(self, mock_access):
         mock_user, mock_audio = MagicMock(), MagicMock()
         mock_user.identity_id = 'identity_id'
@@ -217,15 +188,3 @@ class TestAudioOperation(unittest.TestCase):
         mock_access.assert_called_with(mock_user.id, mock_audio)
         self.assertEqual(
             '{}/identity_id/someguid'.format(settings.HOST_AUDIO), result)
-
-    def test_access_allowed_or_raise(self):
-        mock_audio = MagicMock()
-        mock_audio.owner_user_id = 1
-        result = audio_operation.access_allowed_or_raise(1, mock_audio)
-        self.assertEqual(mock_audio, result)
-
-    def test_access_allowed_or_raise_raise(self):
-        mock_audio = MagicMock()
-        mock_audio.owner_user_id = 2
-        with self.assertRaises(exception.AccessNotAllowedError):
-            audio_operation.access_allowed_or_raise(1, mock_audio)
