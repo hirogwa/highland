@@ -2,19 +2,19 @@ import unittest
 from unittest.mock import patch, MagicMock
 from highland import media_storage, image_operation, models, settings, \
     exception
+from highland.models import db
 
 
 class TestImageOperation(unittest.TestCase):
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'add')
+    @patch.object(db, 'session')
     @patch('uuid.uuid4')
-    def test_create(self, mock_uuid4, mock_add, mock_commit):
+    def test_create(self, mock_uuid4, mock_session):
         mock_uuid4.return_value.hex = 'some_guid'
 
         result = image_operation.create(1, 'file.jpg', 'image/jpeg')
 
-        self.assertEqual(1, mock_add.call_count)
-        mock_commit.assert_called_with()
+        self.assertEqual(1, mock_session.add.call_count)
+        mock_session.commit.assert_called_with()
         self.assertEqual(1, result.get('owner_user_id'))
         self.assertEqual('some_guid', result.get('guid'))
 
