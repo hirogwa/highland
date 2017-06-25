@@ -2,58 +2,103 @@ from datetime import datetime, timezone
 import unittest
 from unittest.mock import patch, MagicMock
 from highland import show_operation, episode_operation, models, audio_operation,\
-    image_operation, exception, common
+    image_operation, exception
+from highland.exception import InvalidValueError, NoSuchEntityError, ValueError
+from highland.models import db, Episode, Show
 
 
 class TestEpisodeOperation(unittest.TestCase):
+
+    @patch.object(db, 'session')
     @patch.object(episode_operation, '_update_show_build_datetime')
-    @patch.object(episode_operation, '_valid_or_assert')
-    @patch.object(audio_operation, 'get_audio_or_assert')
-    @patch.object(episode_operation, '_autofill_attributes')
-    @patch.object(show_operation, 'get_show_or_assert')
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'add')
+    @patch.object(episode_operation, '_verify_episode')
+    @patch.object(show_operation, 'get_model')
     def test_create(
-            self, mocked_add, mocked_commit, mocked_get_show,
-            mocked_autofill, mocked_get_audio, mocked_valid, mocked_build):
-        mocked_user = MagicMock()
-        mocked_show = MagicMock()
-        mocked_show.id = 2
-        mocked_audio = MagicMock()
-        mocked_audio.id = 3
-        mocked_image = MagicMock()
-        mocked_image.id = 4
-
-        title = 'my episode'
-        description = 'my episode description'
-        subtitle = 'my episode subtitle'
-        explicit = True
-        alias = 'myAlias'
-        draft_status = 'published'
-
-        episode = models.Episode(
-            mocked_show, title, subtitle, description, mocked_audio.id,
-            draft_status, None, explicit, mocked_image.id, alias)
-
-        mocked_get_show.return_value = mocked_show
-        mocked_get_audio.return_value = mocked_audio
+            self, mock_get_show, mock_validate, mock_update_show,
+            mock_session):
+        show = Show(1, 'title', 'desc', 'sub', 'ja', 'author', 'art', False,
+                    31, 'alias')
+        show.id = 10
+        mock_get_show.return_value = show
 
         result = episode_operation.create(
-            mocked_user, mocked_show.id, draft_status, alias,
-            mocked_audio.id, mocked_image.id, None, title, subtitle,
-            description, explicit)
+            show_id=10, draft_status='draft', alias='my_show_01', audio_id=20,
+            image_id=30, title='title', subtitle='sub', description='desc')
 
-        self.assertEqual(dict(episode), dict(result))
-        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
-        self.assertTrue(mocked_autofill.called)
-        self.assertTrue(mocked_valid.called)
-        self.assertTrue(mocked_add.called)
-        mocked_commit.assert_called_with()
-        self.assertTrue(mocked_build.called)
+        self.assertEqual(1, mock_validate.call_count)
+        self.assertEqual(1, mock_update_show.call_count)
+        self.assertEqual(1, mock_session.add.call_count)
+        mock_session.commit.assert_called_with()
+
+        self.assertEqual(10, result.get('show_id'))
+        self.assertEqual(1, result.get('owner_user_id'))
+        self.assertEqual(20, result.get('audio_id'))
+        self.assertEqual(30, result.get('image_id'))
+        self.assertEqual('title', result.get('title'))
+
+    def _create_episode(self):
+        return Episode(show_id=10, user_id=1, title='title', subtitle='sub',
+                       description='desc', audio_id=20, draft_status='draft',
+                       scheduled_datetime=datetime.now(), explicit=False,
+                       image_id=30, alias='alias')
+
+    def test_verify_episode_raises_if_bad_alias(self):
+        episode = self._create_episode()
+        episode.alias = '**+'
+        with self.assertRaises(InvalidValueError):
+            episode_operation._verify_episode(episode)
+
+    @patch.object(audio_operation, 'get')
+    def test_verify_episode_raises_if_audio_not_found(self, mock_get_audio):
+        episode = self._create_episode()
+        episode.image_id = None
+        mock_get_audio.side_effect = NoSuchEntityError
+        with self.assertRaises(NoSuchEntityError):
+            episode_operation._verify_episode(episode)
+        mock_get_audio.assert_called_with(episode.audio_id)
+
+    @patch.object(image_operation, 'get_model')
+    def test_verify_episode_raises_if_image_not_found(self, mock_get_image):
+        episode = self._create_episode()
+        episode.audio_id = None
+        mock_get_image.side_effect = NoSuchEntityError
+        with self.assertRaises(NoSuchEntityError):
+            episode_operation._verify_episode(episode)
+        mock_get_image.assert_called_with(episode.image_id)
+
+    @patch.object(image_operation, 'get_model')
+    @patch.object(audio_operation, 'get')
+    def test_verify_episode_raises_if_not_draft_and_field_missing(
+            self, mock_get_audio, mock_get_image):
+        for f in ['title', 'description', 'audio_id']:
+            self._test_verify_episode_raises_if_not_draft_and_field_missing(f)
+
+    def _test_verify_episode_raises_if_not_draft_and_field_missing(
+            self, attribute):
+        episode = self._create_episode()
+        episode.draft_status = 'scheduled'
+        setattr(episode, attribute, None)
+        with self.assertRaises(ValueError):
+            episode_operation._verify_episode(episode)
+
+    @patch.object(image_operation, 'get_model')
+    @patch.object(audio_operation, 'get')
+    def test_verify_episode_raises_if_scheduled_episode_does_not_have_scheduled_datetime(
+            self, mock_get_audio, mock_get_image):
+        episode = self._create_episode()
+        episode.draft_status = 'scheduled'
+        episode.scheduled_datetime = None
+        with self.assertRaises(ValueError):
+            episode_operation._verify_episode(episode)
+
+    def test_verify_episode_returns_episode_if_verified(self):
+        episode = self._create_episode()
+        episode.audio_id, episode.image_id = None, None
+        self.assertEqual(episode, episode_operation._verify_episode(episode))
 
     @patch.object(episode_operation, '_update_show_build_datetime')
     @patch.object(models.db.session, 'commit')
-    @patch.object(episode_operation, '_valid_or_assert')
+    @patch.object(episode_operation, '_verify_episode')
     @patch.object(episode_operation, '_autofill_attributes')
     @patch.object(episode_operation, 'get_episode_or_assert')
     def test_update(self, mocked_get_episode, mocked_autofill,
@@ -319,36 +364,6 @@ class TestEpisodeOperation(unittest.TestCase):
 
         with self.assertRaises(exception.AccessNotAllowedError):
             episode_operation.access_allowed_or_raise(2, mocked_episode)
-
-    @patch.object(common, 'require_true')
-    @patch.object(image_operation, 'get_image_or_assert')
-    @patch.object(audio_operation, 'get_audio_or_assert')
-    @patch.object(common, 'is_valid_alias')
-    def test_valid_or_assert_pass_all(
-            self, mocked_valid_alias, mocked_get_audio, mocked_get_image,
-            mocked_require_true):
-        mocked_user, mocked_episode = MagicMock(), MagicMock()
-        mocked_episode.audio_id = 1
-        mocked_episode.image_id = 2
-        mocked_episode.draft_status = models.Episode.DraftStatus.scheduled.name
-        mocked_valid_alias.return_value = True
-
-        result = episode_operation._valid_or_assert(
-            mocked_user, mocked_episode)
-
-        self.assertEqual(mocked_episode, result)
-        mocked_get_audio.assert_called_with(
-            mocked_user, mocked_episode.audio_id)
-        mocked_get_image.assert_called_with(
-            mocked_user, mocked_episode.image_id)
-        self.assertEqual(4, mocked_require_true.call_count)
-
-    @patch.object(common, 'is_valid_alias')
-    def test_valid_or_assert_bad_alias(self, mocked_valid_alias):
-        mocked_user, mocked_episode = MagicMock(), MagicMock()
-        mocked_valid_alias.return_value = False
-        with self.assertRaises(exception.InvalidValueError):
-            episode_operation._valid_or_assert(mocked_user, mocked_episode)
 
     @patch.object(models.db.session, 'commit')
     @patch.object(show_operation, 'get_show_or_assert')
