@@ -1,17 +1,18 @@
 import urllib.parse
 import uuid
-from highland import models, media_storage, app, exception, user_operation
+from highland import app, media_operation, user_operation
 from highland.common import verify_ownership
-from highland.models import Image, User
+from highland.exception import NoSuchEntityError
+from highland.models import db, Image
 
 
 def create(user_id, file_name, file_type):
     """Creates an image. Intended to be called by front end."""
 
     guid = uuid.uuid4().hex
-    image = models.Image(user_id, file_name, guid, file_type)
-    models.db.session.add(image)
-    models.db.session.commit()
+    image = Image(user_id, file_name, guid, file_type)
+    db.session.add(image)
+    db.session.commit()
     return dict(image)
 
 
@@ -19,27 +20,9 @@ def delete(user_id, image_ids):
     """Deletes the images.
     Intended to be called by front end.
     """
-
-    targets = models.db.session. \
-        query(Image, User). \
-        join(User). \
-        filter(Image.id.in_(image_ids)). \
-        order_by(Image.owner_user_id). \
-        all()
-
-    for image, user in targets:
-        verify_ownership(user_id, image)
-        try:
-            media_storage.delete(
-                _get_image_key(user, image), app.config.get('S3_BUCKET_IMAGE'))
-        except:
-            app.logger.error(
-                'Failed to delete media:({},{})'.format(
-                    user.id, image.id), exc_info=1)
-        else:
-            models.db.session.delete(image)
-    models.db.session.commit()
-    return True
+    return media_operation.delete(
+        user_id=user_id, media_ids=image_ids, model_class=Image,
+        get_key=_get_image_key, bucket=app.config.get('S3_BUCKET_IMAGE'))
 
 
 def load(user_id):
@@ -48,7 +31,7 @@ def load(user_id):
     """
 
     user = user_operation.get_model(user_id)
-    q = models.Image.query.filter_by(owner_user_id=user_id)
+    q = Image.query.filter_by(owner_user_id=user_id)
     return [_add_attributes(user, image) for image in q.all()]
 
 
@@ -64,9 +47,9 @@ def get(user_id, image_id):
 def get_model(image_id):
     """Returns the image as the raw model. Exception is raised if not found.
     """
-    image = models.Image.query.filter_by(id=image_id).first()
+    image = Image.query.filter_by(id=image_id).first()
     if not image:
-        raise exception.NoSuchEntityError(
+        raise NoSuchEntityError(
             'Image not found. Id:{}'.format(image_id))
     return image
 

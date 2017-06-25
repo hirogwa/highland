@@ -1,116 +1,88 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from highland import media_storage, image_operation, models, settings, \
-    exception
+from unittest.mock import patch
+
+from tests.utility import assign_ids, create_user
+from highland import app, image_operation, media_operation, user_operation
+from highland.exception import NoSuchEntityError
+from highland.models import db, Image
 
 
 class TestImageOperation(unittest.TestCase):
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'add')
+    @patch.object(db, 'session')
     @patch('uuid.uuid4')
-    def test_create(self, mock_uuid4, mock_add, mock_commit):
+    def test_create(self, mock_uuid4, mock_session):
         mock_uuid4.return_value.hex = 'some_guid'
 
         result = image_operation.create(1, 'file.jpg', 'image/jpeg')
 
-        self.assertEqual(1, mock_add.call_count)
-        mock_commit.assert_called_with()
+        self.assertEqual(1, mock_session.add.call_count)
+        mock_session.commit.assert_called_with()
         self.assertEqual(1, result.get('owner_user_id'))
         self.assertEqual('some_guid', result.get('guid'))
 
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'delete')
-    @patch.object(media_storage, 'delete')
-    @patch.object(image_operation, 'get_image_or_assert')
-    def test_delete(self, mock_get, mock_storage_delete, mock_db_delete,
-                    mock_db_commit):
-        mock_user, mock_image_01, mock_image_02 = \
-            MagicMock(), MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_image_02.guid = 'non-existing'
-        mock_get.side_effect = \
-            lambda u, i: mock_image_01 if i == 1 else mock_image_02
+    @patch.object(app, 'config')
+    @patch.object(media_operation, 'delete')
+    def test_delete(self, mock_media_delete, mock_config):
+        mock_config.get.side_effect = \
+            lambda key: 'some_bucket' if key == 'S3_BUCKET_IMAGE' else None
+        image_operation.delete(1, [10, 11, 12])
 
-        def f(key, bucket, folder=''):
-            if key == 'identity_id/non-existing':
-                raise ValueError()
-            else:
-                return mock_image_01
-        mock_storage_delete.side_effect = f
+        mock_media_delete.assert_called_with(
+            user_id=1, media_ids=[10, 11, 12], model_class=Image,
+            get_key=image_operation._get_image_key, bucket='some_bucket'
+        )
 
-        result = image_operation.delete(mock_user, [1, 2])
+    @patch.object(Image, 'query')
+    @patch.object(user_operation, 'get_model')
+    def test_load(self, mock_get_user, mock_query):
+        mock_get_user.return_value = create_user(1)
+        images = [
+            Image(1, 'one.jpeg', 'guid_one', 'image/jpeg'),
+            Image(1, 'two.jpeg', 'guid_two', 'image/jpeg')
+        ]
+        mock_query.filter_by.return_value.all.return_value = images
 
-        self.assertEqual(2, mock_get.call_count)
-        self.assertEqual(2, mock_storage_delete.call_count)
-        self.assertEqual(1, mock_db_delete.call_count)
-        mock_db_delete.assert_called_with(mock_image_01)
-        mock_db_commit.assert_called_with()
-        self.assertTrue(result)
+        result = image_operation.load(1)
 
-    @patch('highland.models.Image.query')
-    def test_load(self, mock_query):
-        mock_user = MagicMock()
-        image_list = [MagicMock(), MagicMock()]
-        mock_filter = MagicMock()
-        mock_filter.all.return_value = image_list
-        mock_query.filter_by.return_value = mock_filter
+        self.assertEqual(2, len(result))
+        self.assertEqual('one.jpeg', result[0].get('filename'))
+        self.assertEqual('two.jpeg', result[1].get('filename'))
+        self.assertTrue(result[0].get('url'))
+        self.assertTrue(result[1].get('url'))
 
-        result = image_operation.load(mock_user)
+    @patch.object(user_operation, 'get_model')
+    @patch.object(image_operation, 'get_model')
+    def test_get(self, mock_get_model, mock_get_user):
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        assign_ids([image], 10)
+        mock_get_model.return_value = image
+        mock_get_user.return_value = create_user(1)
 
-        mock_query.filter_by.assert_called_with(owner_user_id=mock_user.id)
-        mock_filter.all.assert_called_with()
-        self.assertEqual(image_list, result)
+        result = image_operation.get(1, 10)
 
-    @patch('highland.models.Image.query')
-    def test_get_image_or_assert(self, mock_query):
-        mock_user, mock_image = MagicMock(), MagicMock()
-        mock_image.owner_user_id = mock_user.id
+        self.assertEqual(10, result.get('id'))
+        self.assertEqual('one.jpeg', result.get('filename'))
+        self.assertTrue(result.get('url'))
 
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = mock_image
-        mock_query.filter_by.return_value = mock_filter
+    @patch.object(Image, 'query')
+    def test_get_model(self, mock_query):
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        assign_ids([image], 10)
+        mock_query.filter_by.return_value.first.return_value = image
+        self.assertEqual(image, image_operation.get_model(10))
 
-        result = image_operation.get_image_or_assert(
-            mock_user, mock_image.id)
+    @patch.object(Image, 'query')
+    def test_get_model_raises_when_image_not_found(self, mock_query):
+        mock_query.filter_by.return_value.first.return_value = None
+        with self.assertRaises(NoSuchEntityError):
+            image_operation.get_model(10)
 
-        mock_query.filter_by.assert_called_with(
-            owner_user_id=mock_user.id, id=mock_image.id)
-        mock_filter.first.assert_called_with()
-        self.assertEqual(mock_image, result)
+    @patch.object(app, 'config')
+    def test_get_image_url(self, mock_config):
+        user = create_user(1)
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        mock_config.get.side_effect = \
+            lambda key: 'http://somehost.com' if key == 'HOST_IMAGE' else None
 
-    @patch('highland.models.Image.query')
-    def test_get_image_or_assert_assert(self, mock_query):
-        mock_user = MagicMock()
-
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
-        with self.assertRaises(exception.NoSuchEntityError):
-            image_operation.get_image_or_assert(mock_user, 1)
-
-    @patch.object(image_operation, 'access_allowed_or_raise')
-    def test_get_image_url(self, mock_access):
-        mock_user, mock_image = MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_image.guid = 'someguid'
-
-        result = image_operation.get_image_url(mock_user, mock_image)
-
-        mock_access.assert_called_with(mock_user.id, mock_image)
-        self.assertEqual('{}/{}'.format(
-            settings.HOST_IMAGE, 'identity_id/someguid'), result)
-
-    def test_access_allowed_or_raise(self):
-        mock_image = MagicMock()
-        mock_image.owner_user_id = 1
-
-        result = image_operation.access_allowed_or_raise(1, mock_image)
-
-        self.assertEqual(mock_image, result)
-
-    def test_access_allowed_or_raise_raise(self):
-        mock_image = MagicMock()
-        mock_image.owner_user_id = 1
-        with self.assertRaises(exception.AccessNotAllowedError):
-            image_operation.access_allowed_or_raise(2, mock_image)
+        self.assertEqual('http://somehost.com/identity/guid_one',
+                         image_operation.get_image_url(user, image))
