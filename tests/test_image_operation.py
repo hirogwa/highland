@@ -1,9 +1,10 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from tests.utility import create_user
+from tests.utility import assign_ids, create_user
 from highland import app, image_operation, media_operation, settings, \
     user_operation, exception
+from highland.exception import NoSuchEntityError
 from highland.models import db, Image
 
 
@@ -50,33 +51,32 @@ class TestImageOperation(unittest.TestCase):
         self.assertTrue(result[0].get('url'))
         self.assertTrue(result[1].get('url'))
 
-    @patch('highland.models.Image.query')
-    def test_get_image_or_assert(self, mock_query):
-        mock_user, mock_image = MagicMock(), MagicMock()
-        mock_image.owner_user_id = mock_user.id
+    @patch.object(user_operation, 'get_model')
+    @patch.object(image_operation, 'get_model')
+    def test_get(self, mock_get_model, mock_get_user):
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        assign_ids([image], 10)
+        mock_get_model.return_value = image
+        mock_get_user.return_value = create_user(1)
 
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = mock_image
-        mock_query.filter_by.return_value = mock_filter
+        result = image_operation.get(1, 10)
 
-        result = image_operation.get_image_or_assert(
-            mock_user, mock_image.id)
+        self.assertEqual(10, result.get('id'))
+        self.assertEqual('one.jpeg', result.get('filename'))
+        self.assertTrue(result.get('url'))
 
-        mock_query.filter_by.assert_called_with(
-            owner_user_id=mock_user.id, id=mock_image.id)
-        mock_filter.first.assert_called_with()
-        self.assertEqual(mock_image, result)
+    @patch.object(Image, 'query')
+    def test_get_model(self, mock_query):
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        assign_ids([image], 10)
+        mock_query.filter_by.return_value.first.return_value = image
+        self.assertEqual(image, image_operation.get_model(10))
 
-    @patch('highland.models.Image.query')
-    def test_get_image_or_assert_assert(self, mock_query):
-        mock_user = MagicMock()
-
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
-        with self.assertRaises(exception.NoSuchEntityError):
-            image_operation.get_image_or_assert(mock_user, 1)
+    @patch.object(Image, 'query')
+    def test_get_model_raises_when_image_not_found(self, mock_query):
+        mock_query.filter_by.return_value.first.return_value = None
+        with self.assertRaises(NoSuchEntityError):
+            image_operation.get_model(10)
 
     @patch.object(image_operation, 'access_allowed_or_raise')
     def test_get_image_url(self, mock_access):
