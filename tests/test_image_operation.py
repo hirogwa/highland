@@ -1,7 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
+
+from tests.utility import create_user
 from highland import app, image_operation, media_operation, settings, \
-    exception
+    user_operation, exception
 from highland.models import db, Image
 
 
@@ -30,19 +32,23 @@ class TestImageOperation(unittest.TestCase):
             get_key=image_operation._get_image_key, bucket='some_bucket'
         )
 
-    @patch('highland.models.Image.query')
-    def test_load(self, mock_query):
-        mock_user = MagicMock()
-        image_list = [MagicMock(), MagicMock()]
-        mock_filter = MagicMock()
-        mock_filter.all.return_value = image_list
-        mock_query.filter_by.return_value = mock_filter
+    @patch.object(Image, 'query')
+    @patch.object(user_operation, 'get_model')
+    def test_load(self, mock_get_user, mock_query):
+        mock_get_user.return_value = create_user(1)
+        images = [
+            Image(1, 'one.jpeg', 'guid_one', 'image/jpeg'),
+            Image(1, 'two.jpeg', 'guid_two', 'image/jpeg')
+        ]
+        mock_query.filter_by.return_value.all.return_value = images
 
-        result = image_operation.load(mock_user)
+        result = image_operation.load(1)
 
-        mock_query.filter_by.assert_called_with(owner_user_id=mock_user.id)
-        mock_filter.all.assert_called_with()
-        self.assertEqual(image_list, result)
+        self.assertEqual(2, len(result))
+        self.assertEqual('one.jpeg', result[0].get('filename'))
+        self.assertEqual('two.jpeg', result[1].get('filename'))
+        self.assertTrue(result[0].get('url'))
+        self.assertTrue(result[1].get('url'))
 
     @patch('highland.models.Image.query')
     def test_get_image_or_assert(self, mock_query):
