@@ -1,9 +1,8 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from tests.utility import assign_ids, create_user
-from highland import app, image_operation, media_operation, settings, \
-    user_operation, exception
+from highland import app, image_operation, media_operation, user_operation
 from highland.exception import NoSuchEntityError
 from highland.models import db, Image
 
@@ -78,28 +77,12 @@ class TestImageOperation(unittest.TestCase):
         with self.assertRaises(NoSuchEntityError):
             image_operation.get_model(10)
 
-    @patch.object(image_operation, 'access_allowed_or_raise')
-    def test_get_image_url(self, mock_access):
-        mock_user, mock_image = MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_image.guid = 'someguid'
+    @patch.object(app, 'config')
+    def test_get_image_url(self, mock_config):
+        user = create_user(1)
+        image = Image(1, 'one.jpeg', 'guid_one', 'image/jpeg')
+        mock_config.get.side_effect = \
+            lambda key: 'http://somehost.com' if key == 'HOST_IMAGE' else None
 
-        result = image_operation.get_image_url(mock_user, mock_image)
-
-        mock_access.assert_called_with(mock_user.id, mock_image)
-        self.assertEqual('{}/{}'.format(
-            settings.HOST_IMAGE, 'identity_id/someguid'), result)
-
-    def test_access_allowed_or_raise(self):
-        mock_image = MagicMock()
-        mock_image.owner_user_id = 1
-
-        result = image_operation.access_allowed_or_raise(1, mock_image)
-
-        self.assertEqual(mock_image, result)
-
-    def test_access_allowed_or_raise_raise(self):
-        mock_image = MagicMock()
-        mock_image.owner_user_id = 1
-        with self.assertRaises(exception.AccessNotAllowedError):
-            image_operation.access_allowed_or_raise(2, mock_image)
+        self.assertEqual('http://somehost.com/identity/guid_one',
+                         image_operation.get_image_url(user, image))
