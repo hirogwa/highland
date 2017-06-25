@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from highland import media_storage, image_operation, models, settings, \
+from highland import app, image_operation, media_operation, settings, \
     exception
-from highland.models import db
+from highland.models import db, Image
 
 
 class TestImageOperation(unittest.TestCase):
@@ -18,34 +18,17 @@ class TestImageOperation(unittest.TestCase):
         self.assertEqual(1, result.get('owner_user_id'))
         self.assertEqual('some_guid', result.get('guid'))
 
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'delete')
-    @patch.object(media_storage, 'delete')
-    @patch.object(image_operation, 'get_image_or_assert')
-    def test_delete(self, mock_get, mock_storage_delete, mock_db_delete,
-                    mock_db_commit):
-        mock_user, mock_image_01, mock_image_02 = \
-            MagicMock(), MagicMock(), MagicMock()
-        mock_user.identity_id = 'identity_id'
-        mock_image_02.guid = 'non-existing'
-        mock_get.side_effect = \
-            lambda u, i: mock_image_01 if i == 1 else mock_image_02
+    @patch.object(app, 'config')
+    @patch.object(media_operation, 'delete')
+    def test_delete(self, mock_media_delete, mock_config):
+        mock_config.get.side_effect = \
+            lambda key: 'some_bucket' if key == 'S3_BUCKET_IMAGE' else None
+        image_operation.delete(1, [10, 11, 12])
 
-        def f(key, bucket, folder=''):
-            if key == 'identity_id/non-existing':
-                raise ValueError()
-            else:
-                return mock_image_01
-        mock_storage_delete.side_effect = f
-
-        result = image_operation.delete(mock_user, [1, 2])
-
-        self.assertEqual(2, mock_get.call_count)
-        self.assertEqual(2, mock_storage_delete.call_count)
-        self.assertEqual(1, mock_db_delete.call_count)
-        mock_db_delete.assert_called_with(mock_image_01)
-        mock_db_commit.assert_called_with()
-        self.assertTrue(result)
+        mock_media_delete.assert_called_with(
+            user_id=1, media_ids=[10, 11, 12], model_class=Image,
+            get_key=image_operation._get_image_key, bucket='some_bucket'
+        )
 
     @patch('highland.models.Image.query')
     def test_load(self, mock_query):

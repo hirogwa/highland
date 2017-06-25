@@ -1,8 +1,8 @@
 import uuid
 import urllib.parse
-from highland import models, media_storage, app, exception, user_operation
-from highland.common import verify_ownership
-from highland.models import Audio, Episode, User
+from highland import app, media_operation, user_operation
+from highland.exception import NoSuchEntityError
+from highland.models import db, Audio, Episode
 
 
 def create(user_id, file_name, duration, length, file_type):
@@ -12,8 +12,8 @@ def create(user_id, file_name, duration, length, file_type):
 
     guid = uuid.uuid4().hex
     audio = Audio(user_id, file_name, duration, length, file_type, guid)
-    models.db.session.add(audio)
-    models.db.session.commit()
+    db.session.add(audio)
+    db.session.commit()
     return dict(audio)
 
 
@@ -21,30 +21,9 @@ def delete(user_id, audio_ids):
     """Deletes the audios.
     Intended to be called by front end.
     """
-
-    targets = models.db.session. \
-        query(Audio, User). \
-        join(User). \
-        filter(Audio.id.in_(audio_ids)). \
-        order_by(Audio.owner_user_id). \
-        all()
-
-    # execute the deletion only when ownership is correct for all
-    for audio, user in targets:
-        verify_ownership(user_id, audio)
-
-    for audio, user in targets:
-        try:
-            media_storage.delete(
-                _get_audio_key(user, audio), app.config.get('S3_BUCKET_AUDIO'))
-        except:
-            app.logger.error(
-                'Failed to delete media:({},{})'.format(
-                    user.id, audio.id), exc_info=1)
-        else:
-            models.db.session.delete(audio)
-    models.db.session.commit()
-    return True
+    return media_operation.delete(
+        user_id=user_id, media_ids=audio_ids, model_class=Audio,
+        get_key=_get_audio_key, bucket=app.config.get('S3_BUCKET_AUDIO'))
 
 
 def load(user_id, unused_only=False, whitelisted_id=None):
@@ -52,7 +31,7 @@ def load(user_id, unused_only=False, whitelisted_id=None):
     Intended to be called by front end.
     """
 
-    audio_query = models.db.session. \
+    audio_query = db.session. \
         query(Audio, Episode). \
         outerjoin(Episode). \
         filter(Audio.owner_user_id == user_id)
@@ -83,7 +62,7 @@ def get(audio_id):
 
     audio = Audio.query.filter_by(id=audio_id).first()
     if not audio:
-        raise exception.NoSuchEntityError(
+        raise NoSuchEntityError(
             'Audio not found. Id:{}'.format(audio_id))
     return audio
 

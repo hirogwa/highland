@@ -1,8 +1,10 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from highland import audio_operation, media_storage, settings, user_operation
-from highland.exception import AccessNotAllowedError, NoSuchEntityError
-from highland.models import db, Audio, Episode, User
+from unittest.mock import patch
+
+from tests.utility import create_user, assign_ids
+from highland import app, audio_operation, media_operation, user_operation
+from highland.exception import NoSuchEntityError
+from highland.models import db, Audio, Episode
 
 
 class TestAudioOperation(unittest.TestCase):
@@ -19,75 +21,23 @@ class TestAudioOperation(unittest.TestCase):
         self.assertEqual(1, result.get('owner_user_id'))
         self.assertEqual('some_guid', result.get('guid'))
 
-    @patch.object(media_storage, 'delete')
-    @patch.object(db, 'session')
-    def test_delete(self, mock_session, mock_delete):
-        audios = [
-            Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
-            Audio(1, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
-        ]
-        self._delete_prep(mock_session, audios)
+    @patch.object(app, 'config')
+    @patch.object(media_operation, 'delete')
+    def test_delete(self, mock_media_delete, mock_config):
+        mock_config.get.side_effect = \
+            lambda key: 'some_bucket' if key == 'S3_BUCKET_AUDIO' else None
+        audio_operation.delete(1, [10, 11, 12])
 
-        audio_operation.delete(1, [x.id for x in audios])
-
-        self.assertEqual(2, mock_delete.call_count)
-        mock_session.commit.assert_called_with()
-
-    @patch.object(media_storage, 'delete')
-    @patch.object(db, 'session')
-    def test_delete_raises_when_audio_is_not_owned_by_the_user(
-            self, mock_session, mock_delete):
-        audios = [
-            Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
-            Audio(9, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
-        ]
-        self._delete_prep(mock_session, audios)
-
-        with self.assertRaises(AccessNotAllowedError):
-            audio_operation.delete(9, [x.id for x in audios])
-
-        mock_delete.assert_not_called()
-        mock_session.delete.assert_not_called()
-        mock_session.commit.assert_not_called()
-
-    @patch.object(media_storage, 'delete')
-    @patch.object(db, 'session')
-    def test_delete_db_record_is_not_deleted_when_storage_error(
-            self, mock_session, mock_delete):
-        audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
-        self._delete_prep(mock_session, [audio])
-        mock_delete.side_effect = ValueError
-
-        audio_operation.delete(1, [audio.id])
-
-        self.assertEqual(1, mock_delete.call_count)
-        mock_session.delete.assert_not_called()
-        mock_session.commit.assert_called_with()
-
-    def _create_user(self, id):
-        user = User('username', 'name', 'identity')
-        user.id = id
-        return user
-
-    def _assign_ids(self, entities, base):
-        for x in entities:
-            x.id = base
-            base += 1
-        return entities
-
-    def _delete_prep(self, mock_session, audios):
-        audios = self._assign_ids(audios, 10)
-        audio_ids = [x.id for x in audios]
-        users = [self._create_user(audio.owner_user_id) for audio in audios]
-        mock_session.query(Audio, User).join(User). \
-            filter(Audio.id.in_(audio_ids)).order_by(Audio.owner_user_id). \
-            all.return_value = [(x, y) for x, y in zip(audios, users)]
+        mock_media_delete.assert_called_with(
+            user_id=1, media_ids=[10, 11, 12], model_class=Audio,
+            get_key=audio_operation._get_audio_key, bucket='some_bucket'
+        )
 
     @patch.object(audio_operation, 'get_audio_url')
     @patch.object(user_operation, 'get_model')
     @patch.object(db, 'session')
     def test_load(self, mock_session, mock_get_user, mock_get_url):
-        user = self._create_user(id=1)
+        user = create_user(id=1)
         audios = [
             Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01'),
             Audio(1, 'file_two', 60, 256, 'audio/mpeg', 'some_guid_02')
@@ -120,7 +70,7 @@ class TestAudioOperation(unittest.TestCase):
     def test_load_loads_unused_only_when_unused_only_is_set(
             self, mock_session, mock_episode_query, mock_get_user,
             mock_get_url):
-        user = self._create_user(id=1)
+        user = create_user(id=1)
         audios = [
             Audio(1, 'whitelisted', 30, 128, 'audio/mpeg', 'some_guid_01'),
             Audio(1, 'unused', 60, 256, 'audio/mpeg', 'some_guid_02'),
@@ -147,7 +97,7 @@ class TestAudioOperation(unittest.TestCase):
         self.assertEqual('unused', result[1].get('filename'))
 
     def _load_prep(self, audios, mock_session, user_id):
-        audios = self._assign_ids(audios, 10)
+        audios = assign_ids(audios, 10)
         episodes = []
         for audio in audios:
             episodes.append(Episode(
@@ -156,7 +106,7 @@ class TestAudioOperation(unittest.TestCase):
                 scheduled_datetime=None, explicit=False, image_id=None,
                 alias='alias')
             )
-        self._assign_ids(episodes, 20)
+        assign_ids(episodes, 20)
 
         mock_audio_query = mock_session. \
             query(Audio, Episode). \
@@ -179,7 +129,7 @@ class TestAudioOperation(unittest.TestCase):
 
     @patch('highland.app.config')
     def test_get_audio_url(self, mock_config):
-        user = self._create_user(1)
+        user = create_user(1)
         audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
         mock_config.get.return_value = 'http://somehost.com'
 
@@ -188,7 +138,7 @@ class TestAudioOperation(unittest.TestCase):
             audio_operation.get_audio_url(user, audio))
 
     def test_get_audio_url_raises_if_user_is_incorrect(self):
-        user = self._create_user(9)
+        user = create_user(9)
         audio = Audio(1, 'file_one', 30, 128, 'audio/mpeg', 'some_guid_01')
         with self.assertRaises(ValueError):
             audio_operation.get_audio_url(user, audio)
