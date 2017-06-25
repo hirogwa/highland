@@ -22,7 +22,7 @@ def create(show_id, draft_status, alias, audio_id, image_id,
         show.id, show.owner_user_id, title, subtitle, description, audio_id,
         draft_status, scheduled_datetime, explicit, image_id, alias)
     _autofill_attributes(episode)
-    _valid_or_assert(episode)
+    _verify_episode(episode)
 
     models.db.session.add(episode)
     _update_show_build_datetime(episode, show)
@@ -56,7 +56,7 @@ def update(user_id, episode_id, draft_status=None, alias=None, audio_id=None,
         setattr(episode, name, value)
 
     _autofill_attributes(episode)
-    _valid_or_assert(episode)
+    _verify_episode(episode)
     _update_show_build_datetime(episode)
 
     models.db.session.commit()
@@ -193,7 +193,7 @@ def _get_default_alias(show_id):
     return str(candidate)
 
 
-def _valid_or_assert(episode):
+def _verify_episode(episode):
     if not common.is_valid_alias(episode.alias):
         raise exception.InvalidValueError(
             'episode alias not accepted. {}'.format(episode.alias))
