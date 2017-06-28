@@ -42,6 +42,37 @@ class TestEpisodeOperation(unittest.TestCase):
                        scheduled_datetime=datetime.now(), explicit=False,
                        image_id=30, alias='alias')
 
+    @patch.object(db, 'session')
+    @patch.object(episode_operation, '_update_show_build_datetime')
+    @patch.object(episode_operation, '_verify_episode')
+    @patch.object(episode_operation, '_get_model')
+    def test_update(self, mock_get_episode, mock_verify, mock_update_show,
+                    mock_session):
+        episode = self._create_episode()
+        mock_get_episode.return_value = episode
+
+        result = episode_operation.update(
+            user_id=1, episode_id=11, draft_status='scheduled',
+            alias='n_alias', audio_id=21, image_id=31,
+            scheduled_datetime='some_date', title='n_title',
+            subtitle='n_sub', description='n_desc', explicit=True)
+
+        mock_verify.assert_called_with(episode)
+        mock_update_show.assert_called_with(episode)
+        mock_session.commit.assert_called_with()
+        self.assertEqual(10, episode.show_id)
+        self.assertEqual(1, episode.owner_user_id)
+        self.assertEqual('scheduled', episode.draft_status)
+        self.assertEqual('n_alias', episode.alias)
+        self.assertEqual(21, episode.audio_id)
+        self.assertEqual(31, episode.image_id)
+        self.assertEqual('some_date', episode.scheduled_datetime)
+        self.assertEqual('n_title', episode.title)
+        self.assertEqual('n_sub', episode.subtitle)
+        self.assertEqual('n_desc', episode.description)
+        self.assertTrue(episode.explicit)
+        self.assertEqual(dict(episode), result)
+
     def test_verify_episode_raises_if_bad_alias(self):
         episode = self._create_episode()
         episode.alias = '**+'
@@ -95,67 +126,6 @@ class TestEpisodeOperation(unittest.TestCase):
         episode = self._create_episode()
         episode.audio_id, episode.image_id = None, None
         self.assertEqual(episode, episode_operation._verify_episode(episode))
-
-    @patch.object(episode_operation, '_update_show_build_datetime')
-    @patch.object(models.db.session, 'commit')
-    @patch.object(episode_operation, '_verify_episode')
-    @patch.object(episode_operation, '_autofill_attributes')
-    @patch.object(episode_operation, 'get_episode_or_assert')
-    def test_update(self, mocked_get_episode, mocked_autofill,
-                    mocked_valid, mocked_commit, mocked_build):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-
-        mocked_show = MagicMock()
-        mocked_show.owner_user_id = 2
-        mocked_show.id = 3
-
-        mocked_audio_original = MagicMock()
-        mocked_audio_original.id = 4
-
-        mocked_episode = MagicMock()
-        mocked_episode.owner_user_id = mocked_show.owner_user_id
-        mocked_episode.show_id = mocked_show.id
-
-        title = 'new title'
-        subtitle = 'new sub title'
-        description = 'new desc'
-        explicit = True
-        scheduled_datetime_new = datetime.utcnow()
-        mocked_audio_new = MagicMock()
-        mocked_audio_new.id = 11
-        mocked_image_new = MagicMock()
-        mocked_image_new.id = 12
-        alias = 'new alias'
-        status_new = 'published'
-
-        mocked_get_episode.return_value = mocked_episode
-
-        result = episode_operation.update(
-            mocked_user, mocked_episode.id, draft_status=status_new,
-            alias=alias, audio_id=mocked_audio_new.id,
-            image_id=mocked_image_new.id,
-            scheduled_datetime=scheduled_datetime_new, title=title,
-            subtitle=subtitle, description=description, explicit=explicit)
-
-        mocked_get_episode.assert_called_with(mocked_user, mocked_episode.id)
-        mocked_autofill.assert_called_with(mocked_user, mocked_episode)
-        mocked_valid.assert_called_with(mocked_user, mocked_episode)
-        mocked_commit.assert_called_with()
-        mocked_build.assert_called_with(mocked_user, mocked_episode)
-        self.assertEqual(mocked_show.owner_user_id,
-                         mocked_episode.owner_user_id)
-        self.assertEqual(mocked_show.id, mocked_episode.show_id)
-        self.assertEqual(title, mocked_episode.title)
-        self.assertEqual(subtitle, mocked_episode.subtitle)
-        self.assertEqual(description, mocked_episode.description)
-        self.assertEqual(mocked_audio_new.id, mocked_episode.audio_id)
-        self.assertEqual(status_new, mocked_episode.draft_status)
-        self.assertEqual(scheduled_datetime_new,
-                         mocked_episode.scheduled_datetime)
-        self.assertEqual(explicit, mocked_episode.explicit)
-        self.assertEqual(alias, mocked_episode.alias)
-        self.assertEqual(result, mocked_episode)
 
     @patch.object(episode_operation,
                   '_update_show_build_datetime')
