@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 from highland import show_operation, episode_operation, models, audio_operation,\
     image_operation, exception
-from highland.exception import InvalidValueError, NoSuchEntityError, ValueError
+from highland.exception import AccessNotAllowedError, InvalidValueError,\
+    NoSuchEntityError, ValueError
 from highland.models import db, Episode, Show
 
 
@@ -106,6 +107,36 @@ class TestEpisodeOperation(unittest.TestCase):
         with self.assertRaises(NoSuchEntityError):
             episode_operation._get_model(1)
 
+    def _prep_delete(self, mock_session):
+        episode = self._create_episode(id=11)
+        show = self._create_show()
+        mock_session.query.return_value. \
+            join.return_value. \
+            filter.return_value. \
+            order_by.return_value. \
+            all.return_value = [(episode, show)]
+        return episode, show
+
+    @patch.object(episode_operation, '_update_show_build_datetime')
+    @patch.object(db, 'session')
+    def test_delete(self, mock_session, mock_update_show):
+        episode, show = self._prep_delete(mock_session)
+
+        episode_operation.delete(episode.owner_user_id, [11])
+
+        mock_session.query.assert_called_with(Episode, Show)
+        mock_session.query.return_value.join.assert_called_with(Show)
+        mock_session.delete.assert_called_with(episode)
+        mock_update_show.assert_called_with(episode, show)
+        mock_session.commit.assert_called_with()
+
+    @patch.object(db, 'session')
+    def test_delete_raises_when_episode_is_not_owned_by_the_user(
+            self, mock_session):
+        episode, show = self._prep_delete(mock_session)
+        with self.assertRaises(AccessNotAllowedError):
+            episode_operation.delete(99, [11])
+
     def test_verify_episode_raises_if_bad_alias(self):
         episode = self._create_episode()
         episode.alias = '**+'
@@ -159,27 +190,6 @@ class TestEpisodeOperation(unittest.TestCase):
         episode = self._create_episode()
         episode.audio_id, episode.image_id = None, None
         self.assertEqual(episode, episode_operation._verify_episode(episode))
-
-    @patch.object(episode_operation,
-                  '_update_show_build_datetime')
-    @patch.object(models.db.session, 'commit')
-    @patch.object(models.db.session, 'delete')
-    @patch.object(episode_operation, 'get_episode_or_assert')
-    def test_delete(self, mocked_get_episode, mocked_delete, mocked_commit,
-                    mocked_build):
-        mocked_user = MagicMock()
-        mocked_episode = MagicMock()
-        episode_ids = [2]
-
-        mocked_get_episode.return_value = mocked_episode
-
-        result = episode_operation.delete(mocked_user, episode_ids)
-
-        mocked_get_episode.assert_called_with(mocked_user, episode_ids[0])
-        mocked_delete.assert_called_with(mocked_episode)
-        mocked_commit.assert_called_with()
-        mocked_build.assert_called_with(mocked_user, mocked_episode)
-        self.assertTrue(result)
 
     @patch.object(show_operation, 'get_show_or_assert')
     @patch('highland.models.Episode.query')
