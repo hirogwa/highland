@@ -9,6 +9,20 @@ from highland.models import db, Episode, Show
 
 class TestEpisodeOperation(unittest.TestCase):
 
+    def _create_show(self, id=101):
+        show = Show(1, 'title', 'desc', 'sub', 'ja', 'author', 'art', False,
+                    31, 'alias')
+        show.id = id
+        return show
+
+    def _create_episode(self, id=201):
+        ep = Episode(show_id=101, user_id=1, title='title', subtitle='sub',
+                     description='desc', audio_id=20, draft_status='draft',
+                     scheduled_datetime=datetime.now(), explicit=False,
+                     image_id=30, alias='alias')
+        ep.id = id
+        return ep
+
     @patch.object(db, 'session')
     @patch.object(episode_operation, '_update_show_build_datetime')
     @patch.object(episode_operation, '_verify_episode')
@@ -16,8 +30,7 @@ class TestEpisodeOperation(unittest.TestCase):
     def test_create(
             self, mock_get_show, mock_validate, mock_update_show,
             mock_session):
-        show = Show(1, 'title', 'desc', 'sub', 'ja', 'author', 'art', False,
-                    31, 'alias')
+        show = self._create_show()
         show.id = 10
         mock_get_show.return_value = show
 
@@ -35,12 +48,6 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual(20, result.get('audio_id'))
         self.assertEqual(30, result.get('image_id'))
         self.assertEqual('title', result.get('title'))
-
-    def _create_episode(self):
-        return Episode(show_id=10, user_id=1, title='title', subtitle='sub',
-                       description='desc', audio_id=20, draft_status='draft',
-                       scheduled_datetime=datetime.now(), explicit=False,
-                       image_id=30, alias='alias')
 
     @patch.object(db, 'session')
     @patch.object(episode_operation, '_update_show_build_datetime')
@@ -60,7 +67,7 @@ class TestEpisodeOperation(unittest.TestCase):
         mock_verify.assert_called_with(episode)
         mock_update_show.assert_called_with(episode)
         mock_session.commit.assert_called_with()
-        self.assertEqual(10, episode.show_id)
+        self.assertEqual(101, episode.show_id)
         self.assertEqual(1, episode.owner_user_id)
         self.assertEqual('scheduled', episode.draft_status)
         self.assertEqual('n_alias', episode.alias)
@@ -72,6 +79,32 @@ class TestEpisodeOperation(unittest.TestCase):
         self.assertEqual('n_desc', episode.description)
         self.assertTrue(episode.explicit)
         self.assertEqual(dict(episode), result)
+
+    @patch.object(episode_operation, '_get_model')
+    def test_get(self, mock_get_model):
+        episode = self._create_episode(id=11)
+        mock_get_model.return_value = episode
+
+        result = episode_operation.get(1, 11)
+
+        self.assertEqual(dict(episode), result)
+        mock_get_model.assert_called_with(11)
+
+    @patch.object(Episode, 'query')
+    def test_get_model(self, mock_query):
+        episode = self._create_episode()
+        mock_query.filter_by.return_value.first.return_value = episode
+
+        result = episode_operation._get_model(11)
+
+        self.assertEqual(episode, result)
+        mock_query.filter_by.assert_called_with(id=11)
+
+    @patch.object(Episode, 'query')
+    def test_get_model_raises_when_episode_not_found(self, mock_query):
+        mock_query.filter_by.return_value.first.return_value = None
+        with self.assertRaises(NoSuchEntityError):
+            episode_operation._get_model(1)
 
     def test_verify_episode_raises_if_bad_alias(self):
         episode = self._create_episode()
