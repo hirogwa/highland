@@ -191,68 +191,54 @@ class TestEpisodeOperation(unittest.TestCase):
         episode.audio_id, episode.image_id = None, None
         self.assertEqual(episode, episode_operation._verify_episode(episode))
 
-    @patch.object(show_operation, 'get_show_or_assert')
-    @patch('highland.models.Episode.query')
-    def test_load(self, mocked_query, mocked_get_show):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        mocked_show = MagicMock()
-        mocked_show.owner_user_id = mocked_user.id
-        mocked_show.id = 2
-        mocked_get_show.return_value = mocked_show
+    @patch.object(Episode, 'query')
+    @patch.object(show_operation, 'get_model')
+    def test_load(self, mock_get, mock_query):
+        show = self._create_show()
+        mock_get.return_value = show
+        episodes = [self._create_episode()]
+        mock_query. \
+            filter_by.return_value. \
+            order_by.return_value. \
+            all.return_value = episodes
 
-        ep_list = [MagicMock(), MagicMock()]
+        result = episode_operation.load(show.owner_user_id, show.id)
 
-        mocked_order = MagicMock()
-        mocked_order.all.return_value = ep_list
-        mocked_filter = MagicMock()
-        mocked_filter.order_by.return_value = mocked_order
-        mocked_query.filter_by.return_value = mocked_filter
+        self.assertEqual([dict(e) for e in episodes], result)
 
-        result = episode_operation.load(mocked_user, mocked_show.id)
+    @patch.object(episode_operation, 'load_public')
+    @patch.object(show_operation, 'get_model')
+    def test_load_public_only(self, mock_get, mock_load_public):
+        show = self._create_show()
+        mock_get.return_value = show
+        episodes = [self._create_episode()]
+        mock_load_public.return_value = episodes
 
-        mocked_query.filter_by.assert_called_with(
-            owner_user_id=mocked_show.owner_user_id,
-            show_id=mocked_show.id)
-        self.assertTrue(mocked_filter.order_by.called)
-        mocked_order.all.assert_called_with()
-        self.assertEqual(ep_list, result)
+        result = episode_operation.load(show.owner_user_id, show.id, True)
 
-    @patch('highland.models.db.session.query')
-    @patch.object(show_operation, 'get_show_or_assert')
-    def test_load_with_audio(self, mocked_get_show, mocked_query):
-        mocked_user, mocked_show = MagicMock(), MagicMock()
-        mocked_get_show.return_value = mocked_show
+        self.assertEqual([dict(e) for e in episodes], result)
+        mock_load_public.assert_called_with(show.id)
 
-        episode_operation.load_with_audio(mocked_user, mocked_show.id)
+    @patch.object(db, 'session')
+    @patch.object(show_operation, 'get_model')
+    def test_load_with_audio(self, mock_get, mock_session):
+        show = self._create_show()
+        mock_get.return_value = show
+        episode_operation.load_with_audio(show.id)
 
-        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
-        self.assertTrue(mocked_query.called)
+    @patch.object(Episode, 'query')
+    @patch.object(show_operation, 'get_model')
+    def test_load_public(self, mock_get, mock_query):
+        show = self._create_show()
+        mock_get.return_value = show
 
-    @patch('highland.models.Episode.query')
-    @patch.object(show_operation, 'get_show_or_assert')
-    def test_load_public(self, mocked_get_show, mocked_query):
-        mocked_user, mocked_show = MagicMock(), MagicMock()
-        mocked_get_show.return_value = mocked_show
+        episode_operation.load_public(show.id)
 
-        ep_list = MagicMock()
-        mocked_order = MagicMock()
-        mocked_order.all.return_value = ep_list
-        mocked_filter = MagicMock()
-        mocked_filter.order_by.return_value = mocked_order
-        mocked_query.filter_by.return_value = mocked_filter
+        mock_query.filter_by.assert_called_with(
+            show_id=show.id,
+            draft_status=Episode.DraftStatus.published.name)
 
-        result = episode_operation.load_public(mocked_user, mocked_show.id)
-
-        self.assertEqual(ep_list, result)
-        mocked_get_show.assert_called_with(mocked_user, mocked_show.id)
-        mocked_query.filter_by.assert_called_with(
-            owner_user_id=mocked_user.id, show_id=mocked_show.id,
-            draft_status=models.Episode.DraftStatus.published.name)
-        self.assertTrue(mocked_filter.order_by.called)
-        mocked_order.all.assert_called_with()
-
-    @patch('highland.models.Episode.query')
+    @patch.object(Episode, 'query')
     def test_load_publish_target(self, mocked_query):
         episode_operation.load_publish_target()
         mocked_query.filter_by.assert_called_with(
@@ -283,40 +269,6 @@ class TestEpisodeOperation(unittest.TestCase):
                          mocked_episode.draft_status)
         self.assertEqual(mocked_date, mocked_episode.published_datetime)
         mocked_commit.assert_not_called()
-
-    @patch.object(episode_operation, 'access_allowed_or_raise')
-    @patch('highland.models.Episode.query')
-    def test_get_episode_or_assert(self, mocked_query, mocked_access):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        mocked_episode = MagicMock()
-        mocked_episode.id = 3
-
-        mocked_filter = MagicMock()
-        mocked_filter.first.return_value = mocked_episode
-        mocked_query.filter_by.return_value = mocked_filter
-
-        result = episode_operation.get_episode_or_assert(
-            mocked_user, mocked_episode.id)
-
-        self.assertEqual(result, mocked_episode)
-        mocked_query.filter_by.assert_called_with(
-            owner_user_id=mocked_user.id, id=mocked_episode.id)
-        mocked_filter.first.assert_called_with()
-        mocked_access.assert_called_with(mocked_user.id, mocked_episode)
-
-    @patch('highland.models.Episode.query')
-    def test_get_episode_or_assert_not_found(self, mocked_query):
-        mocked_user = MagicMock()
-        mocked_user.id = 1
-        episode_id = 3
-
-        mocked_filter = MagicMock()
-        mocked_filter.first.return_value = None
-        mocked_query.filter_by.return_value = mocked_filter
-
-        with self.assertRaises(exception.NoSuchEntityError):
-            episode_operation.get_episode_or_assert(mocked_user, episode_id)
 
     @patch.object(show_operation, 'access_allowed_or_raise')
     @patch.object(episode_operation, 'access_allowed_or_raise')

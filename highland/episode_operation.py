@@ -106,14 +106,15 @@ def load(user_id, show_id, public_only=False):
 
     show = show_operation.get_model(show_id)
     verify_ownership(user_id, show)
-    q = Episode.query. \
-        filter_by(show_id=show.id). \
-        order_by(Episode.published_datetime.desc())
-
     if public_only:
-        q = q.filter_by(draft_status=Episode.DraftStatus.published.name)
+        episodes = load_public(show_id)
+    else:
+        episodes = Episode.query. \
+            filter_by(show_id=show.id). \
+            order_by(Episode.published_datetime.desc()). \
+            all()
 
-    return [dict(episode) for episode in q.all()]
+    return [dict(episode) for episode in episodes]
 
 
 def load_with_audio(show_id):
